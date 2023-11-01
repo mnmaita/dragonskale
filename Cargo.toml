@@ -1,0 +1,26 @@
+[package]
+name = "game-off-2023"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = { version = "0.11.3", default-features = false, features = [
+    "bevy_asset",
+    "bevy_audio",
+    "bevy_core_pipeline",
+    "bevy_gizmos",
+    "bevy_render",
+    "bevy_scene",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_winit",
+    "default_font",
+    "filesystem_watcher",
+    "multi-threaded",
+    "png",
+    "vorbis",
+    "x11",
+] }
