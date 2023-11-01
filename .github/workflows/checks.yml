@@ -1,0 +1,60 @@
+name: Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: ${{ vars.CACHE_BUILD_VERSION }}-cargo-${{ runner.os }}
+
+      - name: Install alsa and udev
+        if: runner.os == 'linux'
+        run: sudo apt update; sudo apt install --no-install-recommends libasound2-dev libudev-dev
+
+      - name: Build and run tests
+        run: cargo test
+        env:
+          CARGO_INCREMENTAL: 0
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: ${{ vars.CACHE_BUILD_VERSION }}-cargo-${{ runner.os }}
+
+      - name: Install alsa and udev
+        run: sudo apt update; sudo apt install --no-install-recommends libasound2-dev libudev-dev
+
+      - name: Run linter
+        run: cargo clippy --all-targets --all-features
