@@ -1,8 +1,20 @@
-use audio::AudioPlugin;
-use bevy::prelude::*;
-use textures::TexturesPlugin;
+use animation::AnimationPlugin;
+use audio::{audio_assets_loaded, AudioPlugin};
+use bevy::{
+    prelude::*,
+    render::{
+        settings::{Backends, RenderCreation, WgpuSettings},
+        RenderPlugin,
+    },
+};
+use camera::CameraPlugin;
+use game::GamePlugin;
+use textures::{texture_assets_loaded, TexturesPlugin};
 
+mod animation;
 mod audio;
+mod camera;
+mod game;
 mod textures;
 
 fn main() {
@@ -17,10 +29,33 @@ fn main() {
                 ..default()
             }),
         }),
+        AnimationPlugin,
         AudioPlugin,
+        CameraPlugin,
+        GamePlugin,
         TexturesPlugin,
     ));
 
+    app.add_state::<AppState>();
+
+    app.add_systems(Update, handle_asset_load.run_if(assets_loaded()));
 
     app.run();
+}
+
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, States)]
+pub enum AppState {
+    #[default]
+    Setup,
+    InGame,
+}
+
+fn handle_asset_load(mut state: ResMut<NextState<AppState>>) {
+    state.set(AppState::InGame);
+}
+
+fn assets_loaded() -> impl Condition<()> {
+    texture_assets_loaded()
+        .and_then(audio_assets_loaded())
+        .and_then(run_once())
 }
