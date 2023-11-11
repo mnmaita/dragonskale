@@ -219,5 +219,5 @@ fn update_sound_effect_assets_load_state(
 }
 
 pub fn audio_assets_loaded() -> impl Condition<()> {
-    resource_equals(AudioLoadStates::LOADED).or_else(|| false)
+    IntoSystem::into_system(resource_equals(AudioLoadStates::LOADED))
 }
