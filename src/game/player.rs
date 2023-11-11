@@ -20,6 +20,6 @@ pub(super) fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer
             ..default()
         },
         AnimationIndices::new(0, 2),
-        AnimationTimer::from_seconds(0.1),
+        AnimationTimer::from_seconds(0.2),
     ));
 }
