@@ -1,3 +1,5 @@
+use std::f32::consts::FRAC_PI_2;
+
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 
 use crate::{game::Player, playing};
@@ -48,7 +50,16 @@ fn mouse_input(
             player_transform.translation.y += direction.y * 15. * velocity_rate;
 
             #[cfg(debug_assertions)]
-            gizmos.line_2d(player_position, cursor_position, Color::YELLOW);
+            {
+                gizmos.line_2d(player_position, cursor_position, Color::YELLOW);
+            }
+
+            if direction != Vec2::ZERO {
+                let angle = (direction).angle_between(Vec2::X);
+                // FIXME: Rotate the image sprite to always face right?
+                // FRAC_PI_2 is subtracted to offset the 90 degree rotation from the X axis the sprite has.
+                player_transform.rotation = Quat::from_rotation_z(-angle - FRAC_PI_2);
+            }
         }
     }
 }
