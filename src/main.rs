@@ -41,7 +41,10 @@ fn main() {
 
     app.add_state::<AppState>();
 
-    app.add_systems(Update, handle_asset_load.run_if(assets_loaded()));
+    app.add_systems(
+        Update,
+        handle_asset_load.run_if(assets_loaded().and_then(run_once())),
+    );
 
     app.run();
 }
@@ -58,11 +61,11 @@ pub fn playing() -> impl Condition<()> {
 }
 
 fn handle_asset_load(mut state: ResMut<NextState<AppState>>) {
+    #[cfg(debug_assertions)]
+    info!("Assets loaded successfully.");
     state.set(AppState::InGame);
 }
 
 fn assets_loaded() -> impl Condition<()> {
-    texture_assets_loaded()
-        .and_then(audio_assets_loaded())
-        .and_then(run_once())
+    texture_assets_loaded().and_then(audio_assets_loaded())
 }
