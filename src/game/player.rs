@@ -1,3 +1,5 @@
+use std::f32::consts::FRAC_PI_2;
+
 use bevy::prelude::*;
 
 use crate::animation::{AnimationIndices, AnimationTimer};
@@ -15,8 +17,9 @@ pub(super) fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer
     commands.spawn((
         Player,
         SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle.clone(),
             sprite: TextureAtlasSprite::new(0),
+            texture_atlas: texture_atlas_handle.clone(),
+            transform: Transform::from_translation(Vec2::ZERO.extend(1.)),
             ..default()
         },
         AnimationIndices::new(0, 2),
