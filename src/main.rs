@@ -50,6 +50,10 @@ pub enum AppState {
     InGame,
 }
 
+pub fn playing() -> impl Condition<()> {
+    IntoSystem::into_system(in_state(AppState::InGame))
+}
+
 fn handle_asset_load(mut state: ResMut<NextState<AppState>>) {
     state.set(AppState::InGame);
 }
