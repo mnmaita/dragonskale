@@ -42,23 +42,30 @@ fn mouse_input(
         if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
             let mut player_transform = query.single_mut();
             let player_position = player_transform.translation.truncate();
+            let cursor_to_player_vector = cursor_position - player_position;
             let cursor_distance_to_player = cursor_position.distance(player_position);
             let velocity_rate = cursor_distance_to_player.min(300.) / 300.;
-            let direction = (cursor_position - player_position).normalize();
 
-            player_transform.translation.x += direction.x * 15. * velocity_rate;
-            player_transform.translation.y += direction.y * 15. * velocity_rate;
+            if cursor_to_player_vector != Vec2::ZERO {
+                let direction = cursor_to_player_vector.normalize();
+
+                player_transform.translation.x += direction.x * 15. * velocity_rate;
+                player_transform.translation.y += direction.y * 15. * velocity_rate;
+
+                if direction != Vec2::ZERO {
+                    let angle = (direction).angle_between(Vec2::X);
+
+                    if angle.is_finite() {
+                        // FIXME: Rotate the image sprite to always face right?
+                        // FRAC_PI_2 is subtracted to offset the 90 degree rotation from the X axis the sprite has.
+                        player_transform.rotation = Quat::from_rotation_z(-angle - FRAC_PI_2);
+                    }
+                }
+            }
 
             #[cfg(debug_assertions)]
             {
                 gizmos.line_2d(player_position, cursor_position, Color::YELLOW);
-            }
-
-            if direction != Vec2::ZERO {
-                let angle = (direction).angle_between(Vec2::X);
-                // FIXME: Rotate the image sprite to always face right?
-                // FRAC_PI_2 is subtracted to offset the 90 degree rotation from the X axis the sprite has.
-                player_transform.rotation = Quat::from_rotation_z(-angle - FRAC_PI_2);
             }
         }
     }
