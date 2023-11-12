@@ -9,12 +9,14 @@ use bevy::{
 };
 use camera::CameraPlugin;
 use game::GamePlugin;
+use input::InputPlugin;
 use textures::{texture_assets_loaded, TexturesPlugin};
 
 mod animation;
 mod audio;
 mod camera;
 mod game;
+mod input;
 mod textures;
 
 fn main() {
@@ -33,6 +35,7 @@ fn main() {
         AudioPlugin,
         CameraPlugin,
         GamePlugin,
+        InputPlugin,
         TexturesPlugin,
     ));
 
