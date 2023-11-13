@@ -4,8 +4,8 @@ use rand::random;
 
 use crate::AppState;
 
-const TILE_SIZE: Vec2 = Vec2::new(32., 32.);
-const GRID_SIZE: Vec2 = Vec2::new(100., 100.);
+pub const TILE_SIZE: Vec2 = Vec2::new(32., 32.);
+pub const GRID_SIZE: Vec2 = Vec2::new(100., 100.);
 
 pub struct LevelPlugin;
 
