@@ -46,7 +46,8 @@ pub fn generate_level(mut commands: Commands) {
                 .unwrap_or(&Color::BLACK)
                 .to_owned();
             let custom_size = Some(TILE_SIZE);
-            let position = Vec2::new(x as f32, y as f32) * TILE_SIZE;
+            let position =
+                Vec2::new(x as f32 - GRID_SIZE.x / 2., y as f32 - GRID_SIZE.y / 2.) * TILE_SIZE;
             let translation = position.extend(0.0);
             let transform = Transform::from_translation(translation);
 
