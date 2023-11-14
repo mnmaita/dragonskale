@@ -24,7 +24,7 @@ pub fn generate_level(mut commands: Commands) {
 
     let seed = random();
     let perlin = Perlin::new(seed);
-    let tile_type_count = Tile::_LAST as u8;
+    let tile_count = Tile::_LAST as u8;
 
     for y in 0..GRID_SIZE.y as i32 {
         for x in 0..GRID_SIZE.x as i32 {
@@ -34,29 +34,38 @@ pub fn generate_level(mut commands: Commands) {
             ];
             let noise_value = perlin.get(point).clamp(0., 1.);
             let scaled_noise_value =
-                (noise_value * tile_type_count as f64).clamp(0., tile_type_count as f64 - 1.);
+                (noise_value * tile_count as f64).clamp(0., tile_count as f64 - 1.);
             let int_noise_value = scaled_noise_value.floor() as u8;
-            let tile_type: Tile = int_noise_value.into();
-            let color = tile_type.into();
+            let tile: Tile = int_noise_value.into();
+            let color = tile.into();
             let custom_size = Some(TILE_SIZE);
             let position = (Vec2::new(x as f32, y as f32) - HALF_GRID_SIZE) * TILE_SIZE;
             let translation = position.extend(0.0);
             let transform = Transform::from_translation(translation);
 
-            commands.spawn(SpriteBundle {
-                sprite: Sprite {
-                    color,
-                    custom_size,
+            commands.spawn(TileBundle {
+                sprite: SpriteBundle {
+                    sprite: Sprite {
+                        color,
+                        custom_size,
+                        ..default()
+                    },
+                    transform,
                     ..default()
                 },
-                transform,
-                ..default()
+                tile,
             });
         }
     }
 }
 
-#[derive(Component, PartialEq, Eq, Hash)]
+#[derive(Bundle)]
+pub struct TileBundle {
+    pub sprite: SpriteBundle,
+    pub tile: Tile,
+}
+
+#[derive(Component, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Tile {
     Water,
     Sand,
