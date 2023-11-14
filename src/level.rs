@@ -20,7 +20,7 @@ pub fn generate_level(mut commands: Commands) {
     const MAP_OFFSET_Y: f64 = 0.;
     const MAP_SCALE: f64 = 20.;
 
-    let color_map: HashMap<i8, Color> = HashMap::from_iter([
+    let color_map: HashMap<u8, Color> = HashMap::from_iter([
         (0, Color::BLUE),
         (1, Color::BEIGE),
         (2, Color::DARK_GREEN),
@@ -40,7 +40,7 @@ pub fn generate_level(mut commands: Commands) {
             let noise_value = perlin.get(point).clamp(0., 1.);
             let scaled_noise_value =
                 (noise_value * color_map_len_f64).clamp(0., color_map_len_f64 - 1.);
-            let int_noise_value: i8 = scaled_noise_value.floor() as i8;
+            let int_noise_value = scaled_noise_value.floor() as u8;
             let color = color_map
                 .get(&int_noise_value)
                 .unwrap_or(&Color::BLACK)
