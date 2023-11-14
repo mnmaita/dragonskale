@@ -43,7 +43,7 @@ fn generate_level(mut commands: Commands) {
             let translation = position.extend(0.0);
             let transform = Transform::from_translation(translation);
 
-            commands.spawn(TileBundle {
+            let mut tile_entity = commands.spawn(TileBundle {
                 sprite: SpriteBundle {
                     sprite: Sprite {
                         color,
@@ -55,9 +55,16 @@ fn generate_level(mut commands: Commands) {
                 },
                 tile,
             });
+
+            if y == 0 || x == 0 || y == GRID_SIZE.y as i32 - 1 || x == GRID_SIZE.x as i32 - 1 {
+                tile_entity.insert(BorderTile);
+            }
         }
     }
 }
+
+#[derive(Component)]
+struct BorderTile;
 
 #[derive(Bundle)]
 pub struct TileBundle {
