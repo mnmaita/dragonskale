@@ -17,7 +17,7 @@ impl Plugin for LevelPlugin {
     }
 }
 
-pub fn generate_level(mut commands: Commands) {
+fn generate_level(mut commands: Commands) {
     const MAP_OFFSET_X: f64 = 0.;
     const MAP_OFFSET_Y: f64 = 0.;
     const MAP_SCALE: f64 = 20.;
