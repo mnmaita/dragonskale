@@ -1,4 +1,4 @@
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 use noise::{NoiseFn, Perlin};
 use rand::random;
 
@@ -20,16 +20,9 @@ pub fn generate_level(mut commands: Commands) {
     const MAP_OFFSET_Y: f64 = 0.;
     const MAP_SCALE: f64 = 20.;
 
-    let color_map: HashMap<u8, Color> = HashMap::from_iter([
-        (0, Color::BLUE),
-        (1, Color::BEIGE),
-        (2, Color::DARK_GREEN),
-        (3, Color::GRAY),
-        (4, Color::DARK_GRAY),
-    ]);
     let seed = random();
     let perlin = Perlin::new(seed);
-    let color_map_len_f64 = color_map.len() as f64;
+    let tile_type_count = Tile::_LAST as u8;
 
     for y in 0..GRID_SIZE.y as i32 {
         for x in 0..GRID_SIZE.x as i32 {
@@ -39,12 +32,10 @@ pub fn generate_level(mut commands: Commands) {
             ];
             let noise_value = perlin.get(point).clamp(0., 1.);
             let scaled_noise_value =
-                (noise_value * color_map_len_f64).clamp(0., color_map_len_f64 - 1.);
+                (noise_value * tile_type_count as f64).clamp(0., tile_type_count as f64 - 1.);
             let int_noise_value = scaled_noise_value.floor() as u8;
-            let color = color_map
-                .get(&int_noise_value)
-                .unwrap_or(&Color::BLACK)
-                .to_owned();
+            let tile_type: Tile = int_noise_value.into();
+            let color = tile_type.into();
             let custom_size = Some(TILE_SIZE);
             let position =
                 Vec2::new(x as f32 - GRID_SIZE.x / 2., y as f32 - GRID_SIZE.y / 2.) * TILE_SIZE;
@@ -71,4 +62,35 @@ pub enum Tile {
     Grass,
     Hills,
     Mountains,
+    _LAST,
+}
+
+impl From<u8> for Tile {
+    fn from(value: u8) -> Self {
+        // For every new type added to the enum, a new match arm should be added here.
+        match value {
+            0 => Self::Water,
+            1 => Self::Sand,
+            2 => Self::Grass,
+            3 => Self::Hills,
+            4 => Self::Mountains,
+            #[cfg(debug_assertions)]
+            _ => panic!("From<u8> for Tile: Missing match arm!"),
+            #[cfg(not(debug_assertions))]
+            _ => Self::Water,
+        }
+    }
+}
+
+impl From<Tile> for Color {
+    fn from(value: Tile) -> Self {
+        match value {
+            Tile::Grass => Self::DARK_GREEN,
+            Tile::Hills => Self::GRAY,
+            Tile::Mountains => Self::DARK_GRAY,
+            Tile::Water => Self::BLUE,
+            Tile::Sand => Self::BEIGE,
+            Tile::_LAST => Self::default(),
+        }
+    }
 }
