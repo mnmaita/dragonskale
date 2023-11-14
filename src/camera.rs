@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::Player,
-    level::{GRID_SIZE, TILE_SIZE},
+    level::{GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
 };
 
 pub struct CameraPlugin;
@@ -45,14 +45,13 @@ fn constrain_camera_position_to_level(
     if let Some(viewport_size) = camera.logical_viewport_size() {
         let level_dimensions = GRID_SIZE * TILE_SIZE;
         let half_viewport_size = viewport_size * 0.5;
-        let half_tile_size = TILE_SIZE * 0.5;
 
         camera_transform.translation.x = if viewport_size.x > level_dimensions.x {
             0.0
         } else {
             let level_half_width = level_dimensions.x * 0.5;
-            let min = -level_half_width + half_viewport_size.x + half_tile_size.x;
-            let max = level_half_width - half_viewport_size.x - half_tile_size.x;
+            let min = -level_half_width + half_viewport_size.x + HALF_TILE_SIZE.x;
+            let max = level_half_width - half_viewport_size.x - HALF_TILE_SIZE.x;
             camera_transform.translation.x.clamp(min, max)
         };
 
@@ -60,8 +59,8 @@ fn constrain_camera_position_to_level(
             0.0
         } else {
             let level_half_height = level_dimensions.y * 0.5;
-            let min = -level_half_height + half_viewport_size.y + half_tile_size.y;
-            let max = level_half_height - half_viewport_size.y - half_tile_size.y;
+            let min = -level_half_height + half_viewport_size.y + HALF_TILE_SIZE.y;
+            let max = level_half_height - half_viewport_size.y - HALF_TILE_SIZE.y;
             camera_transform.translation.y.clamp(min, max)
         };
     }

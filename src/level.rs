@@ -6,6 +6,8 @@ use crate::AppState;
 
 pub const TILE_SIZE: Vec2 = Vec2::new(32., 32.);
 pub const GRID_SIZE: Vec2 = Vec2::new(100., 100.);
+pub const HALF_TILE_SIZE: Vec2 = Vec2::new(TILE_SIZE.x * 0.5, TILE_SIZE.y * 0.5);
+pub const HALF_GRID_SIZE: Vec2 = Vec2::new(GRID_SIZE.x * 0.5, GRID_SIZE.y * 0.5);
 
 pub struct LevelPlugin;
 
@@ -37,8 +39,7 @@ pub fn generate_level(mut commands: Commands) {
             let tile_type: Tile = int_noise_value.into();
             let color = tile_type.into();
             let custom_size = Some(TILE_SIZE);
-            let position =
-                Vec2::new(x as f32 - GRID_SIZE.x / 2., y as f32 - GRID_SIZE.y / 2.) * TILE_SIZE;
+            let position = (Vec2::new(x as f32, y as f32) - HALF_GRID_SIZE) * TILE_SIZE;
             let translation = position.extend(0.0);
             let transform = Transform::from_translation(translation);
 
