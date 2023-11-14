@@ -63,3 +63,12 @@ pub fn generate_level(mut commands: Commands) {
         }
     }
 }
+
+#[derive(Component, PartialEq, Eq, Hash)]
+pub enum Tile {
+    Water,
+    Sand,
+    Grass,
+    Hills,
+    Mountains,
+}
