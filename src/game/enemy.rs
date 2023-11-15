@@ -67,16 +67,18 @@ fn spawn_enemies(
 }
 
 fn move_enemies(
-    mut enemy_query: Query<(&mut Transform, &Speed), With<Enemy>>,
+    mut enemy_query: Query<(&mut Transform, &Speed, &Range), With<Enemy>>,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
     let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
 
-    for (mut enemy_transform, enemy_speed) in &mut enemy_query {
+    for (mut enemy_transform, enemy_speed, enemy_range) in &mut enemy_query {
         let enemy_position = enemy_transform.translation.truncate();
-        let enemy_direction = (player_position - enemy_position).normalize();
-        enemy_transform.translation.x += enemy_direction.x * enemy_speed.0;
-        enemy_transform.translation.y += enemy_direction.y * enemy_speed.0;
+        if enemy_position.distance(player_position) > enemy_range.0 {
+            let enemy_direction = (player_position - enemy_position).normalize();
+            enemy_transform.translation.x += enemy_direction.x * enemy_speed.0;
+            enemy_transform.translation.y += enemy_direction.y * enemy_speed.0;
+        }
     }
 }
