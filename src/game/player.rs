@@ -3,6 +3,7 @@ use bevy_rapier2d::prelude::Collider;
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
+    physics::Speed,
     AppState,
 };
 
@@ -23,6 +24,7 @@ pub struct PlayerBundle {
     pub collider: Collider,
     pub hitpoints: Hitpoints,
     pub marker: Player,
+    pub speed: Speed,
     pub spritesheet: SpriteSheetBundle,
 }
 
@@ -42,6 +44,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         collider: Collider::ball(80.5),
         hitpoints: Hitpoints::new(100),
         marker: Player,
+        speed: Speed(15.),
         spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
             texture_atlas: texture_atlas_handle.clone(),
