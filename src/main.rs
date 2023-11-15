@@ -19,6 +19,7 @@ mod camera;
 mod game;
 mod input;
 mod level;
+mod physics;
 mod textures;
 
 fn main() {
