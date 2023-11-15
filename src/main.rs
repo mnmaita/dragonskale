@@ -10,7 +10,6 @@ use bevy::{
 use camera::CameraPlugin;
 use game::GamePlugin;
 use input::InputPlugin;
-use level::LevelPlugin;
 use textures::{texture_assets_loaded, TexturesPlugin};
 
 mod animation;
@@ -18,7 +17,6 @@ mod audio;
 mod camera;
 mod game;
 mod input;
-mod level;
 mod physics;
 mod textures;
 
@@ -39,7 +37,6 @@ fn main() {
         CameraPlugin,
         GamePlugin,
         InputPlugin,
-        LevelPlugin,
         TexturesPlugin,
     ));
 

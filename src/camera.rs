@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::Player,
-    level::{GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
+    game::{GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
 };
 
 pub struct CameraPlugin;

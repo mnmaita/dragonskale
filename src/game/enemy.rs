@@ -1,12 +1,9 @@
 use bevy::prelude::*;
 use rand::seq::IteratorRandom;
 
-use crate::{
-    level::{BorderTile, TILE_SIZE},
-    physics::Speed,
-};
+use crate::physics::Speed;
 
-use super::Player;
+use super::{BorderTile, Player, TILE_SIZE};
 
 pub(super) struct EnemyPlugin;
 
