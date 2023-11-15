@@ -88,7 +88,7 @@ fn generate_level(mut commands: Commands) {
 }
 
 #[derive(Component)]
-struct BorderTile;
+pub struct BorderTile;
 
 #[derive(Bundle)]
 pub struct TileBundle {
