@@ -5,6 +5,8 @@ use crate::{
     AppState,
 };
 
+use super::Hitpoints;
+
 pub(super) struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -17,6 +19,7 @@ impl Plugin for PlayerPlugin {
 pub struct PlayerBundle {
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
+    pub hitpoints: Hitpoints,
     pub marker: Player,
     pub spritesheet: SpriteSheetBundle,
 }
@@ -34,6 +37,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(PlayerBundle {
         animation_indices: AnimationIndices::new(0, 2),
         animation_timer: AnimationTimer::from_seconds(0.2),
+        hitpoints: Hitpoints::new(100),
         marker: Player,
         spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
