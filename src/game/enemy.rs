@@ -3,7 +3,7 @@ use rand::seq::IteratorRandom;
 
 use crate::{physics::Speed, playing};
 
-use super::{BorderTile, Hitpoints, Player, TILE_SIZE};
+use super::{combat::Range, BorderTile, Hitpoints, Player, TILE_SIZE};
 
 pub(super) struct EnemyPlugin;
 
@@ -19,6 +19,7 @@ impl Plugin for EnemyPlugin {
 pub struct EnemyBundle {
     pub marker: Enemy,
     pub hitpoints: Hitpoints,
+    pub range: Range,
     pub speed: Speed,
     pub sprite: SpriteBundle,
 }
@@ -49,6 +50,7 @@ fn spawn_enemies(
             commands.spawn(EnemyBundle {
                 hitpoints: Hitpoints::new(1),
                 marker: Enemy,
+                range: Range(TILE_SIZE.x * 3.),
                 speed: Speed(2.),
                 sprite: SpriteBundle {
                     sprite: Sprite {
