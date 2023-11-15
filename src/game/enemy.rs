@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 use rand::seq::IteratorRandom;
 
-use crate::physics::Speed;
+use crate::{physics::Speed, playing};
 
-use super::{BorderTile, Player, TILE_SIZE};
+use super::{BorderTile, Hitpoints, Player, TILE_SIZE};
 
 pub(super) struct EnemyPlugin;
 
@@ -11,13 +11,14 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnTimer::new(3.));
 
-        app.add_systems(FixedUpdate, (spawn_enemies, move_enemies));
+        app.add_systems(FixedUpdate, (spawn_enemies, move_enemies).run_if(playing()));
     }
 }
 
 #[derive(Bundle)]
 pub struct EnemyBundle {
     pub marker: Enemy,
+    pub hitpoints: Hitpoints,
     pub speed: Speed,
     pub sprite: SpriteBundle,
 }
@@ -46,6 +47,7 @@ fn spawn_enemies(
             let translation = tile_transform.translation.truncate().extend(1.);
 
             commands.spawn(EnemyBundle {
+                hitpoints: Hitpoints::new(1),
                 marker: Enemy,
                 speed: Speed(2.),
                 sprite: SpriteBundle {
