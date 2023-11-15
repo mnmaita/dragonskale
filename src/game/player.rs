@@ -13,6 +13,14 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+#[derive(Bundle)]
+pub struct PlayerBundle {
+    pub animation_indices: AnimationIndices,
+    pub animation_timer: AnimationTimer,
+    pub marker: Player,
+    pub spritesheet: SpriteSheetBundle,
+}
+
 #[derive(Component)]
 pub struct Player;
 
@@ -23,15 +31,15 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture_atlas = TextureAtlas::from_grid(texture, Vec2::new(191., 161.), 12, 1, None, None);
     let texture_atlas_handle = asset_server.add(texture_atlas);
 
-    commands.spawn((
-        Player,
-        SpriteSheetBundle {
+    commands.spawn(PlayerBundle {
+        animation_indices: AnimationIndices::new(0, 2),
+        animation_timer: AnimationTimer::from_seconds(0.2),
+        marker: Player,
+        spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
             texture_atlas: texture_atlas_handle.clone(),
             transform: Transform::from_translation(Vec2::ZERO.extend(1.)),
             ..default()
         },
-        AnimationIndices::new(0, 2),
-        AnimationTimer::from_seconds(0.2),
-    ));
+    });
 }
