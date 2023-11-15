@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::seq::IteratorRandom;
 
-use crate::physics::Speed;
+use crate::{physics::Speed, playing};
 
 use super::{BorderTile, Player, TILE_SIZE};
 
@@ -11,7 +11,7 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnTimer::new(3.));
 
-        app.add_systems(FixedUpdate, (spawn_enemies, move_enemies));
+        app.add_systems(FixedUpdate, (spawn_enemies, move_enemies).run_if(playing()));
     }
 }
 
