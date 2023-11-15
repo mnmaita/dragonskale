@@ -7,7 +7,7 @@ use crate::{
     AppState,
 };
 
-pub struct LevelPlugin;
+pub(super) struct LevelPlugin;
 
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
