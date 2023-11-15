@@ -1,13 +1,14 @@
-use bevy::prelude::*;
+use bevy::{app::PluginGroupBuilder, prelude::*};
 
-use crate::AppState;
-
-use super::player::spawn_player;
+use super::{enemy::EnemyPlugin, level::LevelPlugin, player::PlayerPlugin};
 
 pub struct GamePlugin;
 
-impl Plugin for GamePlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::InGame), spawn_player);
+impl PluginGroup for GamePlugin {
+    fn build(self) -> bevy::app::PluginGroupBuilder {
+        PluginGroupBuilder::start::<Self>()
+            .add(EnemyPlugin)
+            .add(LevelPlugin)
+            .add(PlayerPlugin)
     }
 }

@@ -1,11 +1,22 @@
 use bevy::prelude::*;
 
-use crate::animation::{AnimationIndices, AnimationTimer};
+use crate::{
+    animation::{AnimationIndices, AnimationTimer},
+    AppState,
+};
+
+pub(super) struct PlayerPlugin;
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(AppState::InGame), spawn_player);
+    }
+}
 
 #[derive(Component)]
 pub struct Player;
 
-pub(super) fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture = asset_server
         .get_handle("textures/dragon.png")
         .unwrap_or_default();
