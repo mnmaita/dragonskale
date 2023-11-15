@@ -9,6 +9,6 @@ mod plugin;
 pub use constants::*;
 pub use enemy::Enemy;
 pub use hitpoints::Hitpoints;
-pub use level::BorderTile;
+pub use level::{BorderTile, Tile};
 pub use player::Player;
 pub use plugin::GamePlugin;

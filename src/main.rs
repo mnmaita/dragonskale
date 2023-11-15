@@ -17,6 +17,8 @@ use textures::{texture_assets_loaded, TexturesPlugin};
 mod animation;
 mod audio;
 mod camera;
+#[cfg(debug_assertions)]
+mod debug;
 mod fonts;
 mod game;
 mod input;
@@ -38,6 +40,8 @@ fn main() {
         AnimationPlugin,
         AudioPlugin,
         CameraPlugin,
+        #[cfg(debug_assertions)]
+        debug::DebugPlugin,
         FontsPlugin,
         GamePlugin,
         InputPlugin,

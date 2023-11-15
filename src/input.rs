@@ -16,7 +16,7 @@ impl Plugin for InputPlugin {
 struct CursorWorldPosition(Option<Vec2>);
 
 #[derive(SystemParam)]
-struct CursorWorldPositionChecker<'w, 's> {
+pub struct CursorWorldPositionChecker<'w, 's> {
     window_query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
     camera_query: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<Camera2d>>,
 }
@@ -36,7 +36,6 @@ fn mouse_input(
     mouse_input: ResMut<Input<MouseButton>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
     mut query: Query<&mut Transform, With<Player>>,
-    mut gizmos: Gizmos,
 ) {
     if mouse_input.pressed(MouseButton::Right) {
         if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
@@ -61,11 +60,6 @@ fn mouse_input(
                         player_transform.rotation = Quat::from_rotation_z(-angle - FRAC_PI_2);
                     }
                 }
-            }
-
-            #[cfg(debug_assertions)]
-            {
-                gizmos.line_2d(player_position, cursor_position, Color::YELLOW);
             }
         }
     }

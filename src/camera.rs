@@ -39,7 +39,6 @@ fn update_camera(
 
 fn constrain_camera_position_to_level(
     mut camera_query: Query<(&Camera, &mut Transform), With<Camera2d>>,
-    #[cfg(debug_assertions)] mut gizmos: Gizmos,
 ) {
     let (camera, mut camera_transform) = camera_query.single_mut();
 
@@ -68,17 +67,6 @@ fn constrain_camera_position_to_level(
             let (min_y, max_y) = (camera_boundary.min.y, camera_boundary.max.y);
             camera_transform.translation.x = camera_transform.translation.x.clamp(min_x, max_x);
             camera_transform.translation.y = camera_transform.translation.y.clamp(min_y, max_y);
-        }
-
-        #[cfg(debug_assertions)]
-        {
-            gizmos.rect_2d(
-                camera_boundary.center(),
-                0.,
-                camera_boundary.size(),
-                Color::RED,
-            );
-            gizmos.circle_2d(camera_transform.translation.truncate(), 10., Color::RED);
         }
     }
 }
