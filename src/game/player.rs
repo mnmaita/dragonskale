@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::Collider;
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
@@ -19,6 +20,7 @@ impl Plugin for PlayerPlugin {
 pub struct PlayerBundle {
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
+    pub collider: Collider,
     pub hitpoints: Hitpoints,
     pub marker: Player,
     pub spritesheet: SpriteSheetBundle,
@@ -37,6 +39,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(PlayerBundle {
         animation_indices: AnimationIndices::new(0, 2),
         animation_timer: AnimationTimer::from_seconds(0.2),
+        collider: Collider::ball(80.5),
         hitpoints: Hitpoints::new(100),
         marker: Player,
         spritesheet: SpriteSheetBundle {
