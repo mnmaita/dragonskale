@@ -15,7 +15,7 @@ impl Plugin for CombatPlugin {
 
 #[derive(Event)]
 pub struct SpawnProjectileEvent {
-    damage: i32,
+    damage: i16,
     direction: Vec2,
     emitter: Entity,
     position: Vec2,
@@ -23,7 +23,7 @@ pub struct SpawnProjectileEvent {
 }
 
 impl SpawnProjectileEvent {
-    pub fn new(damage: i32, direction: Vec2, emitter: Entity, position: Vec2, speed: f32) -> Self {
+    pub fn new(damage: i16, direction: Vec2, emitter: Entity, position: Vec2, speed: f32) -> Self {
         Self {
             damage,
             direction,
@@ -54,11 +54,11 @@ pub struct Range(pub f32);
 
 /// Represents the damage this entity causes to others when colliding.
 #[derive(Component)]
-pub struct ImpactDamage(pub i32);
+pub struct ImpactDamage(pub i16);
 
 /// Represents an Entity's damage attributes.
 #[derive(Component)]
-pub struct AttackDamage(pub i32);
+pub struct AttackDamage(pub i16);
 
 #[derive(Component, Deref, DerefMut)]
 pub struct AttackTimer(pub Timer);
