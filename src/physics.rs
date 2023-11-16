@@ -11,6 +11,9 @@ impl Plugin for PhysicsPlugin {
             TILE_SIZE.y,
         ));
 
+        #[cfg(debug_assertions)]
+        app.add_plugins(RapierDebugRenderPlugin::default());
+
         app.insert_resource(RapierConfiguration {
             gravity: Vec2::ZERO,
             timestep_mode: TimestepMode::Fixed {
