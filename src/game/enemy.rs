@@ -60,7 +60,7 @@ fn spawn_enemies(
                 attack_timer: AttackTimer(Timer::from_seconds(5., TimerMode::Repeating)),
                 hitpoints: Hitpoints::new(1),
                 marker: Enemy,
-                range: Range(TILE_SIZE.x * 3.),
+                range: Range(TILE_SIZE.x * 6.),
                 speed: Speed(2.),
                 sprite: SpriteBundle {
                     sprite: Sprite {
