@@ -81,6 +81,15 @@ fn spawn_projectiles(
     } in spawn_projectile_event_reader.read()
     {
         let size = Vec2::new(HALF_TILE_SIZE.x, 3.);
+        let angle = if direction != Vec2::ZERO {
+            let mut angle = (direction).angle_between(Vec2::X);
+            if !angle.is_finite() {
+                angle = 0.;
+            }
+            angle
+        } else {
+            0.
+        };
 
         commands.spawn(ProjectileBundle {
             ccd: Ccd::enabled(),
@@ -95,8 +104,8 @@ fn spawn_projectiles(
                     custom_size: Some(size),
                     ..default()
                 },
-                // FIXME: Add rotation to the projectile so it faces towards its direction.
-                transform: Transform::from_translation(position.extend(1.0)),
+                transform: Transform::from_translation(position.extend(1.0))
+                    .with_rotation(Quat::from_rotation_z(-angle)),
                 ..default()
             },
             velocity: Velocity {
