@@ -93,7 +93,7 @@ fn spawn_projectiles(
 
         commands.spawn(ProjectileBundle {
             ccd: Ccd::enabled(),
-            collider: Collider::cuboid(size.x, size.y),
+            collider: Collider::cuboid(size.x / 2., size.y / 2.),
             damage: ImpactDamage(damage),
             emitter: Emitter(emitter),
             marker: Projectile,
