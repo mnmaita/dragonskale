@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use super::HALF_TILE_SIZE;
+use super::{Hitpoints, Player, HALF_TILE_SIZE};
 
 pub(super) struct CombatPlugin;
 
@@ -10,6 +10,8 @@ impl Plugin for CombatPlugin {
         app.add_event::<SpawnProjectileEvent>();
 
         app.add_systems(Update, spawn_projectiles);
+
+        app.add_systems(FixedUpdate, projectile_collision_with_player);
     }
 }
 
@@ -102,5 +104,24 @@ fn spawn_projectiles(
                 angvel: 0.,
             },
         });
+    }
+}
+
+fn projectile_collision_with_player(
+    mut commands: Commands,
+    mut player_query: Query<(Entity, &mut Hitpoints), With<Player>>,
+    projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
+    rapier_context: Res<RapierContext>,
+) {
+    let (player_entity, mut player_hitpoints) = player_query.single_mut(); // A first entity with a collider attached.
+
+    for (projectile_entity, projectile_damage) in &projectile_query {
+        if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
+            if contact_pair.has_any_active_contacts() {
+                player_hitpoints.subtract(projectile_damage.0);
+                // TODO: Add "death" component or event and use it here so a different system handles despawns.
+                commands.entity(projectile_entity).despawn_recursive();
+            }
+        }
     }
 }
