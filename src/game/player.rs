@@ -134,7 +134,7 @@ fn handle_player_movement_events(
                 let angle = target_to_player_vector.angle_between(direction);
 
                 *damping = Damping::default();
-                external_impulse.impulse = direction * velocity_scalar * 1000.;
+                external_impulse.impulse = direction * velocity_scalar * 125.;
 
                 let (torque, strafe) = {
                     if is_in_cruise_mode {
@@ -142,7 +142,7 @@ fn handle_player_movement_events(
                         damping.angular_damping = 10.;
                         (0., Vec2::ZERO)
                     } else {
-                        (-angle * 250., direction.perp() * -angle * 125_000.)
+                        (-angle * 75., direction.perp() * -angle * 31250.)
                     }
                 };
 
