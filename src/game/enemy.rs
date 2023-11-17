@@ -16,7 +16,7 @@ impl Plugin for EnemyPlugin {
 
         app.add_systems(
             FixedUpdate,
-            (spawn_enemies, move_enemies, attack_player).run_if(playing()),
+            (spawn_enemies, handle_enemy_behavior, handle_enemy_attacks).run_if(playing()),
         );
     }
 }
@@ -25,6 +25,7 @@ impl Plugin for EnemyPlugin {
 pub struct EnemyBundle {
     pub attack_damage: AttackDamage,
     pub attack_timer: AttackTimer,
+    pub behavior: Behavior,
     pub hitpoints: Hitpoints,
     pub marker: Enemy,
     pub range: Range,
@@ -44,6 +45,11 @@ impl EnemySpawnTimer {
     }
 }
 
+#[derive(Component)]
+pub enum Behavior {
+    FollowPlayer { distance: f32 },
+}
+
 fn spawn_enemies(
     mut commands: Commands,
     time: Res<Time>,
@@ -58,9 +64,12 @@ fn spawn_enemies(
             commands.spawn(EnemyBundle {
                 attack_damage: AttackDamage(5),
                 attack_timer: AttackTimer(Timer::from_seconds(5., TimerMode::Repeating)),
+                behavior: Behavior::FollowPlayer {
+                    distance: TILE_SIZE.x * 6.,
+                },
                 hitpoints: Hitpoints::new(1),
                 marker: Enemy,
-                range: Range(TILE_SIZE.x * 6.),
+                range: Range(TILE_SIZE.x * 12.),
                 speed: Speed(2.),
                 sprite: SpriteBundle {
                     sprite: Sprite {
@@ -76,24 +85,28 @@ fn spawn_enemies(
     }
 }
 
-fn move_enemies(
-    mut enemy_query: Query<(&mut Transform, &Speed, &Range), With<Enemy>>,
+fn handle_enemy_behavior(
+    mut enemy_query: Query<(&mut Transform, &Speed, &Behavior), With<Enemy>>,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
     let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
 
-    for (mut enemy_transform, enemy_speed, enemy_range) in &mut enemy_query {
-        let enemy_position = enemy_transform.translation.truncate();
-        if enemy_position.distance(player_position) > enemy_range.0 {
-            let enemy_direction = (player_position - enemy_position).normalize();
-            enemy_transform.translation.x += enemy_direction.x * enemy_speed.0;
-            enemy_transform.translation.y += enemy_direction.y * enemy_speed.0;
+    for (mut enemy_transform, enemy_speed, enemy_behavior) in &mut enemy_query {
+        match enemy_behavior {
+            &Behavior::FollowPlayer { distance } => {
+                let enemy_position = enemy_transform.translation.truncate();
+                if enemy_position.distance(player_position) > distance {
+                    let enemy_direction = (player_position - enemy_position).normalize();
+                    enemy_transform.translation.x += enemy_direction.x * enemy_speed.0;
+                    enemy_transform.translation.y += enemy_direction.y * enemy_speed.0;
+                }
+            }
         }
     }
 }
 
-fn attack_player(
+fn handle_enemy_attacks(
     mut spawn_projectile_event_writer: EventWriter<SpawnProjectileEvent>,
     mut enemy_query: Query<
         (Entity, &Transform, &mut AttackTimer, &Range, &AttackDamage),
