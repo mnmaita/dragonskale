@@ -3,7 +3,10 @@ use rand::seq::IteratorRandom;
 
 use crate::{physics::Speed, playing};
 
-use super::{BorderTile, Hitpoints, Player, TILE_SIZE};
+use super::{
+    combat::{AttackDamage, AttackTimer, Range, SpawnProjectileEvent},
+    BorderTile, Hitpoints, Player, TILE_SIZE,
+};
 
 pub(super) struct EnemyPlugin;
 
@@ -11,14 +14,21 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnTimer::new(3.));
 
-        app.add_systems(FixedUpdate, (spawn_enemies, move_enemies).run_if(playing()));
+        app.add_systems(
+            FixedUpdate,
+            (spawn_enemies, handle_enemy_behavior, handle_enemy_attacks).run_if(playing()),
+        );
     }
 }
 
 #[derive(Bundle)]
 pub struct EnemyBundle {
-    pub marker: Enemy,
+    pub attack_damage: AttackDamage,
+    pub attack_timer: AttackTimer,
+    pub behavior: Behavior,
     pub hitpoints: Hitpoints,
+    pub marker: Enemy,
+    pub range: Range,
     pub speed: Speed,
     pub sprite: SpriteBundle,
 }
@@ -35,6 +45,11 @@ impl EnemySpawnTimer {
     }
 }
 
+#[derive(Component)]
+pub enum Behavior {
+    FollowPlayer { distance: f32 },
+}
+
 fn spawn_enemies(
     mut commands: Commands,
     time: Res<Time>,
@@ -47,8 +62,14 @@ fn spawn_enemies(
             let translation = tile_transform.translation.truncate().extend(1.);
 
             commands.spawn(EnemyBundle {
+                attack_damage: AttackDamage(5),
+                attack_timer: AttackTimer(Timer::from_seconds(5., TimerMode::Repeating)),
+                behavior: Behavior::FollowPlayer {
+                    distance: TILE_SIZE.x * 6.,
+                },
                 hitpoints: Hitpoints::new(1),
                 marker: Enemy,
+                range: Range(TILE_SIZE.x * 12.),
                 speed: Speed(2.),
                 sprite: SpriteBundle {
                     sprite: Sprite {
@@ -64,17 +85,57 @@ fn spawn_enemies(
     }
 }
 
-fn move_enemies(
-    mut enemy_query: Query<(&mut Transform, &Speed), With<Enemy>>,
+fn handle_enemy_behavior(
+    mut enemy_query: Query<(&mut Transform, &Speed, &Behavior), With<Enemy>>,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
     let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
 
-    for (mut enemy_transform, enemy_speed) in &mut enemy_query {
-        let enemy_position = enemy_transform.translation.truncate();
-        let enemy_direction = (player_position - enemy_position).normalize();
-        enemy_transform.translation.x += enemy_direction.x * enemy_speed.0;
-        enemy_transform.translation.y += enemy_direction.y * enemy_speed.0;
+    for (mut enemy_transform, enemy_speed, enemy_behavior) in &mut enemy_query {
+        match enemy_behavior {
+            &Behavior::FollowPlayer { distance } => {
+                let enemy_position = enemy_transform.translation.truncate();
+                if enemy_position.distance(player_position) > distance {
+                    let enemy_direction = (player_position - enemy_position).normalize();
+                    enemy_transform.translation.x += enemy_direction.x * enemy_speed.0;
+                    enemy_transform.translation.y += enemy_direction.y * enemy_speed.0;
+                }
+            }
+        }
+    }
+}
+
+fn handle_enemy_attacks(
+    mut spawn_projectile_event_writer: EventWriter<SpawnProjectileEvent>,
+    mut enemy_query: Query<
+        (Entity, &Transform, &mut AttackTimer, &Range, &AttackDamage),
+        With<Enemy>,
+    >,
+    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    time: Res<Time>,
+) {
+    let player_transform = player_query.single();
+    let player_position = player_transform.translation.truncate();
+
+    for (enemy_entity, enemy_transform, mut enemy_attack_timer, enemy_range, enemy_attack_damage) in
+        &mut enemy_query
+    {
+        if enemy_attack_timer.tick(time.delta()).just_finished() {
+            let enemy_position = enemy_transform.translation.truncate();
+
+            if enemy_position.distance(player_position) <= enemy_range.0 {
+                let direction = (player_position - enemy_position).normalize();
+                let emitter = enemy_entity;
+
+                spawn_projectile_event_writer.send(SpawnProjectileEvent::new(
+                    enemy_attack_damage.0,
+                    direction,
+                    emitter,
+                    enemy_position,
+                    1000.,
+                ))
+            }
+        }
     }
 }
