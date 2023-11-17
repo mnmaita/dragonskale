@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+use crate::playing;
+
 use super::{Hitpoints, Player, HALF_TILE_SIZE};
 
 pub(super) struct CombatPlugin;
@@ -9,9 +11,10 @@ impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SpawnProjectileEvent>();
 
-        app.add_systems(Update, spawn_projectiles);
-
-        app.add_systems(FixedUpdate, projectile_collision_with_player);
+        app.add_systems(
+            FixedUpdate,
+            (projectile_collision_with_player, spawn_projectiles).run_if(playing()),
+        );
     }
 }
 

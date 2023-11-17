@@ -8,6 +8,7 @@ use bevy::{
     },
 };
 use camera::CameraPlugin;
+use fonts::{font_assets_loaded, FontsPlugin};
 use game::GamePlugin;
 use input::InputPlugin;
 use physics::PhysicsPlugin;
@@ -16,6 +17,7 @@ use textures::{texture_assets_loaded, TexturesPlugin};
 mod animation;
 mod audio;
 mod camera;
+mod fonts;
 mod game;
 mod input;
 mod physics;
@@ -36,6 +38,7 @@ fn main() {
         AnimationPlugin,
         AudioPlugin,
         CameraPlugin,
+        FontsPlugin,
         GamePlugin,
         InputPlugin,
         PhysicsPlugin,
@@ -70,5 +73,7 @@ fn handle_asset_load(mut state: ResMut<NextState<AppState>>) {
 }
 
 fn assets_loaded() -> impl Condition<()> {
-    texture_assets_loaded().and_then(audio_assets_loaded())
+    texture_assets_loaded()
+        .and_then(audio_assets_loaded())
+        .and_then(font_assets_loaded())
 }
