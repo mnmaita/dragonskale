@@ -2,13 +2,13 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 
-use crate::{game::Player, playing};
+use crate::{game::Player, game::SpawnFireBreathEvent, playing};
 
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, mouse_input.run_if(playing()));
+        app.add_systems(PreUpdate, (mouse_input, keyboard_input).run_if(playing()));
     }
 }
 
@@ -62,5 +62,19 @@ fn mouse_input(
                 }
             }
         }
+    }
+}
+
+fn keyboard_input(
+    keys: Res<Input<KeyCode>>,
+    mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
+    query: Query<&Transform, With<Player>>,
+) {
+    if keys.pressed(KeyCode::Key1) {
+        // Key number 1 is being held down
+        let player_transform = query.single();
+        let player_position = player_transform.translation.truncate();
+
+        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1000, player_position));
     }
 }
