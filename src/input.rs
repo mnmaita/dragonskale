@@ -8,7 +8,7 @@ pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, (mouse_input, keyboard_input).run_if(playing()));
+        app.add_systems(PreUpdate, mouse_input.run_if(playing()));
     }
 }
 
@@ -35,6 +35,7 @@ impl CursorWorldPositionChecker<'_, '_> {
 fn mouse_input(
     mouse_input: ResMut<Input<MouseButton>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
+    mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
     mut query: Query<&mut Transform, With<Player>>,
 ) {
     if mouse_input.pressed(MouseButton::Right) {
@@ -63,18 +64,20 @@ fn mouse_input(
             }
         }
     }
-}
-
-fn keyboard_input(
-    keys: Res<Input<KeyCode>>,
-    mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
-    query: Query<&Transform, With<Player>>,
-) {
-    if keys.pressed(KeyCode::Key1) {
-        // Key number 1 is being held down
+    if mouse_input.pressed(MouseButton::Left) {
         let player_transform = query.single();
-        let player_position = player_transform.translation.truncate();
 
-        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1000, player_position));
+        let player_direction = player_transform.rotation.mul_vec3(Vec3::Y).truncate(); // already normalized
+        info!(player_direction.x, player_direction.y);
+
+        let mut fire_transform = player_transform.clone();
+
+        fire_transform.translation.x += player_direction.x * 90.; // TODO replace constant with sprite dimensions
+        fire_transform.translation.y += player_direction.y * 90.;
+
+        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(
+            1000,
+            fire_transform.translation.truncate(),
+        ));
     }
 }
