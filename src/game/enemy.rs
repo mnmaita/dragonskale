@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_rapier2d::{dynamics::RigidBody, prelude::Collider};
+use bevy_rapier2d::prelude::*;
 use rand::seq::IteratorRandom;
 
 use crate::{physics::Speed, playing};
@@ -34,6 +34,7 @@ pub struct EnemyBundle {
     pub sprite: SpriteBundle,
     pub collider: Collider,
     pub rigid_body: RigidBody,
+    pub collision_groups: CollisionGroups,
 }
 
 #[derive(Component)]
@@ -85,6 +86,7 @@ fn spawn_enemies(
                 },
                 collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
                 rigid_body: RigidBody::Dynamic,
+                collision_groups: CollisionGroups::new(Group::GROUP_2, Group::GROUP_2),
             });
         }
     }

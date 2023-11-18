@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_particle_systems::*;
-use bevy_rapier2d::{dynamics::RigidBody, geometry::Sensor, prelude::Collider};
+use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
@@ -25,6 +25,7 @@ pub struct PlayerBundle {
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
     pub collider: Collider,
+    pub collision_groups: CollisionGroups,
     pub hitpoints: Hitpoints,
     pub marker: Player,
     pub spritesheet: SpriteSheetBundle,
@@ -71,6 +72,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         animation_indices: AnimationIndices::new(0, 2),
         animation_timer: AnimationTimer::from_seconds(0.2),
         collider: Collider::ball(80.5),
+        collision_groups: CollisionGroups::new(Group::GROUP_1, Group::GROUP_1),
         hitpoints: Hitpoints::new(100),
         marker: Player,
         spritesheet: SpriteSheetBundle {
