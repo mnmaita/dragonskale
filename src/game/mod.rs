@@ -2,6 +2,7 @@ mod combat;
 mod constants;
 mod enemy;
 mod hitpoints;
+mod hud;
 mod level;
 mod player;
 mod plugin;
