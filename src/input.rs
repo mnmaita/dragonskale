@@ -68,7 +68,6 @@ fn mouse_input(
         let player_transform = query.single();
 
         let player_direction = player_transform.rotation.mul_vec3(Vec3::Y).truncate(); // already normalized
-        info!(player_direction.x, player_direction.y);
 
         let mut fire_transform = player_transform.clone();
 

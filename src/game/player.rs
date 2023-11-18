@@ -77,7 +77,7 @@ fn spawn_fire_breath(
             .spawn(ParticleSystemBundle {
                 transform: Transform::from_translation(position.extend(1.0)),
                 particle_system: ParticleSystem {
-                    z_value_override: Some(JitteredValue::new(0.0)), // TODO validar si esta haciendo algo
+                    z_value_override: Some(JitteredValue::new(0.9)), // temporary value 0.9 (under dragon), if set to 2, the fire is above
                     max_particles: 10_000,
                     texture: ParticleTexture::Sprite(asset_server.load("textures/fire_breath.png")),
                     spawn_rate_per_second: 10.0.into(),
