@@ -12,30 +12,6 @@ pub(super) struct LevelPlugin;
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::InGame), generate_level);
-
-        #[cfg(debug_assertions)]
-        {
-            app.add_systems(Update, debug_draw_tiles.after(generate_level));
-        }
-    }
-}
-
-#[cfg(debug_assertions)]
-fn debug_draw_tiles(
-    query: Query<(&Transform, Option<&BorderTile>), With<Tile>>,
-    mut gizmos: Gizmos,
-) {
-    for (transform, border_tile) in &query {
-        gizmos.rect_2d(
-            transform.translation.truncate(),
-            0.,
-            TILE_SIZE,
-            if border_tile.is_some() {
-                Color::BLACK
-            } else {
-                Color::FUCHSIA
-            },
-        );
     }
 }
 
