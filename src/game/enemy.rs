@@ -1,11 +1,12 @@
 use bevy::prelude::*;
+use bevy_rapier2d::{dynamics::RigidBody, prelude::Collider};
 use rand::seq::IteratorRandom;
 
 use crate::{physics::Speed, playing};
 
 use super::{
     combat::{AttackDamage, AttackTimer, Range, SpawnProjectileEvent},
-    BorderTile, Hitpoints, Player, TILE_SIZE,
+    BorderTile, Hitpoints, Player, HALF_TILE_SIZE, TILE_SIZE,
 };
 
 pub(super) struct EnemyPlugin;
@@ -31,6 +32,8 @@ pub struct EnemyBundle {
     pub range: Range,
     pub speed: Speed,
     pub sprite: SpriteBundle,
+    pub collider: Collider,
+    pub rigid_body: RigidBody,
 }
 
 #[derive(Component)]
@@ -80,6 +83,8 @@ fn spawn_enemies(
                     transform: Transform::from_translation(translation),
                     ..default()
                 },
+                collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
+                rigid_body: RigidBody::Dynamic,
             });
         }
     }

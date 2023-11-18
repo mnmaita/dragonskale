@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_particle_systems::*;
-use bevy_rapier2d::prelude::Collider;
+use bevy_rapier2d::{dynamics::RigidBody, geometry::Sensor, prelude::Collider};
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
@@ -29,6 +29,16 @@ pub struct PlayerBundle {
     pub marker: Player,
     pub spritesheet: SpriteSheetBundle,
 }
+
+#[derive(Bundle)]
+pub struct FireBreathBundle {
+    pub particle_system: ParticleSystemBundle,
+    pub damage: Damage,
+    pub sensor: Sensor,
+}
+
+#[derive(Component)]
+pub struct Damage(i16);
 
 #[derive(Component)]
 pub struct Player;
@@ -74,25 +84,31 @@ fn spawn_fire_breath(
 ) {
     for &SpawnFireBreathEvent { damage, position } in spawn_fire_breath_event_reader.read() {
         commands
-            .spawn(ParticleSystemBundle {
-                transform: Transform::from_translation(position.extend(1.0)),
-                particle_system: ParticleSystem {
-                    z_value_override: Some(JitteredValue::new(0.9)), // temporary value 0.9 (under dragon), if set to 2, the fire is above
-                    max_particles: 10_000,
-                    texture: ParticleTexture::Sprite(asset_server.load("textures/fire_breath.png")),
-                    spawn_rate_per_second: 10.0.into(),
-                    initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
-                    lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
-                    /* color: ColorOverTime::Gradient(Gradient::new(vec![
-                        ColorPoint::new(Color::WHITE, 0.0),
-                        ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
-                    ])), */
-                    looping: false,
-                    despawn_on_finish: true,
-                    system_duration_seconds: 1.0,
-                    ..ParticleSystem::default()
+            .spawn(FireBreathBundle {
+                particle_system: ParticleSystemBundle {
+                    transform: Transform::from_translation(position.extend(1.0)),
+                    particle_system: ParticleSystem {
+                        z_value_override: Some(JitteredValue::new(0.9)), // temporary value 0.9 (under dragon), if set to 2, the fire is above
+                        max_particles: 10_000,
+                        texture: ParticleTexture::Sprite(
+                            asset_server.load("textures/fire_breath.png"),
+                        ),
+                        spawn_rate_per_second: 10.0.into(),
+                        initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
+                        lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
+                        /* color: ColorOverTime::Gradient(Gradient::new(vec![
+                            ColorPoint::new(Color::WHITE, 0.0),
+                            ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
+                        ])), */
+                        looping: false,
+                        despawn_on_finish: true,
+                        system_duration_seconds: 1.0,
+                        ..ParticleSystem::default()
+                    },
+                    ..ParticleSystemBundle::default()
                 },
-                ..ParticleSystemBundle::default()
+                sensor: Sensor,
+                damage: Damage(damage),
             })
             // Add the playing component so it starts playing. This can be added later as well.
             .insert(Playing);
