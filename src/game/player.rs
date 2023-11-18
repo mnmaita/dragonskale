@@ -30,15 +30,20 @@ pub struct PlayerBundle {
     pub spritesheet: SpriteSheetBundle,
 }
 
+#[derive(Component)]
+pub struct Fire;
+
 #[derive(Bundle)]
 pub struct FireBreathBundle {
     pub particle_system: ParticleSystemBundle,
     pub damage: Damage,
     pub sensor: Sensor,
+    pub collider: Collider,
+    pub marker: Fire,
 }
 
 #[derive(Component)]
-pub struct Damage(i16);
+pub struct Damage(pub i16);
 
 #[derive(Component)]
 pub struct Player;
@@ -85,6 +90,7 @@ fn spawn_fire_breath(
     for &SpawnFireBreathEvent { damage, position } in spawn_fire_breath_event_reader.read() {
         commands
             .spawn(FireBreathBundle {
+                marker: Fire,
                 particle_system: ParticleSystemBundle {
                     transform: Transform::from_translation(position.extend(1.0)),
                     particle_system: ParticleSystem {
@@ -108,6 +114,7 @@ fn spawn_fire_breath(
                     ..ParticleSystemBundle::default()
                 },
                 sensor: Sensor,
+                collider: Collider::ball(25.0),
                 damage: Damage(damage),
             })
             // Add the playing component so it starts playing. This can be added later as well.
