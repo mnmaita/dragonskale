@@ -2,7 +2,7 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 
-use crate::{game::Player, playing};
+use crate::{game::Player, game::SpawnFireBreathEvent, playing};
 
 pub struct InputPlugin;
 
@@ -35,6 +35,7 @@ impl CursorWorldPositionChecker<'_, '_> {
 fn mouse_input(
     mouse_input: ResMut<Input<MouseButton>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
+    mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
     mut query: Query<&mut Transform, With<Player>>,
 ) {
     if mouse_input.pressed(MouseButton::Right) {
@@ -62,5 +63,20 @@ fn mouse_input(
                 }
             }
         }
+    }
+    if mouse_input.pressed(MouseButton::Left) {
+        let player_transform = query.single();
+
+        let player_direction = player_transform.rotation.mul_vec3(Vec3::Y).truncate(); // already normalized
+
+        let mut fire_transform = player_transform.clone();
+
+        fire_transform.translation.x += player_direction.x * 90.; // TODO replace constant with sprite dimensions
+        fire_transform.translation.y += player_direction.y * 90.;
+
+        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(
+            1000,
+            fire_transform.translation.truncate(),
+        ));
     }
 }

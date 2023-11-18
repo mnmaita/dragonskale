@@ -3,7 +3,10 @@ use bevy_rapier2d::prelude::*;
 
 use crate::playing;
 
-use super::{Hitpoints, Player, HALF_TILE_SIZE};
+use super::{
+    player::{Damage, Fire},
+    Enemy, Hitpoints, Player, HALF_TILE_SIZE,
+};
 
 pub(super) struct CombatPlugin;
 
@@ -13,7 +16,12 @@ impl Plugin for CombatPlugin {
 
         app.add_systems(
             FixedUpdate,
-            (projectile_collision_with_player, spawn_projectiles).run_if(playing()),
+            (
+                projectile_collision_with_player,
+                spawn_projectiles,
+                compute_damage_from_intersections,
+            )
+                .run_if(playing()),
         );
     }
 }
@@ -133,6 +141,27 @@ fn projectile_collision_with_player(
                 player_hitpoints.subtract(projectile_damage.0);
                 // TODO: Add "death" component or event and use it here so a different system handles despawns.
                 commands.entity(projectile_entity).despawn_recursive();
+            }
+        }
+    }
+}
+
+fn compute_damage_from_intersections(
+    mut commands: Commands,
+    fire_query: Query<(Entity, &Damage), With<Fire>>,
+    mut enemy_query: Query<(Entity, &mut Hitpoints), With<Enemy>>,
+    rapier_context: Res<RapierContext>,
+) {
+    for (entity, damage) in &fire_query {
+        /* Iterate through all the intersection pairs involving a specific collider. */
+        for (entity1, entity2, intersecting) in rapier_context.intersections_with(entity) {
+            let other_entity = if entity1 == entity { entity2 } else { entity1 };
+
+            if intersecting {
+                if let Ok((enemy_entity, mut enemy_hitpoints)) = enemy_query.get_mut(other_entity) {
+                    enemy_hitpoints.subtract(damage.0);
+                    commands.entity(enemy_entity).despawn_recursive();
+                }
             }
         }
     }
