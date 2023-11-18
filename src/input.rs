@@ -1,8 +1,6 @@
-use std::f32::consts::FRAC_PI_2;
-
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 
-use crate::{game::Player, playing};
+use crate::{game::PlayerMovementEvent, playing};
 
 pub struct InputPlugin;
 
@@ -35,32 +33,13 @@ impl CursorWorldPositionChecker<'_, '_> {
 fn mouse_input(
     mouse_input: ResMut<Input<MouseButton>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
-    mut query: Query<&mut Transform, With<Player>>,
+    mut player_movement_event_writer: EventWriter<PlayerMovementEvent>,
 ) {
     if mouse_input.pressed(MouseButton::Right) {
         if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
-            let mut player_transform = query.single_mut();
-            let player_position = player_transform.translation.truncate();
-            let cursor_to_player_vector = cursor_position - player_position;
-            let cursor_distance_to_player = cursor_position.distance(player_position);
-            let velocity_rate = cursor_distance_to_player.min(300.) / 300.;
-
-            if cursor_to_player_vector != Vec2::ZERO {
-                let direction = cursor_to_player_vector.normalize();
-
-                player_transform.translation.x += direction.x * 15. * velocity_rate;
-                player_transform.translation.y += direction.y * 15. * velocity_rate;
-
-                if direction != Vec2::ZERO {
-                    let angle = (direction).angle_between(Vec2::X);
-
-                    if angle.is_finite() {
-                        // FIXME: Rotate the image sprite to always face right?
-                        // FRAC_PI_2 is subtracted to offset the 90 degree rotation from the X axis the sprite has.
-                        player_transform.rotation = Quat::from_rotation_z(-angle - FRAC_PI_2);
-                    }
-                }
-            }
+            player_movement_event_writer.send(PlayerMovementEvent::accelerate(cursor_position));
         }
+    } else if mouse_input.just_released(MouseButton::Right) {
+        player_movement_event_writer.send(PlayerMovementEvent::brake());
     }
 }
