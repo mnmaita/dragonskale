@@ -4,7 +4,11 @@ use bevy_rapier2d::prelude::{Collider, Sensor};
 
 use crate::playing;
 
-use super::{combat::ImpactDamage, resource_pool::{ResourcePool, Fire}, Player};
+use super::{
+    combat::ImpactDamage,
+    resource_pool::{Fire, ResourcePool},
+    Player,
+};
 
 pub(super) struct FireBreathPlugin;
 
