@@ -4,7 +4,7 @@ use bevy_rapier2d::prelude::{Collider, Sensor};
 
 use crate::playing;
 
-use super::{combat::ImpactDamage, resource_pool::ResourcePool, Player};
+use super::{combat::ImpactDamage, resource_pool::{ResourcePool, Fire}, Player};
 
 pub(super) struct FireBreathPlugin;
 
@@ -34,9 +34,6 @@ impl SpawnFireBreathEvent {
         Self { damage, position }
     }
 }
-
-#[derive(Component)]
-pub struct Fire;
 
 #[derive(Bundle)]
 struct FireBreathBundle {

@@ -86,3 +86,9 @@ impl<T> ResourcePool<T> {
         self.current == 0
     }
 }
+
+#[derive(Component)]
+pub struct Fire;
+
+#[derive(Component)]
+pub struct Health;

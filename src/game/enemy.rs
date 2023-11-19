@@ -6,7 +6,8 @@ use crate::{physics::Speed, playing};
 
 use super::{
     combat::{AttackDamage, AttackTimer, Range, SpawnProjectileEvent},
-    BorderTile, Hitpoints, Player, HALF_TILE_SIZE, TILE_SIZE,
+    resource_pool::{Health, ResourcePool},
+    BorderTile, Player, HALF_TILE_SIZE, TILE_SIZE,
 };
 
 pub(super) struct EnemyPlugin;
@@ -27,7 +28,7 @@ pub struct EnemyBundle {
     pub attack_damage: AttackDamage,
     pub attack_timer: AttackTimer,
     pub behavior: Behavior,
-    pub hitpoints: Hitpoints,
+    pub hitpoints: ResourcePool<Health>,
     pub marker: Enemy,
     pub range: Range,
     pub speed: Speed,
@@ -71,7 +72,7 @@ fn spawn_enemies(
                 behavior: Behavior::FollowPlayer {
                     distance: TILE_SIZE.x * 6.,
                 },
-                hitpoints: Hitpoints::new(1),
+                hitpoints: ResourcePool::<Health>::new(1),
                 marker: Enemy,
                 range: Range(TILE_SIZE.x * 12.),
                 speed: Speed(2.),

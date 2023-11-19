@@ -3,7 +3,10 @@ use bevy_rapier2d::prelude::*;
 
 use crate::playing;
 
-use super::{fire_breath::Fire, Enemy, Hitpoints, Player, HALF_TILE_SIZE};
+use super::{
+    resource_pool::{Fire, Health, ResourcePool},
+    Enemy, Player, HALF_TILE_SIZE,
+};
 
 pub(super) struct CombatPlugin;
 
@@ -126,7 +129,7 @@ fn spawn_projectiles(
 
 fn projectile_collision_with_player(
     mut commands: Commands,
-    mut player_query: Query<(Entity, &mut Hitpoints), With<Player>>,
+    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
     rapier_context: Res<RapierContext>,
 ) {
@@ -146,7 +149,7 @@ fn projectile_collision_with_player(
 fn compute_damage_from_intersections(
     mut commands: Commands,
     fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
-    mut enemy_query: Query<(Entity, &mut Hitpoints), With<Enemy>>,
+    mut enemy_query: Query<(Entity, &mut ResourcePool<Health>), With<Enemy>>,
     rapier_context: Res<RapierContext>,
 ) {
     for (entity, damage) in &fire_query {

@@ -2,7 +2,10 @@ use bevy::prelude::*;
 
 use crate::{playing, AppState};
 
-use super::{fire_breath::Fire, resource_pool::ResourcePool, Hitpoints, Player};
+use super::{
+    resource_pool::{Fire, Health, ResourcePool},
+    Player,
+};
 
 const HEALTH_BAR_WIDTH: i16 = 150;
 const HEALTH_BAR_HEIGHT: i16 = 15;
@@ -105,7 +108,7 @@ fn spawn_hud(mut commands: Commands) {
 }
 
 fn update_health_bar_display(
-    player_query: Query<&Hitpoints, (Changed<Hitpoints>, With<Player>)>,
+    player_query: Query<&ResourcePool<Health>, (Changed<ResourcePool<Health>>, With<Player>)>,
     mut health_bar_query: Query<&mut Style, With<HealthBar>>,
 ) {
     if let Ok(hitpoints) = player_query.get_single() {

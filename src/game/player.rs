@@ -6,7 +6,7 @@ use crate::{
     AppState,
 };
 
-use super::{fire_breath::Fire, resource_pool::ResourcePool, Hitpoints};
+use super::resource_pool::{Fire, Health, ResourcePool};
 
 pub(super) struct PlayerPlugin;
 
@@ -23,7 +23,7 @@ pub struct PlayerBundle {
     pub collider: Collider,
     pub collision_groups: CollisionGroups,
     pub fire_breath_resource: ResourcePool<Fire>,
-    pub hitpoints: Hitpoints,
+    pub hitpoints: ResourcePool<Health>,
     pub marker: Player,
     pub spritesheet: SpriteSheetBundle,
 }
@@ -44,7 +44,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         collider: Collider::ball(80.5),
         collision_groups: CollisionGroups::new(Group::GROUP_1, Group::GROUP_1),
         fire_breath_resource: ResourcePool::<Fire>::new(100),
-        hitpoints: Hitpoints::new(100),
+        hitpoints: ResourcePool::<Health>::new(100),
         marker: Player,
         spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
