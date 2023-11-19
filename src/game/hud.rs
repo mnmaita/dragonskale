@@ -7,11 +7,9 @@ use super::{
     Player,
 };
 
-const HEALTH_BAR_WIDTH: i16 = 150;
-const HEALTH_BAR_HEIGHT: i16 = 15;
-
-const FIRE_BREATH_BAR_WIDTH: i16 = 150;
-const FIRE_BAR_HEIGHT: i16 = 15;
+const BAR_WIDTH: f32 = 150.;
+const BAR_HEIGHT: f32 = 15.;
+const BAR_BORDER_SIZE: f32 = 2.;
 
 pub(super) struct HudPlugin;
 
@@ -57,9 +55,9 @@ fn spawn_hud(mut commands: Commands) {
                 .spawn(NodeBundle {
                     border_color: BorderColor(Color::BLACK),
                     style: Style {
-                        border: UiRect::all(Val::Px(2.)),
-                        width: Val::Px(HEALTH_BAR_WIDTH as f32),
-                        height: Val::Px(HEALTH_BAR_HEIGHT as f32),
+                        border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
+                        width: Val::Px(BAR_WIDTH),
+                        height: Val::Px(BAR_HEIGHT),
                         ..default()
                     },
                     ..default()
@@ -69,8 +67,8 @@ fn spawn_hud(mut commands: Commands) {
                         NodeBundle {
                             background_color: BackgroundColor(Color::RED),
                             style: Style {
-                                width: Val::Px(HEALTH_BAR_WIDTH as f32 - 4.),
-                                height: Val::Px(HEALTH_BAR_HEIGHT as f32 - 4.),
+                                width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
+                                height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
                                 ..default()
                             },
                             ..default()
@@ -83,9 +81,9 @@ fn spawn_hud(mut commands: Commands) {
                 .spawn(NodeBundle {
                     border_color: BorderColor(Color::BLACK),
                     style: Style {
-                        border: UiRect::all(Val::Px(2.)),
-                        width: Val::Px(FIRE_BREATH_BAR_WIDTH as f32),
-                        height: Val::Px(FIRE_BAR_HEIGHT as f32),
+                        border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
+                        width: Val::Px(BAR_WIDTH),
+                        height: Val::Px(BAR_HEIGHT),
                         ..default()
                     },
                     ..default()
@@ -95,8 +93,8 @@ fn spawn_hud(mut commands: Commands) {
                         NodeBundle {
                             background_color: BackgroundColor(Color::LIME_GREEN),
                             style: Style {
-                                width: Val::Px(FIRE_BREATH_BAR_WIDTH as f32 - 4.),
-                                height: Val::Px(FIRE_BAR_HEIGHT as f32 - 4.),
+                                width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
+                                height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
                                 ..default()
                             },
                             ..default()
@@ -114,7 +112,7 @@ fn update_health_bar_display(
     if let Ok(hitpoints) = player_query.get_single() {
         let mut style = health_bar_query.single_mut();
 
-        style.width = Val::Px(HEALTH_BAR_WIDTH as f32 * hitpoints.current_percentage());
+        style.width = Val::Px(BAR_WIDTH * hitpoints.current_percentage());
     }
 }
 
@@ -125,7 +123,6 @@ fn update_fire_bar_display(
     if let Ok(fire_breath_resource) = player_query.get_single() {
         let mut style = fire_bar_query.single_mut();
 
-        style.width =
-            Val::Px(FIRE_BREATH_BAR_WIDTH as f32 * fire_breath_resource.current_percentage());
+        style.width = Val::Px(BAR_WIDTH * fire_breath_resource.current_percentage());
     }
 }
