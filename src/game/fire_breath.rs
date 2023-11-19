@@ -108,9 +108,11 @@ fn restore_fire_breath_resource(
     mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
     spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
 ) {
+    const FIRE_BREATH_RESTORATION_RATIO: i16 = 1;
+
     if spawn_fire_breath_event_reader.is_empty() {
         let mut fire_resource_pool = player_query.single_mut();
 
-        fire_resource_pool.add(1);
+        fire_resource_pool.add(FIRE_BREATH_RESTORATION_RATIO);
     }
 }
