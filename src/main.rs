@@ -11,6 +11,7 @@ use camera::CameraPlugin;
 use fonts::{font_assets_loaded, FontsPlugin};
 use game::GamePlugin;
 use input::InputPlugin;
+use main_menu::MainMenuPlugin;
 use physics::PhysicsPlugin;
 use textures::{texture_assets_loaded, TexturesPlugin};
 
@@ -22,6 +23,7 @@ mod debug;
 mod fonts;
 mod game;
 mod input;
+mod main_menu;
 mod physics;
 mod textures;
 
@@ -45,6 +47,7 @@ fn main() {
         FontsPlugin,
         GamePlugin,
         InputPlugin,
+        MainMenuPlugin,
         PhysicsPlugin,
         TexturesPlugin,
     ));
@@ -56,6 +59,11 @@ fn main() {
         handle_asset_load.run_if(assets_loaded().and_then(run_once())),
     );
 
+    app.add_systems(
+        PostUpdate,
+        app_state_transition_entity_cleanup.run_if(state_changed::<AppState>()),
+    );
+
     app.run();
 }
 
@@ -63,17 +71,33 @@ fn main() {
 pub enum AppState {
     #[default]
     Setup,
+    MainMenu,
     InGame,
 }
 
-pub fn playing() -> impl Condition<()> {
-    IntoSystem::into_system(in_state(AppState::InGame))
-}
+#[derive(Component)]
+pub struct InState<T: States>(T);
 
 fn handle_asset_load(mut state: ResMut<NextState<AppState>>) {
     #[cfg(debug_assertions)]
     info!("Assets loaded successfully.");
-    state.set(AppState::InGame);
+    state.set(AppState::MainMenu);
+}
+
+fn app_state_transition_entity_cleanup(
+    mut commands: Commands,
+    query: Query<(Entity, &InState<AppState>)>,
+    state: Res<State<AppState>>,
+) {
+    for (entity, in_state) in &query {
+        if in_state.0 != *state.get() {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}
+
+pub fn playing() -> impl Condition<()> {
+    IntoSystem::into_system(in_state(AppState::InGame))
 }
 
 fn assets_loaded() -> impl Condition<()> {
