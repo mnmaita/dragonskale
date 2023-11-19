@@ -5,6 +5,7 @@ mod hitpoints;
 mod level;
 mod player;
 mod plugin;
+mod resource_pool;
 
 pub use constants::*;
 pub use enemy::Enemy;
