@@ -90,8 +90,19 @@ fn spawn_fire_breath(
     mut commands: Commands,
     mut spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
     asset_server: Res<AssetServer>,
+    mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
 ) {
+    let Ok(mut fire_resource_pool) = player_query.get_single_mut() else {
+        return;
+    };
+
+    if fire_resource_pool.is_empty() {
+        return;
+    }
+
     for &SpawnFireBreathEvent { damage, position } in spawn_fire_breath_event_reader.read() {
+        fire_resource_pool.subtract(1);
+
         commands
             .spawn(FireBreathBundle {
                 marker: Fire,
