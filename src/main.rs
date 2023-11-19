@@ -1,5 +1,5 @@
 use animation::AnimationPlugin;
-use audio::{audio_assets_loaded, AudioPlugin};
+use audio::{audio_assets_loaded, AudioPlugin, BackgroundMusic};
 use bevy::{
     prelude::*,
     render::{
@@ -60,8 +60,12 @@ fn main() {
     );
 
     app.add_systems(
-        PostUpdate,
-        app_state_transition_entity_cleanup.run_if(state_changed::<AppState>()),
+        Update,
+        (
+            app_state_transition_entity_cleanup,
+            app_state_transition_music_cleanup,
+        )
+            .run_if(state_changed::<AppState>()),
     );
 
     app.run();
@@ -93,6 +97,15 @@ fn app_state_transition_entity_cleanup(
         if in_state.0 != *state.get() {
             commands.entity(entity).despawn_recursive();
         }
+    }
+}
+
+fn app_state_transition_music_cleanup(
+    mut commands: Commands,
+    query: Query<Entity, With<BackgroundMusic>>,
+) {
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
     }
 }
 

@@ -1,12 +1,22 @@
-use bevy::{app::AppExit, prelude::*};
+use bevy::{
+    app::AppExit,
+    audio::{Volume, VolumeLevel},
+    prelude::*,
+};
 
-use crate::{AppState, InState};
+use crate::{audio::PlayMusicEvent, AppState, InState};
 
 pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::MainMenu), setup_main_menu);
+        app.add_systems(
+            OnEnter(AppState::MainMenu),
+            (
+                setup_main_menu,
+                play_background_music.after(setup_main_menu),
+            ),
+        );
         app.add_systems(
             Update,
             handle_main_menu_button_interactions.run_if(in_state(AppState::MainMenu)),
@@ -122,4 +132,15 @@ fn handle_main_menu_button_interactions(
             Interaction::None => (),
         }
     }
+}
+
+fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
+    play_music_event_writer.send(PlayMusicEvent::new(
+        "theme1.ogg",
+        Some(PlaybackSettings {
+            volume: Volume::Absolute(VolumeLevel::new(0.25)),
+            ..default()
+        }),
+        None,
+    ));
 }
