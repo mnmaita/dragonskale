@@ -50,31 +50,57 @@ fn spawn_hud(mut commands: Commands) {
             },
         ))
         .with_children(|builder| {
-            builder.spawn((
-                NodeBundle {
+            builder
+                .spawn(NodeBundle {
+                    border_color: BorderColor(Color::BLACK),
                     style: Style {
+                        border: UiRect::all(Val::Px(2.)),
                         width: Val::Px(HEALTH_BAR_WIDTH as f32),
                         height: Val::Px(HEALTH_BAR_HEIGHT as f32),
                         ..default()
                     },
-                    background_color: BackgroundColor(Color::RED),
                     ..default()
-                },
-                HealthBar,
-            ));
+                })
+                .with_children(|health_bar_builder| {
+                    health_bar_builder.spawn((
+                        NodeBundle {
+                            background_color: BackgroundColor(Color::RED),
+                            style: Style {
+                                width: Val::Px(HEALTH_BAR_WIDTH as f32 - 4.),
+                                height: Val::Px(HEALTH_BAR_HEIGHT as f32 - 4.),
+                                ..default()
+                            },
+                            ..default()
+                        },
+                        HealthBar,
+                    ));
+                });
 
-            builder.spawn((
-                NodeBundle {
+            builder
+                .spawn(NodeBundle {
+                    border_color: BorderColor(Color::BLACK),
                     style: Style {
+                        border: UiRect::all(Val::Px(2.)),
                         width: Val::Px(FIRE_BREATH_BAR_WIDTH as f32),
                         height: Val::Px(FIRE_BAR_HEIGHT as f32),
                         ..default()
                     },
-                    background_color: BackgroundColor(Color::LIME_GREEN),
                     ..default()
-                },
-                FireBreathBar,
-            ));
+                })
+                .with_children(|fire_breath_bar_builder| {
+                    fire_breath_bar_builder.spawn((
+                        NodeBundle {
+                            background_color: BackgroundColor(Color::LIME_GREEN),
+                            style: Style {
+                                width: Val::Px(FIRE_BREATH_BAR_WIDTH as f32 - 4.),
+                                height: Val::Px(FIRE_BAR_HEIGHT as f32 - 4.),
+                                ..default()
+                            },
+                            ..default()
+                        },
+                        FireBreathBar,
+                    ));
+                });
         });
 }
 
