@@ -7,7 +7,7 @@ use crate::{
     AppState,
 };
 
-use super::Hitpoints;
+use super::{resource_pool::ResourcePool, Hitpoints};
 
 pub(super) struct PlayerPlugin;
 
@@ -26,6 +26,7 @@ pub struct PlayerBundle {
     pub animation_timer: AnimationTimer,
     pub collider: Collider,
     pub collision_groups: CollisionGroups,
+    pub fire_breath_resource: ResourcePool<Fire>,
     pub hitpoints: Hitpoints,
     pub marker: Player,
     pub spritesheet: SpriteSheetBundle,
@@ -73,6 +74,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         animation_timer: AnimationTimer::from_seconds(0.2),
         collider: Collider::ball(80.5),
         collision_groups: CollisionGroups::new(Group::GROUP_1, Group::GROUP_1),
+        fire_breath_resource: ResourcePool::<Fire>::new(100),
         hitpoints: Hitpoints::new(100),
         marker: Player,
         spritesheet: SpriteSheetBundle {
