@@ -80,7 +80,7 @@ fn spawn_hud(mut commands: Commands) {
 
 fn update_health_bar_display(
     player_query: Query<&Hitpoints, (Changed<Hitpoints>, With<Player>)>,
-    mut health_bar_query: Query<&mut Style>,
+    mut health_bar_query: Query<&mut Style, With<HealthBar>>,
 ) {
     if let Ok(hitpoints) = player_query.get_single() {
         let mut style = health_bar_query.single_mut();
@@ -91,7 +91,7 @@ fn update_health_bar_display(
 
 fn update_fire_bar_display(
     player_query: Query<&ResourcePool<Fire>, (Changed<ResourcePool<Fire>>, With<Player>)>,
-    mut fire_bar_query: Query<&mut Style>,
+    mut fire_bar_query: Query<&mut Style, With<FireBreathBar>>,
 ) {
     if let Ok(fire_breath_resource) = player_query.get_single() {
         let mut style = fire_bar_query.single_mut();
