@@ -81,4 +81,8 @@ impl<T> ResourcePool<T> {
     pub fn subtract(&mut self, hp: i16) {
         self.current = (self.current - hp).max(0);
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.current == 0
+    }
 }
