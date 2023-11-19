@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{playing, AppState};
 
-use super::{player::Fire, resource_pool::ResourcePool, Hitpoints, Player};
+use super::{fire_breath::Fire, resource_pool::ResourcePool, Hitpoints, Player};
 
 const HEALTH_BAR_WIDTH: i16 = 150;
 const HEALTH_BAR_HEIGHT: i16 = 15;
