@@ -65,8 +65,8 @@ impl<T> ResourcePool<T> {
         self.current = new_current.min(self.max);
     }
 
-    pub fn add_max(&mut self, hp: i16) {
-        let new_max = self.max + hp;
+    pub fn add_max(&mut self, value: i16) {
+        let new_max = self.max + value;
         if new_max > 0 {
             let new_current = (new_max as f32 * self.current_percentage()) as i16;
             self.current = new_current.max(1);
@@ -74,12 +74,12 @@ impl<T> ResourcePool<T> {
         }
     }
 
-    pub fn add(&mut self, hp: i16) {
-        self.current = (self.current + hp).min(self.max);
+    pub fn add(&mut self, value: i16) {
+        self.current = (self.current + value).min(self.max);
     }
 
-    pub fn subtract(&mut self, hp: i16) {
-        self.current = (self.current - hp).max(0);
+    pub fn subtract(&mut self, value: i16) {
+        self.current = (self.current - value).max(0);
     }
 
     pub fn is_empty(&self) -> bool {
