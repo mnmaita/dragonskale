@@ -98,10 +98,11 @@ fn consume_fire_breath_resource(
 ) {
     const FIRE_BREATH_CONSUMPTION_RATIO: i16 = 1;
 
-    let spawn_fire_breath_event_count = spawn_fire_breath_event_reader.len() as i16;
-    let mut fire_resource_pool = player_query.single_mut();
+    if !spawn_fire_breath_event_reader.is_empty() {
+        let mut fire_resource_pool = player_query.single_mut();
 
-    fire_resource_pool.subtract(FIRE_BREATH_CONSUMPTION_RATIO * spawn_fire_breath_event_count);
+        fire_resource_pool.subtract(FIRE_BREATH_CONSUMPTION_RATIO);
+    }
 }
 
 fn restore_fire_breath_resource(
