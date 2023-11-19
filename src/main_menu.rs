@@ -28,7 +28,7 @@ impl Plugin for MainMenuPlugin {
 enum MainMenuButtonAction {
     NewGame,
     Settings,
-    // TODO: Do not compile in WASM builds
+    #[cfg(not(target_family = "wasm"))]
     Exit,
 }
 
@@ -91,7 +91,7 @@ fn setup_main_menu(mut commands: Commands) {
                 });
             });
 
-            // TODO: Do not compile in WASM builds
+            #[cfg(not(target_family = "wasm"))]
             node.spawn((
                 ButtonBundle {
                     background_color: Color::ALICE_BLUE.into(),
@@ -123,7 +123,7 @@ fn handle_main_menu_button_interactions(
     for (interaction, main_menu_button_action) in query.iter() {
         match interaction {
             Interaction::Pressed => match main_menu_button_action {
-                // TODO: Do not compile in WASM builds
+                #[cfg(not(target_family = "wasm"))]
                 MainMenuButtonAction::Exit => exit.send(AppExit),
                 MainMenuButtonAction::NewGame => app_state.set(AppState::InGame),
                 MainMenuButtonAction::Settings => (),
