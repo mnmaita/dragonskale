@@ -15,9 +15,11 @@ impl Plugin for FireBreathPlugin {
         app.add_plugins(ParticleSystemPlugin);
 
         app.add_systems(
-            Update,
-            (spawn_fire_breath, restore_fire_breath_resource).run_if(playing()),
+            FixedUpdate,
+            (consume_fire_breath_resource, restore_fire_breath_resource).run_if(playing()),
         );
+
+        app.add_systems(Update, spawn_fire_breath.run_if(playing()));
     }
 }
 
@@ -49,9 +51,9 @@ fn spawn_fire_breath(
     mut commands: Commands,
     mut spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
     asset_server: Res<AssetServer>,
-    mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
+    player_query: Query<&ResourcePool<Fire>, With<Player>>,
 ) {
-    let Ok(mut fire_resource_pool) = player_query.get_single_mut() else {
+    let Ok(fire_resource_pool) = player_query.get_single() else {
         return;
     };
 
@@ -60,8 +62,6 @@ fn spawn_fire_breath(
     }
 
     for &SpawnFireBreathEvent { damage, position } in spawn_fire_breath_event_reader.read() {
-        fire_resource_pool.subtract(1);
-
         commands
             .spawn(FireBreathBundle {
                 marker: Fire,
@@ -90,6 +90,18 @@ fn spawn_fire_breath(
             // Add the playing component so it starts playing. This can be added later as well.
             .insert(Playing);
     }
+}
+
+fn consume_fire_breath_resource(
+    mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
+    spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
+) {
+    const FIRE_BREATH_CONSUMPTION_RATIO: i16 = 1;
+
+    let spawn_fire_breath_event_count = spawn_fire_breath_event_reader.len() as i16;
+    let mut fire_resource_pool = player_query.single_mut();
+
+    fire_resource_pool.subtract(FIRE_BREATH_CONSUMPTION_RATIO * spawn_fire_breath_event_count);
 }
 
 fn restore_fire_breath_resource(
