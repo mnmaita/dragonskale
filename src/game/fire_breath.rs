@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy_particle_systems::*;
 use bevy_rapier2d::prelude::{Collider, Sensor};
 
+use crate::playing;
+
 use super::{combat::ImpactDamage, resource_pool::ResourcePool, Player};
 
 pub(super) struct FireBreathPlugin;
@@ -9,8 +11,13 @@ pub(super) struct FireBreathPlugin;
 impl Plugin for FireBreathPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SpawnFireBreathEvent>();
+
         app.add_plugins(ParticleSystemPlugin);
-        app.add_systems(Update, spawn_fire_breath);
+
+        app.add_systems(
+            Update,
+            (spawn_fire_breath, restore_fire_breath_resource).run_if(playing()),
+        );
     }
 }
 
@@ -82,5 +89,16 @@ fn spawn_fire_breath(
             })
             // Add the playing component so it starts playing. This can be added later as well.
             .insert(Playing);
+    }
+}
+
+fn restore_fire_breath_resource(
+    mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
+    spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
+) {
+    if spawn_fire_breath_event_reader.is_empty() {
+        let mut fire_resource_pool = player_query.single_mut();
+
+        fire_resource_pool.add(1);
     }
 }
