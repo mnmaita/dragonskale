@@ -7,8 +7,9 @@ use crate::{
 };
 
 use super::{
+    level::TileQuery,
     player::{Damage, Fire},
-    Enemy, Hitpoints, Player, HALF_TILE_SIZE,
+    Enemy, Hitpoints, Player, Tile, HALF_TILE_SIZE,
 };
 
 pub(super) struct CombatPlugin;
@@ -22,6 +23,7 @@ impl Plugin for CombatPlugin {
             (
                 projectile_collision_with_player,
                 spawn_projectiles,
+                despawn_projectiles,
                 compute_damage_from_intersections,
             )
                 .run_if(playing()),
@@ -132,7 +134,13 @@ fn spawn_projectiles(
             },
         });
 
-        projectile_entity_commands.insert(YSorted);
+        projectile_entity_commands.insert((
+            Damping {
+                linear_damping: 1.0,
+                ..default()
+            },
+            YSorted,
+        ));
     }
 }
 
@@ -169,6 +177,26 @@ fn compute_damage_from_intersections(
                 if let Ok((enemy_entity, mut enemy_hitpoints)) = enemy_query.get_mut(other_entity) {
                     enemy_hitpoints.subtract(damage.0);
                     commands.entity(enemy_entity).despawn_recursive();
+                }
+            }
+        }
+    }
+}
+
+pub fn despawn_projectiles(
+    mut commands: Commands,
+    projectile_query: Query<(Entity, &Transform, &Velocity), With<Projectile>>,
+    tile_query: TileQuery,
+) {
+    for (entity, transform, velocity) in &projectile_query {
+        if velocity.linvel.length() < 60. {
+            if let Some(tile) = tile_query.get_from_position(transform.translation.truncate()) {
+                if *tile == Tile::Water {
+                    // TODO: Decouple this with a Despawn component
+                    commands.entity(entity).despawn_recursive();
+                } else {
+                    // TODO: Add a DespawnTimer for arrows that land on the ground
+                    commands.entity(entity).insert(ColliderDisabled);
                 }
             }
         }

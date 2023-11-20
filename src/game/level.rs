@@ -1,5 +1,6 @@
 use bevy::{
     audio::{Volume, VolumeLevel},
+    ecs::system::SystemParam,
     prelude::*,
     render::view::RenderLayers,
 };
@@ -129,5 +130,35 @@ impl From<Tile> for Color {
             Tile::Sand => Self::BEIGE,
             Tile::_LAST => Self::default(),
         }
+    }
+}
+
+#[derive(SystemParam)]
+pub struct TileQuery<'w, 's> {
+    tile_query: Query<'w, 's, (&'static Tile, &'static Transform)>,
+}
+
+impl<'w, 's> TileQuery<'w, 's> {
+    pub fn get_from_position(&self, pos: Vec2) -> Option<&Tile> {
+        self.tile_query
+            .iter()
+            .find(|(_, transform)| {
+                let pos_transform = &Transform::from_translation(pos.extend(0.));
+                translate_transform_to_grid_space(transform)
+                    == translate_transform_to_grid_space(pos_transform)
+            })
+            .map(|(tile, _)| tile)
+    }
+}
+
+pub fn translate_transform_to_grid_space(transform: &Transform) -> (usize, usize) {
+    let half_columns = GRID_SIZE.x * 0.5;
+    let half_rows = GRID_SIZE.y * 0.5;
+    let x = ((transform.translation.x / TILE_SIZE.x) + half_columns).round();
+    let y = ((transform.translation.y / TILE_SIZE.y) + half_rows).round();
+    if x >= 0.0 && y >= 0.0 {
+        (x as usize, y as usize)
+    } else {
+        (0, 0)
     }
 }
