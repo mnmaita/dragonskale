@@ -1,31 +1,44 @@
 use bevy::prelude::Component;
 
 #[derive(Component, Clone, Copy, Debug)]
-pub struct Hitpoints {
+pub struct ResourcePool<T> {
     max: i16,
     current: i16,
+    _marker: std::marker::PhantomData<T>,
 }
 
-impl Default for Hitpoints {
+impl<T> Default for ResourcePool<T> {
     fn default() -> Self {
-        Self { max: 1, current: 1 }
+        Self {
+            max: 1,
+            current: 1,
+            _marker: std::marker::PhantomData,
+        }
     }
 }
 
-impl Hitpoints {
+impl<T> ResourcePool<T> {
     pub fn new(max: i16) -> Self {
         if max <= 0 {
-            panic!("Maximum Hitpoints cannot be zero or less.");
+            panic!("Maximum ResourcePool cannot be zero or less.");
         }
-        Self { max, current: max }
+        Self {
+            max,
+            current: max,
+            _marker: std::marker::PhantomData,
+        }
     }
 
     pub fn new_with_current(max: i16, current: impl Into<Option<i16>>) -> Self {
         if max <= 0 {
-            panic!("Maximum Hitpoints cannot be zero or less.");
+            panic!("Maximum ResourcePool cannot be zero or less.");
         }
         let current = current.into().unwrap_or(max).min(max);
-        Self { max, current }
+        Self {
+            max,
+            current,
+            _marker: std::marker::PhantomData,
+        }
     }
 
     pub fn max(&self) -> i16 {
@@ -52,8 +65,8 @@ impl Hitpoints {
         self.current = new_current.min(self.max);
     }
 
-    pub fn add_max(&mut self, hp: i16) {
-        let new_max = self.max + hp;
+    pub fn add_max(&mut self, value: i16) {
+        let new_max = self.max + value;
         if new_max > 0 {
             let new_current = (new_max as f32 * self.current_percentage()) as i16;
             self.current = new_current.max(1);
@@ -61,11 +74,21 @@ impl Hitpoints {
         }
     }
 
-    pub fn add(&mut self, hp: i16) {
-        self.current = (self.current + hp).min(self.max);
+    pub fn add(&mut self, value: i16) {
+        self.current = (self.current + value).min(self.max);
     }
 
-    pub fn subtract(&mut self, hp: i16) {
-        self.current = (self.current - hp).max(0);
+    pub fn subtract(&mut self, value: i16) {
+        self.current = (self.current - value).max(0);
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.current == 0
     }
 }
+
+#[derive(Component)]
+pub struct Fire;
+
+#[derive(Component)]
+pub struct Health;
