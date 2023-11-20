@@ -71,20 +71,14 @@ fn mouse_input(
             }
         }
     }
+
     if mouse_input.pressed(MouseButton::Left) {
         let player_transform = query.single();
+        let player_direction = player_transform.rotation.mul_vec3(Vec3::Y).truncate();
+        // TODO: replace constant with sprite dimensions
+        let fire_position = player_transform.translation.truncate() + player_direction * 90.;
 
-        let player_direction = player_transform.rotation.mul_vec3(Vec3::Y).truncate(); // already normalized
-
-        let mut fire_transform = player_transform.clone();
-
-        fire_transform.translation.x += player_direction.x * 90.; // TODO replace constant with sprite dimensions
-        fire_transform.translation.y += player_direction.y * 90.;
-
-        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(
-            1000,
-            fire_transform.translation.truncate(),
-        ));
+        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1000, fire_position));
     }
 }
 
