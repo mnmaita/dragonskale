@@ -2,13 +2,20 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 
-use crate::{game::Player, game::SpawnFireBreathEvent, playing};
+use crate::{game::Player, game::SpawnFireBreathEvent, playing, AppState};
 
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreUpdate, mouse_input.run_if(playing()));
+        app.add_systems(
+            PreUpdate,
+            (
+                clear_input.run_if(state_changed::<AppState>()),
+                mouse_input.run_if(playing()),
+            )
+                .chain(),
+        );
     }
 }
 
@@ -73,4 +80,12 @@ fn mouse_input(
 
         spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1000, fire_position));
     }
+}
+
+fn clear_input(
+    mut keyboard_input: ResMut<Input<KeyCode>>,
+    mut mouse_input: ResMut<Input<MouseButton>>,
+) {
+    keyboard_input.reset_all();
+    mouse_input.reset_all()
 }

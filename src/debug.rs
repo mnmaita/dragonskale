@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game::{BorderTile, Player, Tile, GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
     input::CursorWorldPositionChecker,
+    playing,
 };
 
 pub struct DebugPlugin;
@@ -15,7 +16,8 @@ impl Plugin for DebugPlugin {
                 debug_draw_tiles,
                 draw_camera_constraints,
                 draw_mouse_direction,
-            ),
+            )
+                .run_if(playing()),
         );
     }
 }

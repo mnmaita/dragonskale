@@ -1,8 +1,12 @@
-use bevy::prelude::*;
+use bevy::{
+    audio::{Volume, VolumeLevel},
+    prelude::*,
+};
 use noise::{NoiseFn, Perlin};
 use rand::random;
 
 use crate::{
+    audio::PlayMusicEvent,
     game::{GRID_SIZE, HALF_GRID_SIZE, TILE_SIZE},
     AppState,
 };
@@ -11,7 +15,10 @@ pub(super) struct LevelPlugin;
 
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::InGame), generate_level);
+        app.add_systems(
+            OnEnter(AppState::InGame),
+            (generate_level, play_background_music).chain(),
+        );
     }
 }
 
@@ -59,6 +66,17 @@ fn generate_level(mut commands: Commands) {
             }
         }
     }
+}
+
+fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
+    play_music_event_writer.send(PlayMusicEvent::new(
+        "theme2.ogg",
+        Some(PlaybackSettings {
+            volume: Volume::Absolute(VolumeLevel::new(0.25)),
+            ..default()
+        }),
+        None,
+    ));
 }
 
 #[derive(Component)]
