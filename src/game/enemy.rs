@@ -94,7 +94,7 @@ fn spawn_enemies(
                 collision_groups: CollisionGroups::new(Group::GROUP_2, Group::GROUP_2),
             });
 
-            enemy_entity_commands.insert(YSorted);
+            enemy_entity_commands.insert((LockedAxes::ROTATION_LOCKED, YSorted));
         }
     }
 }
