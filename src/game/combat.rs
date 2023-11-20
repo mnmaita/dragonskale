@@ -1,7 +1,10 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
 
-use crate::playing;
+use crate::{
+    camera::{YSorted, SKY_LAYER},
+    playing,
+};
 
 use super::{
     player::{Damage, Fire},
@@ -54,6 +57,7 @@ pub struct ProjectileBundle {
     pub damage: ImpactDamage,
     pub emitter: Emitter,
     pub marker: Projectile,
+    pub render_layers: RenderLayers,
     pub rigid_body: RigidBody,
     pub sprite: SpriteBundle,
     pub velocity: Velocity,
@@ -102,12 +106,13 @@ fn spawn_projectiles(
             0.
         };
 
-        commands.spawn(ProjectileBundle {
+        let mut projectile_entity_commands = commands.spawn(ProjectileBundle {
             ccd: Ccd::enabled(),
             collider: Collider::cuboid(size.x / 2., size.y / 2.),
             damage: ImpactDamage(damage),
             emitter: Emitter(emitter),
             marker: Projectile,
+            render_layers: RenderLayers::layer(SKY_LAYER),
             rigid_body: RigidBody::Dynamic,
             sprite: SpriteBundle {
                 sprite: Sprite {
@@ -124,6 +129,8 @@ fn spawn_projectiles(
                 angvel: 0.,
             },
         });
+
+        projectile_entity_commands.insert(YSorted);
     }
 }
 
@@ -153,7 +160,6 @@ fn compute_damage_from_intersections(
     rapier_context: Res<RapierContext>,
 ) {
     for (entity, damage) in &fire_query {
-        /* Iterate through all the intersection pairs involving a specific collider. */
         for (entity1, entity2, intersecting) in rapier_context.intersections_with(entity) {
             let other_entity = if entity1 == entity { entity2 } else { entity1 };
 

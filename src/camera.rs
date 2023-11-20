@@ -1,9 +1,14 @@
-use bevy::prelude::*;
+use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*, render::view::RenderLayers};
 
 use crate::{
     game::Player,
     game::{GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
 };
+
+pub const BACKGROUND_LAYER: u8 = 0;
+pub const GROUND_LAYER: u8 = 1;
+pub const SKY_LAYER: u8 = 2;
+pub const UI_LAYER: u8 = 3;
 
 pub struct CameraPlugin;
 
@@ -12,22 +17,84 @@ impl Plugin for CameraPlugin {
         app.add_systems(Startup, setup_camera);
 
         app.add_systems(
-            Update,
+            PostUpdate,
             (
-                update_camera.run_if(any_with_component::<Player>()),
-                constrain_camera_position_to_level,
-            )
-                .chain(),
+                (
+                    update_camera.run_if(any_with_component::<Player>()),
+                    constrain_camera_position_to_level,
+                )
+                    .chain(),
+                y_sorting,
+            ),
         );
     }
 }
 
+#[derive(Bundle)]
+pub struct MainCameraBundle {
+    pub camera_2d: Camera2dBundle,
+    pub marker: MainCamera,
+    pub render_layers: RenderLayers,
+}
+
+impl MainCameraBundle {
+    pub fn from_layer(layer: u8) -> Self {
+        Self {
+            camera_2d: Camera2dBundle {
+                camera: Camera {
+                    order: layer as isize,
+                    ..default()
+                },
+                ..default()
+            },
+            marker: MainCamera,
+            render_layers: RenderLayers::layer(layer),
+        }
+    }
+}
+
+#[derive(Bundle)]
+pub struct SubLayerCameraBundle {
+    pub camera_2d: Camera2dBundle,
+    pub render_layers: RenderLayers,
+}
+
+impl SubLayerCameraBundle {
+    pub fn from_layer(layer: u8) -> Self {
+        Self {
+            camera_2d: Camera2dBundle {
+                camera: Camera {
+                    order: layer as isize,
+                    ..default()
+                },
+                camera_2d: Camera2d {
+                    clear_color: ClearColorConfig::None,
+                },
+                ..default()
+            },
+            render_layers: RenderLayers::layer(layer),
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct MainCamera;
+
+#[derive(Component)]
+pub struct YSorted;
+
 fn setup_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands
+        .spawn(MainCameraBundle::from_layer(BACKGROUND_LAYER))
+        .with_children(|builder| {
+            builder.spawn(SubLayerCameraBundle::from_layer(GROUND_LAYER));
+            builder.spawn(SubLayerCameraBundle::from_layer(SKY_LAYER));
+            builder.spawn(SubLayerCameraBundle::from_layer(UI_LAYER));
+        });
 }
 
 fn update_camera(
-    mut camera_query: Query<&mut Transform, With<Camera2d>>,
+    mut camera_query: Query<&mut Transform, (With<Camera2d>, With<MainCamera>)>,
     player_query: Query<&Transform, (With<Player>, Without<Camera2d>)>,
 ) {
     let player_transform = player_query.single();
@@ -38,7 +105,7 @@ fn update_camera(
 }
 
 fn constrain_camera_position_to_level(
-    mut camera_query: Query<(&Camera, &mut Transform), With<Camera2d>>,
+    mut camera_query: Query<(&Camera, &mut Transform), (With<Camera2d>, With<MainCamera>)>,
 ) {
     let (camera, mut camera_transform) = camera_query.single_mut();
 
@@ -68,5 +135,11 @@ fn constrain_camera_position_to_level(
             camera_transform.translation.x = camera_transform.translation.x.clamp(min_x, max_x);
             camera_transform.translation.y = camera_transform.translation.y.clamp(min_y, max_y);
         }
+    }
+}
+
+pub fn y_sorting(mut query: Query<&mut Transform, (Changed<Transform>, With<YSorted>)>) {
+    for mut transform in &mut query {
+        transform.translation.z = transform.translation.normalize().y;
     }
 }

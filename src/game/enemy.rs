@@ -1,8 +1,12 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
 use rand::seq::IteratorRandom;
 
-use crate::{physics::Speed, playing};
+use crate::{
+    camera::{YSorted, GROUND_LAYER},
+    physics::Speed,
+    playing,
+};
 
 use super::{
     combat::{AttackDamage, AttackTimer, Range, SpawnProjectileEvent},
@@ -33,6 +37,7 @@ pub struct EnemyBundle {
     pub speed: Speed,
     pub sprite: SpriteBundle,
     pub collider: Collider,
+    pub render_layers: RenderLayers,
     pub rigid_body: RigidBody,
     pub collision_groups: CollisionGroups,
 }
@@ -64,8 +69,7 @@ fn spawn_enemies(
         let mut rng = rand::thread_rng();
         if let Some(tile_transform) = tile_query.iter().choose(&mut rng) {
             let translation = tile_transform.translation.truncate().extend(1.);
-
-            commands.spawn(EnemyBundle {
+            let mut enemy_entity_commands = commands.spawn(EnemyBundle {
                 attack_damage: AttackDamage(5),
                 attack_timer: AttackTimer(Timer::from_seconds(5., TimerMode::Repeating)),
                 behavior: Behavior::FollowPlayer {
@@ -85,9 +89,12 @@ fn spawn_enemies(
                     ..default()
                 },
                 collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
+                render_layers: RenderLayers::layer(GROUND_LAYER),
                 rigid_body: RigidBody::Dynamic,
                 collision_groups: CollisionGroups::new(Group::GROUP_2, Group::GROUP_2),
             });
+
+            enemy_entity_commands.insert(YSorted);
         }
     }
 }

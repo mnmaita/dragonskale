@@ -2,7 +2,7 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 
-use crate::{game::Player, game::SpawnFireBreathEvent, playing, AppState};
+use crate::{camera::MainCamera, game::Player, game::SpawnFireBreathEvent, playing, AppState};
 
 pub struct InputPlugin;
 
@@ -25,7 +25,12 @@ struct CursorWorldPosition(Option<Vec2>);
 #[derive(SystemParam)]
 pub struct CursorWorldPositionChecker<'w, 's> {
     window_query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
-    camera_query: Query<'w, 's, (&'static Camera, &'static GlobalTransform), With<Camera2d>>,
+    camera_query: Query<
+        'w,
+        's,
+        (&'static Camera, &'static GlobalTransform),
+        (With<Camera2d>, With<MainCamera>),
+    >,
 }
 
 impl CursorWorldPositionChecker<'_, '_> {

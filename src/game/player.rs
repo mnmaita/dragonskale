@@ -1,9 +1,10 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_particle_systems::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
+    camera::{YSorted, SKY_LAYER},
     AppState,
 };
 
@@ -14,7 +15,7 @@ pub(super) struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SpawnFireBreathEvent>();
-        app.add_plugins(ParticleSystemPlugin::default());
+        app.add_plugins(ParticleSystemPlugin);
         app.add_systems(Update, spawn_fire_breath);
         app.add_systems(OnEnter(AppState::InGame), spawn_player);
     }
@@ -28,6 +29,7 @@ pub struct PlayerBundle {
     pub collision_groups: CollisionGroups,
     pub hitpoints: Hitpoints,
     pub marker: Player,
+    pub render_layers: RenderLayers,
     pub spritesheet: SpriteSheetBundle,
 }
 
@@ -37,6 +39,7 @@ pub struct Fire;
 #[derive(Bundle)]
 pub struct FireBreathBundle {
     pub particle_system: ParticleSystemBundle,
+    pub render_layers: RenderLayers,
     pub damage: Damage,
     pub sensor: Sensor,
     pub collider: Collider,
@@ -68,13 +71,14 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture_atlas = TextureAtlas::from_grid(texture, Vec2::new(191., 161.), 12, 1, None, None);
     let texture_atlas_handle = asset_server.add(texture_atlas);
 
-    commands.spawn(PlayerBundle {
+    let mut player_entity_commands = commands.spawn(PlayerBundle {
         animation_indices: AnimationIndices::new(0, 2),
         animation_timer: AnimationTimer::from_seconds(0.2),
         collider: Collider::ball(80.5),
         collision_groups: CollisionGroups::new(Group::GROUP_1, Group::GROUP_1),
         hitpoints: Hitpoints::new(100),
         marker: Player,
+        render_layers: RenderLayers::layer(SKY_LAYER),
         spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
             texture_atlas: texture_atlas_handle.clone(),
@@ -82,6 +86,8 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
     });
+
+    player_entity_commands.insert(YSorted);
 }
 
 fn spawn_fire_breath(
@@ -90,36 +96,30 @@ fn spawn_fire_breath(
     asset_server: Res<AssetServer>,
 ) {
     for &SpawnFireBreathEvent { damage, position } in spawn_fire_breath_event_reader.read() {
-        commands
-            .spawn(FireBreathBundle {
-                marker: Fire,
-                particle_system: ParticleSystemBundle {
-                    transform: Transform::from_translation(position.extend(1.0)),
-                    particle_system: ParticleSystem {
-                        z_value_override: Some(JitteredValue::new(0.9)), // temporary value 0.9 (under dragon), if set to 2, the fire is above
-                        max_particles: 10_000,
-                        texture: ParticleTexture::Sprite(
-                            asset_server.load("textures/fire_breath.png"),
-                        ),
-                        spawn_rate_per_second: 10.0.into(),
-                        initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
-                        lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
-                        /* color: ColorOverTime::Gradient(Gradient::new(vec![
-                            ColorPoint::new(Color::WHITE, 0.0),
-                            ColorPoint::new(Color::rgba(0.0, 0.0, 1.0, 0.0), 1.0),
-                        ])), */
-                        looping: false,
-                        despawn_on_finish: true,
-                        system_duration_seconds: 1.0,
-                        ..ParticleSystem::default()
-                    },
-                    ..ParticleSystemBundle::default()
+        let mut fire_breath_entity_commands = commands.spawn(FireBreathBundle {
+            marker: Fire,
+            particle_system: ParticleSystemBundle {
+                transform: Transform::from_translation(position.extend(1.0)),
+                particle_system: ParticleSystem {
+                    z_value_override: Some(JitteredValue::new(0.9)),
+                    max_particles: 10_000,
+                    texture: ParticleTexture::Sprite(asset_server.load("textures/fire_breath.png")),
+                    spawn_rate_per_second: 10.0.into(),
+                    initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
+                    lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
+                    looping: false,
+                    despawn_on_finish: true,
+                    system_duration_seconds: 1.0,
+                    ..ParticleSystem::default()
                 },
-                sensor: Sensor,
-                collider: Collider::ball(25.0),
-                damage: Damage(damage),
-            })
-            // Add the playing component so it starts playing. This can be added later as well.
-            .insert(Playing);
+                ..ParticleSystemBundle::default()
+            },
+            render_layers: RenderLayers::layer(SKY_LAYER),
+            sensor: Sensor,
+            collider: Collider::ball(25.0),
+            damage: Damage(damage),
+        });
+
+        fire_breath_entity_commands.insert((Playing, YSorted));
     }
 }

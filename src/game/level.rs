@@ -1,12 +1,14 @@
 use bevy::{
     audio::{Volume, VolumeLevel},
     prelude::*,
+    render::view::RenderLayers,
 };
 use noise::{NoiseFn, Perlin};
 use rand::random;
 
 use crate::{
     audio::PlayMusicEvent,
+    camera::BACKGROUND_LAYER,
     game::{GRID_SIZE, HALF_GRID_SIZE, TILE_SIZE},
     AppState,
 };
@@ -49,6 +51,7 @@ fn generate_level(mut commands: Commands) {
             let transform = Transform::from_translation(translation);
 
             let mut tile_entity = commands.spawn(TileBundle {
+                render_layers: RenderLayers::layer(BACKGROUND_LAYER),
                 sprite: SpriteBundle {
                     sprite: Sprite {
                         color,
@@ -84,6 +87,7 @@ pub struct BorderTile;
 
 #[derive(Bundle)]
 pub struct TileBundle {
+    pub render_layers: RenderLayers,
     pub sprite: SpriteBundle,
     pub tile: Tile,
 }
