@@ -53,6 +53,7 @@ impl SpawnProjectileEvent {
 #[derive(Bundle)]
 pub struct ProjectileBundle {
     pub collider: Collider,
+    pub collision_groups: CollisionGroups,
     pub ccd: Ccd,
     pub damage: ImpactDamage,
     pub emitter: Emitter,
@@ -109,6 +110,7 @@ fn spawn_projectiles(
         let mut projectile_entity_commands = commands.spawn(ProjectileBundle {
             ccd: Ccd::enabled(),
             collider: Collider::cuboid(size.x / 2., size.y / 2.),
+            collision_groups: CollisionGroups::new(Group::GROUP_3, Group::GROUP_1 | Group::GROUP_3),
             damage: ImpactDamage(damage),
             emitter: Emitter(emitter),
             marker: Projectile,
