@@ -44,11 +44,17 @@ impl CursorWorldPositionChecker<'_, '_> {
     }
 }
 
+#[derive(Component)]
+struct FireBreathSfx;
+
 fn mouse_input(
-    mouse_input: ResMut<Input<MouseButton>>,
-    cursor_world_position_checker: CursorWorldPositionChecker,
+    mut commands: Commands,
     mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
     mut query: Query<&mut Transform, With<Player>>,
+    sfx_query: Query<Entity, With<FireBreathSfx>>,
+    asset_server: Res<AssetServer>,
+    cursor_world_position_checker: CursorWorldPositionChecker,
+    mouse_input: ResMut<Input<MouseButton>>,
 ) {
     if mouse_input.pressed(MouseButton::Right) {
         if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
@@ -74,6 +80,40 @@ fn mouse_input(
                     }
                 }
             }
+        }
+    }
+
+    if mouse_input.just_pressed(MouseButton::Left) {
+        commands.spawn((
+            AudioBundle {
+                source: asset_server
+                    .get_handle("sfx/breathstart.ogg")
+                    .unwrap_or_default(),
+                settings: PlaybackSettings::DESPAWN,
+            },
+            FireBreathSfx,
+        ));
+        commands.spawn((
+            AudioBundle {
+                source: asset_server
+                    .get_handle("sfx/breathloop.ogg")
+                    .unwrap_or_default(),
+                settings: PlaybackSettings::LOOP,
+            },
+            FireBreathSfx,
+        ));
+    } else if mouse_input.just_released(MouseButton::Left) {
+        commands.spawn((
+            AudioBundle {
+                source: asset_server
+                    .get_handle("sfx/breathend.ogg")
+                    .unwrap_or_default(),
+                settings: PlaybackSettings::DESPAWN,
+            },
+            FireBreathSfx,
+        ));
+        for entity in &sfx_query {
+            commands.entity(entity).despawn_recursive();
         }
     }
 
