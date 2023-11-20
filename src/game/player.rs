@@ -1,8 +1,9 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
+    camera::{YSorted, SKY_LAYER},
     AppState,
 };
 
@@ -25,6 +26,7 @@ pub struct PlayerBundle {
     pub fire_breath_resource: ResourcePool<Fire>,
     pub hitpoints: ResourcePool<Health>,
     pub marker: Player,
+    pub render_layers: RenderLayers,
     pub spritesheet: SpriteSheetBundle,
 }
 
@@ -38,14 +40,15 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture_atlas = TextureAtlas::from_grid(texture, Vec2::new(191., 161.), 12, 1, None, None);
     let texture_atlas_handle = asset_server.add(texture_atlas);
 
-    commands.spawn(PlayerBundle {
+    let mut player_entity_commands = commands.spawn(PlayerBundle {
         animation_indices: AnimationIndices::new(0, 2),
         animation_timer: AnimationTimer::from_seconds(0.2),
         collider: Collider::ball(80.5),
-        collision_groups: CollisionGroups::new(Group::GROUP_1, Group::GROUP_1),
+        collision_groups: CollisionGroups::new(Group::GROUP_1, Group::GROUP_1 | Group::GROUP_3),
         fire_breath_resource: ResourcePool::<Fire>::new(100),
         hitpoints: ResourcePool::<Health>::new(100),
         marker: Player,
+        render_layers: RenderLayers::layer(SKY_LAYER),
         spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
             texture_atlas: texture_atlas_handle.clone(),
@@ -53,4 +56,6 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
     });
+
+    player_entity_commands.insert(YSorted);
 }

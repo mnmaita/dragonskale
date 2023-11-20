@@ -1,11 +1,15 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
 
-use crate::playing;
+use crate::{
+    camera::{YSorted, SKY_LAYER},
+    playing,
+};
 
 use super::{
+    level::TileQuery,
     resource_pool::{Fire, Health, ResourcePool},
-    Enemy, Player, HALF_TILE_SIZE,
+    Enemy, Player, Tile, HALF_TILE_SIZE,
 };
 
 pub(super) struct CombatPlugin;
@@ -19,6 +23,7 @@ impl Plugin for CombatPlugin {
             (
                 projectile_collision_with_player,
                 spawn_projectiles,
+                despawn_projectiles,
                 compute_damage_from_intersections,
             )
                 .run_if(playing()),
@@ -50,10 +55,12 @@ impl SpawnProjectileEvent {
 #[derive(Bundle)]
 pub struct ProjectileBundle {
     pub collider: Collider,
+    pub collision_groups: CollisionGroups,
     pub ccd: Ccd,
     pub damage: ImpactDamage,
     pub emitter: Emitter,
     pub marker: Projectile,
+    pub render_layers: RenderLayers,
     pub rigid_body: RigidBody,
     pub sprite: SpriteBundle,
     pub velocity: Velocity,
@@ -102,12 +109,14 @@ fn spawn_projectiles(
             0.
         };
 
-        commands.spawn(ProjectileBundle {
+        let mut projectile_entity_commands = commands.spawn(ProjectileBundle {
             ccd: Ccd::enabled(),
             collider: Collider::cuboid(size.x / 2., size.y / 2.),
+            collision_groups: CollisionGroups::new(Group::GROUP_3, Group::GROUP_1 | Group::GROUP_3),
             damage: ImpactDamage(damage),
             emitter: Emitter(emitter),
             marker: Projectile,
+            render_layers: RenderLayers::layer(SKY_LAYER),
             rigid_body: RigidBody::Dynamic,
             sprite: SpriteBundle {
                 sprite: Sprite {
@@ -124,6 +133,14 @@ fn spawn_projectiles(
                 angvel: 0.,
             },
         });
+
+        projectile_entity_commands.insert((
+            Damping {
+                linear_damping: 1.0,
+                ..default()
+            },
+            YSorted,
+        ));
     }
 }
 
@@ -153,7 +170,6 @@ fn compute_damage_from_intersections(
     rapier_context: Res<RapierContext>,
 ) {
     for (entity, damage) in &fire_query {
-        /* Iterate through all the intersection pairs involving a specific collider. */
         for (entity1, entity2, intersecting) in rapier_context.intersections_with(entity) {
             let other_entity = if entity1 == entity { entity2 } else { entity1 };
 
@@ -161,6 +177,26 @@ fn compute_damage_from_intersections(
                 if let Ok((enemy_entity, mut enemy_hitpoints)) = enemy_query.get_mut(other_entity) {
                     enemy_hitpoints.subtract(damage.0);
                     commands.entity(enemy_entity).despawn_recursive();
+                }
+            }
+        }
+    }
+}
+
+pub fn despawn_projectiles(
+    mut commands: Commands,
+    projectile_query: Query<(Entity, &Transform, &Velocity), With<Projectile>>,
+    tile_query: TileQuery,
+) {
+    for (entity, transform, velocity) in &projectile_query {
+        if velocity.linvel.length() < 60. {
+            if let Some(tile) = tile_query.get_from_position(transform.translation.truncate()) {
+                if *tile == Tile::Water {
+                    // TODO: Decouple this with a Despawn component
+                    commands.entity(entity).despawn_recursive();
+                } else {
+                    // TODO: Add a DespawnTimer for arrows that land on the ground
+                    commands.entity(entity).insert(ColliderDisabled);
                 }
             }
         }

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    camera::MainCamera,
     game::{BorderTile, Player, Tile, GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
     input::CursorWorldPositionChecker,
     playing,
@@ -41,7 +42,7 @@ fn debug_draw_tiles(
 }
 
 fn draw_camera_constraints(
-    camera_query: Query<(&Camera, &Transform), With<Camera2d>>,
+    camera_query: Query<(&Camera, &Transform), (With<Camera2d>, With<MainCamera>)>,
     mut gizmos: Gizmos,
 ) {
     let (camera, camera_transform) = camera_query.single();
