@@ -3,6 +3,7 @@
 use animation::AnimationPlugin;
 use audio::{audio_assets_loaded, AudioPlugin, BackgroundMusic};
 use bevy::{
+    ecs::query::ReadOnlyWorldQuery,
     prelude::*,
     render::{
         settings::{Backends, RenderCreation, WgpuSettings},
@@ -63,11 +64,7 @@ fn main() {
 
     app.add_systems(
         Update,
-        (
-            app_state_transition_entity_cleanup,
-            app_state_transition_music_cleanup,
-        )
-            .run_if(state_changed::<AppState>()),
+        entity_cleanup::<With<BackgroundMusic>>.run_if(state_changed::<AppState>()),
     );
 
     app.run();
@@ -82,31 +79,13 @@ pub enum AppState {
     GameOver,
 }
 
-#[derive(Component)]
-pub struct InState<T: States>(T);
-
 fn handle_asset_load(mut state: ResMut<NextState<AppState>>) {
     #[cfg(debug_assertions)]
     info!("Assets loaded successfully.");
     state.set(AppState::MainMenu);
 }
 
-fn app_state_transition_entity_cleanup(
-    mut commands: Commands,
-    query: Query<(Entity, &InState<AppState>)>,
-    state: Res<State<AppState>>,
-) {
-    for (entity, in_state) in &query {
-        if in_state.0 != *state.get() {
-            commands.entity(entity).despawn_recursive();
-        }
-    }
-}
-
-fn app_state_transition_music_cleanup(
-    mut commands: Commands,
-    query: Query<Entity, With<BackgroundMusic>>,
-) {
+pub fn entity_cleanup<F: ReadOnlyWorldQuery>(mut commands: Commands, query: Query<Entity, F>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }

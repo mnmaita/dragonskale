@@ -10,6 +10,8 @@ mod plugin;
 mod resource_pool;
 mod score_system;
 
+use plugin::InGameEntity;
+
 pub use constants::*;
 pub use enemy::Enemy;
 pub use fire_breath::SpawnFireBreathEvent;

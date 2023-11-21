@@ -11,7 +11,7 @@ use crate::{
 use super::{
     combat::{AttackDamage, AttackTimer, Range, SpawnProjectileEvent},
     resource_pool::{Health, ResourcePool},
-    BorderTile, Player, HALF_TILE_SIZE, TILE_SIZE,
+    BorderTile, InGameEntity, Player, HALF_TILE_SIZE, TILE_SIZE,
 };
 
 pub(super) struct EnemyPlugin;
@@ -95,7 +95,7 @@ fn spawn_enemies(
                 collision_groups: CollisionGroups::new(Group::GROUP_2, Group::GROUP_2),
             });
 
-            enemy_entity_commands.insert((LockedAxes::ROTATION_LOCKED, YSorted));
+            enemy_entity_commands.insert((InGameEntity, LockedAxes::ROTATION_LOCKED, YSorted));
         }
     }
 }

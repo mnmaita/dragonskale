@@ -10,7 +10,7 @@ use super::{
     level::TileQuery,
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{ScoreEvent, ScoreEventType},
-    Enemy, Player, Tile, HALF_TILE_SIZE,
+    Enemy, InGameEntity, Player, Tile, HALF_TILE_SIZE,
 };
 
 pub(super) struct CombatPlugin;
@@ -140,6 +140,7 @@ fn spawn_projectiles(
                 linear_damping: 1.0,
                 ..default()
             },
+            InGameEntity,
             YSorted,
         ));
     }

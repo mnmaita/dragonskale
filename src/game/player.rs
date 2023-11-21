@@ -7,8 +7,11 @@ use crate::{
     AppState,
 };
 
-use super::resource_pool::{Fire, Health, ResourcePool};
-use super::score_system::{Score, ScoreSystem};
+use super::{
+    resource_pool::{Fire, Health, ResourcePool},
+    score_system::{Score, ScoreSystem},
+    InGameEntity,
+};
 
 pub(super) struct PlayerPlugin;
 
@@ -60,5 +63,5 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
     });
 
-    player_entity_commands.insert(YSorted);
+    player_entity_commands.insert((InGameEntity, YSorted));
 }

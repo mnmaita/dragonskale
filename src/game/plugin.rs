@@ -21,3 +21,6 @@ impl PluginGroup for GamePlugin {
             .add(ScoreSystemPlugin)
     }
 }
+
+#[derive(Component)]
+pub(super) struct InGameEntity;

@@ -10,7 +10,7 @@ use crate::{
 use super::{
     combat::ImpactDamage,
     resource_pool::{Fire, ResourcePool},
-    Player,
+    InGameEntity, Player,
 };
 
 pub(super) struct FireBreathPlugin;
@@ -91,7 +91,7 @@ fn spawn_fire_breath(
             damage: ImpactDamage(damage),
         });
 
-        fire_breath_entity_commands.insert((Playing, YSorted));
+        fire_breath_entity_commands.insert((InGameEntity, Playing, YSorted));
     }
 }
 

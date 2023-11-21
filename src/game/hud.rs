@@ -5,7 +5,7 @@ use crate::{playing, AppState};
 use super::{
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{Score, ScoreSystem},
-    Player,
+    InGameEntity, Player,
 };
 
 const BAR_WIDTH: f32 = 150.;
@@ -46,6 +46,7 @@ fn spawn_hud(mut commands: Commands) {
     commands
         .spawn((
             Hud,
+            InGameEntity,
             NodeBundle {
                 style: Style {
                     width: Val::Percent(100.),
