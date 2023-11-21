@@ -1,6 +1,9 @@
-use bevy::prelude::*;
+use bevy::{
+    audio::{Volume, VolumeLevel},
+    prelude::*,
+};
 
-use crate::{playing, AppState, InState};
+use crate::{audio::PlayMusicEvent, playing, AppState, InState};
 
 use super::{
     resource_pool::{Health, ResourcePool},
@@ -21,7 +24,10 @@ impl Plugin for GameOverPlugin {
             ),
         );
 
-        app.add_systems(OnEnter(AppState::GameOver), display_game_over_screen);
+        app.add_systems(
+            OnEnter(AppState::GameOver),
+            (play_background_music, display_game_over_screen),
+        );
     }
 }
 
@@ -98,4 +104,15 @@ fn fade_in_text(
         let alpha = text.sections[0].style.color.a();
         text.sections[0].style.color.set_a(alpha + 0.001);
     }
+}
+
+fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
+    play_music_event_writer.send(PlayMusicEvent::new(
+        "theme3.ogg",
+        Some(PlaybackSettings {
+            volume: Volume::Absolute(VolumeLevel::new(0.25)),
+            ..default()
+        }),
+        None,
+    ));
 }
