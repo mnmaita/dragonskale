@@ -2,6 +2,7 @@ mod combat;
 mod constants;
 mod enemy;
 mod fire_breath;
+mod game_over;
 mod hud;
 mod level;
 mod player;

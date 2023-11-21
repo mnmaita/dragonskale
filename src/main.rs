@@ -79,6 +79,7 @@ pub enum AppState {
     Setup,
     MainMenu,
     InGame,
+    GameOver,
 }
 
 #[derive(Component)]
