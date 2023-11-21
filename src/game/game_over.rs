@@ -14,6 +14,8 @@ pub(super) struct GameOverPlugin;
 
 impl Plugin for GameOverPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(PreUpdate, handle_game_over_button_interactions);
+
         app.add_systems(
             FixedUpdate,
             (
@@ -29,6 +31,11 @@ impl Plugin for GameOverPlugin {
             (play_background_music, display_game_over_screen),
         );
     }
+}
+
+#[derive(Component)]
+enum GameOverButtonAction {
+    BackToMenu,
 }
 
 #[derive(Component)]
@@ -115,4 +122,19 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
         }),
         None,
     ));
+}
+
+fn handle_game_over_button_interactions(
+    mut app_state: ResMut<NextState<AppState>>,
+    query: Query<(&Interaction, &GameOverButtonAction), With<Button>>,
+) {
+    for (interaction, game_over_button_action) in query.iter() {
+        match interaction {
+            Interaction::Pressed => match game_over_button_action {
+                GameOverButtonAction::BackToMenu => app_state.set(AppState::MainMenu),
+            },
+            Interaction::Hovered => (),
+            Interaction::None => (),
+        }
+    }
 }
