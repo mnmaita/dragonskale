@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use animation::AnimationPlugin;
 use audio::{audio_assets_loaded, AudioPlugin, BackgroundMusic};
 use bevy::{
