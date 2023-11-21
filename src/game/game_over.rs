@@ -89,6 +89,31 @@ fn display_game_over_screen(mut commands: Commands) {
                     ..default()
                 },
             ));
+
+            builder
+                .spawn((
+                    ButtonBundle {
+                        background_color: BackgroundColor(Color::default().with_a(0.)),
+                        ..default()
+                    },
+                    GameOverButtonAction::BackToMenu,
+                ))
+                .with_children(|button| {
+                    button.spawn((
+                        GameOverText,
+                        TextBundle {
+                            text: Text::from_section(
+                                "Back to Menu",
+                                TextStyle {
+                                    color: Color::WHITE.with_a(0.),
+                                    font_size: 32.0,
+                                    ..default()
+                                },
+                            ),
+                            ..default()
+                        },
+                    ));
+                });
         });
 }
 
@@ -105,12 +130,12 @@ fn fade_in_text(
     mut query: Query<&mut Text, With<GameOverText>>,
     background_query: Query<&BackgroundColor, With<GameOverBackground>>,
 ) {
-    let mut text = query.single_mut();
     let background_color = background_query.single();
-
-    if background_color.0.a() >= 0.5 && text.sections[0].style.color.a() < 1. {
-        let alpha = text.sections[0].style.color.a();
-        text.sections[0].style.color.set_a(alpha + 0.001);
+    for mut text in &mut query {
+        if background_color.0.a() >= 0.5 && text.sections[0].style.color.a() < 1. {
+            let alpha = text.sections[0].style.color.a();
+            text.sections[0].style.color.set_a(alpha + 0.001);
+        }
     }
 }
 
