@@ -65,6 +65,7 @@ fn display_game_over_screen(mut commands: Commands) {
                 style: Style {
                     align_items: AlignItems::Center,
                     display: Display::Flex,
+                    flex_direction: FlexDirection::Column,
                     height: Val::Percent(100.),
                     justify_content: JustifyContent::Center,
                     width: Val::Percent(100.),
