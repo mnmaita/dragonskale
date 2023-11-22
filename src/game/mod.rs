@@ -7,6 +7,7 @@ mod level;
 mod player;
 mod plugin;
 mod resource_pool;
+mod score_system;
 
 pub use constants::*;
 pub use enemy::Enemy;

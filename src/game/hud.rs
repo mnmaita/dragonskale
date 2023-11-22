@@ -1,9 +1,10 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, text::BreakLineOn};
 
 use crate::{playing, AppState};
 
 use super::{
     resource_pool::{Fire, Health, ResourcePool},
+    score_system::{Score, ScoreSystem},
     Player,
 };
 
@@ -19,7 +20,12 @@ impl Plugin for HudPlugin {
 
         app.add_systems(
             FixedUpdate,
-            (update_health_bar_display, update_fire_bar_display).run_if(playing()),
+            (
+                update_health_bar_display,
+                update_fire_bar_display,
+                update_score_display,
+            )
+                .run_if(playing()),
         );
     }
 }
@@ -32,6 +38,9 @@ struct HealthBar;
 
 #[derive(Component)]
 struct FireBreathBar;
+
+#[derive(Component)]
+struct ScoreDisplay;
 
 fn spawn_hud(mut commands: Commands) {
     commands
@@ -103,6 +112,35 @@ fn spawn_hud(mut commands: Commands) {
                     ));
                 });
         });
+
+    // Score text in botton middle of screen
+    commands
+        .spawn((
+            Hud,
+            TextBundle {
+                text: Text {
+                    linebreak_behavior: BreakLineOn::NoWrap,
+                    sections: vec![TextSection {
+                        value: "Score: 0".to_string(),
+                        style: TextStyle {
+                            // TODO add font to assets and use it here
+                            font_size: 40.0,
+                            color: Color::WHITE,
+                            ..Default::default()
+                        },
+                    }],
+                    ..default()
+                },
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    width: Val::Px(5.),
+                    height: Val::Px(5.),
+                    ..Default::default()
+                },
+                ..default()
+            },
+        ))
+        .insert(ScoreDisplay);
 }
 
 fn update_health_bar_display(
@@ -124,5 +162,19 @@ fn update_fire_bar_display(
         let mut style = fire_bar_query.single_mut();
 
         style.width = Val::Px(BAR_WIDTH * fire_breath_resource.current_percentage());
+    }
+}
+
+fn update_score_display(
+    player_query: Query<&ScoreSystem<Score>, (Changed<ScoreSystem<Score>>, With<Player>)>,
+    mut score_text_display_query: Query<&mut Text, With<ScoreDisplay>>,
+) {
+    if let Ok(score_system) = player_query.get_single() {
+        let mut score_text = score_text_display_query.single_mut();
+        score_text.sections[0].value = format!(
+            "Score: {} - Multiplier x {}",
+            score_system.current(),
+            score_system.multiplier()
+        );
     }
 }
