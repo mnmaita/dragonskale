@@ -9,6 +9,7 @@ use crate::{
 use super::{
     level::TileQuery,
     resource_pool::{Fire, Health, ResourcePool},
+    score_system::{Score, ScoreSystem},
     Enemy, Player, Tile, HALF_TILE_SIZE,
 };
 
@@ -146,16 +147,20 @@ fn spawn_projectiles(
 
 fn projectile_collision_with_player(
     mut commands: Commands,
-    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
+    mut player_query: Query<
+        (Entity, &mut ResourcePool<Health>, &mut ScoreSystem<Score>),
+        With<Player>,
+    >,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
     rapier_context: Res<RapierContext>,
 ) {
-    let (player_entity, mut player_hitpoints) = player_query.single_mut(); // A first entity with a collider attached.
+    let (player_entity, mut player_hitpoints, mut player_score) = player_query.single_mut(); // A first entity with a collider attached.
 
     for (projectile_entity, projectile_damage) in &projectile_query {
         if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
             if contact_pair.has_any_active_contacts() {
                 player_hitpoints.subtract(projectile_damage.0);
+                player_score.reset_multiplier();
                 // TODO: Add "death" component or event and use it here so a different system handles despawns.
                 commands.entity(projectile_entity).despawn_recursive();
             }
@@ -167,6 +172,7 @@ fn compute_damage_from_intersections(
     mut commands: Commands,
     fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
     mut enemy_query: Query<(Entity, &mut ResourcePool<Health>), With<Enemy>>,
+    mut player_query: Query<&mut ScoreSystem<Score>, With<Player>>,
     rapier_context: Res<RapierContext>,
 ) {
     for (entity, damage) in &fire_query {
@@ -176,7 +182,10 @@ fn compute_damage_from_intersections(
             if intersecting {
                 if let Ok((enemy_entity, mut enemy_hitpoints)) = enemy_query.get_mut(other_entity) {
                     enemy_hitpoints.subtract(damage.0);
+                    let mut player_score = player_query.single_mut();
                     commands.entity(enemy_entity).despawn_recursive();
+                    player_score.add_with_multiplier(10);
+                    player_score.increase_multiplier_by_one();
                 }
             }
         }

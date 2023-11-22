@@ -8,6 +8,7 @@ use crate::{
 };
 
 use super::resource_pool::{Fire, Health, ResourcePool};
+use super::score_system::{Score, ScoreSystem};
 
 pub(super) struct PlayerPlugin;
 
@@ -25,6 +26,7 @@ pub struct PlayerBundle {
     pub collision_groups: CollisionGroups,
     pub fire_breath_resource: ResourcePool<Fire>,
     pub hitpoints: ResourcePool<Health>,
+    pub score: ScoreSystem<Score>,
     pub marker: Player,
     pub render_layers: RenderLayers,
     pub spritesheet: SpriteSheetBundle,
@@ -47,6 +49,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         collision_groups: CollisionGroups::new(Group::GROUP_1, Group::GROUP_1 | Group::GROUP_3),
         fire_breath_resource: ResourcePool::<Fire>::new(100),
         hitpoints: ResourcePool::<Health>::new(100),
+        score: ScoreSystem::<Score>::new(0, 1),
         marker: Player,
         render_layers: RenderLayers::layer(SKY_LAYER),
         spritesheet: SpriteSheetBundle {
