@@ -1620,7 +1620,7 @@ dependencies = [
  "bevy_particle_systems",
  "bevy_rapier2d",
  "noise",
- "rand 0.7.3",
+ "rand 0.8.5",
 ]
 
 [[package]]
