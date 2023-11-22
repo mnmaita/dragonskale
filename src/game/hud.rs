@@ -4,7 +4,7 @@ use crate::{playing, AppState};
 
 use super::{
     resource_pool::{Fire, Health, ResourcePool},
-    score_system::{Score, ScoreSystem},
+    score_system::Score,
     InGameEntity, Player,
 };
 
@@ -162,7 +162,7 @@ fn update_fire_bar_display(
 }
 
 fn update_score_display(
-    player_query: Query<&ScoreSystem<Score>, (Changed<ScoreSystem<Score>>, With<Player>)>,
+    player_query: Query<&Score, (Changed<Score>, With<Player>)>,
     mut score_text_display_query: Query<&mut Text, With<ScoreDisplay>>,
 ) {
     if let Ok(score_system) = player_query.get_single() {
