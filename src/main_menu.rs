@@ -4,7 +4,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{audio::PlayMusicEvent, AppState, InState};
+use crate::{audio::PlayMusicEvent, entity_cleanup, AppState};
 
 pub struct MainMenuPlugin;
 
@@ -17,12 +17,21 @@ impl Plugin for MainMenuPlugin {
                 play_background_music.after(setup_main_menu),
             ),
         );
+
         app.add_systems(
             Update,
             handle_main_menu_button_interactions.run_if(in_state(AppState::MainMenu)),
         );
+
+        app.add_systems(
+            OnExit(AppState::MainMenu),
+            entity_cleanup::<With<MainMenuEntity>>,
+        );
     }
 }
+
+#[derive(Component)]
+struct MainMenuEntity;
 
 #[derive(Component)]
 enum MainMenuButtonAction {
@@ -46,7 +55,7 @@ fn setup_main_menu(mut commands: Commands) {
                 },
                 ..default()
             },
-            InState(AppState::MainMenu),
+            MainMenuEntity,
         ))
         .with_children(|node| {
             node.spawn((

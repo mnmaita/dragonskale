@@ -2,12 +2,15 @@ mod combat;
 mod constants;
 mod enemy;
 mod fire_breath;
+mod game_over;
 mod hud;
 mod level;
 mod player;
 mod plugin;
 mod resource_pool;
 mod score_system;
+
+use plugin::InGameEntity;
 
 pub use constants::*;
 pub use enemy::Enemy;

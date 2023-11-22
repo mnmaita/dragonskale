@@ -10,7 +10,7 @@ use rand::random;
 use crate::{
     audio::PlayMusicEvent,
     camera::BACKGROUND_LAYER,
-    game::{GRID_SIZE, HALF_GRID_SIZE, TILE_SIZE},
+    game::{InGameEntity, GRID_SIZE, HALF_GRID_SIZE, TILE_SIZE},
     AppState,
 };
 
@@ -64,6 +64,8 @@ fn generate_level(mut commands: Commands) {
                 },
                 tile,
             });
+
+            tile_entity.insert(InGameEntity);
 
             if y == 0 || x == 0 || y == GRID_SIZE.y as i32 - 1 || x == GRID_SIZE.x as i32 - 1 {
                 tile_entity.insert(BorderTile);

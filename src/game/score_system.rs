@@ -21,28 +21,25 @@ impl Plugin for ScoreSystemPlugin {
 }
 
 #[derive(Component, Clone, Copy, Debug)]
-pub struct ScoreSystem<T> {
+pub struct Score {
     current: i32,
     multiplier: i16,
-    _marker: std::marker::PhantomData<T>,
 }
 
-impl<T> Default for ScoreSystem<T> {
+impl Default for Score {
     fn default() -> Self {
         Self {
             current: 0,
             multiplier: 1,
-            _marker: std::marker::PhantomData,
         }
     }
 }
 
-impl<T> ScoreSystem<T> {
+impl Score {
     pub fn new(current: i32, multiplier: i16) -> Self {
         Self {
             current,
             multiplier,
-            _marker: std::marker::PhantomData,
         }
     }
 
@@ -67,9 +64,6 @@ impl<T> ScoreSystem<T> {
     }
 }
 
-#[derive(Component)]
-pub struct Score;
-
 #[derive(Event)]
 pub struct ScoreEvent {
     points: i32,
@@ -92,7 +86,7 @@ impl ScoreEvent {
 
 fn update_player_score(
     mut score_event_reader: EventReader<ScoreEvent>,
-    mut player_score_query: Query<&mut ScoreSystem<Score>, With<Player>>,
+    mut player_score_query: Query<&mut Score, With<Player>>,
 ) {
     for ScoreEvent {
         points,
