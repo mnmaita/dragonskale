@@ -9,7 +9,7 @@ use crate::{
 use super::{
     level::TileQuery,
     resource_pool::{Fire, Health, ResourcePool},
-    score_system::{Score, ScoreSystem},
+    score_system::{Score, ScoreEvent, ScoreEventType, ScoreSystem},
     Enemy, Player, Tile, HALF_TILE_SIZE,
 };
 
@@ -151,6 +151,7 @@ fn projectile_collision_with_player(
         (Entity, &mut ResourcePool<Health>, &mut ScoreSystem<Score>),
         With<Player>,
     >,
+    mut score_event_writer: EventWriter<ScoreEvent>,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
     rapier_context: Res<RapierContext>,
 ) {
@@ -160,7 +161,8 @@ fn projectile_collision_with_player(
         if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
             if contact_pair.has_any_active_contacts() {
                 player_hitpoints.subtract(projectile_damage.0);
-                player_score.reset_multiplier();
+                score_event_writer.send(ScoreEvent::new(0, ScoreEventType::ResetMultiplier));
+
                 // TODO: Add "death" component or event and use it here so a different system handles despawns.
                 commands.entity(projectile_entity).despawn_recursive();
             }
@@ -172,7 +174,7 @@ fn compute_damage_from_intersections(
     mut commands: Commands,
     fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
     mut enemy_query: Query<(Entity, &mut ResourcePool<Health>), With<Enemy>>,
-    mut player_query: Query<&mut ScoreSystem<Score>, With<Player>>,
+    mut score_event_writer: EventWriter<ScoreEvent>,
     rapier_context: Res<RapierContext>,
 ) {
     for (entity, damage) in &fire_query {
@@ -182,10 +184,8 @@ fn compute_damage_from_intersections(
             if intersecting {
                 if let Ok((enemy_entity, mut enemy_hitpoints)) = enemy_query.get_mut(other_entity) {
                     enemy_hitpoints.subtract(damage.0);
-                    let mut player_score = player_query.single_mut();
                     commands.entity(enemy_entity).despawn_recursive();
-                    player_score.add_with_multiplier(10);
-                    player_score.increase_multiplier_by_one();
+                    score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
                 }
             }
         }
