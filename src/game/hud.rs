@@ -31,9 +31,6 @@ impl Plugin for HudPlugin {
 }
 
 #[derive(Component)]
-struct Hud;
-
-#[derive(Component)]
 struct HealthBar;
 
 #[derive(Component)]
@@ -45,7 +42,6 @@ struct ScoreDisplay;
 fn spawn_hud(mut commands: Commands) {
     commands
         .spawn((
-            Hud,
             InGameEntity,
             NodeBundle {
                 style: Style {
@@ -115,33 +111,32 @@ fn spawn_hud(mut commands: Commands) {
         });
 
     // Score text in botton middle of screen
-    commands
-        .spawn((
-            Hud,
-            TextBundle {
-                text: Text {
-                    linebreak_behavior: BreakLineOn::NoWrap,
-                    sections: vec![TextSection {
-                        value: "Score: 0".to_string(),
-                        style: TextStyle {
-                            // TODO add font to assets and use it here
-                            font_size: 40.0,
-                            color: Color::WHITE,
-                            ..Default::default()
-                        },
-                    }],
-                    ..default()
-                },
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    width: Val::Px(5.),
-                    height: Val::Px(5.),
-                    ..Default::default()
-                },
+    commands.spawn((
+        InGameEntity,
+        ScoreDisplay,
+        TextBundle {
+            text: Text {
+                linebreak_behavior: BreakLineOn::NoWrap,
+                sections: vec![TextSection {
+                    value: "Score: 0".to_string(),
+                    style: TextStyle {
+                        // TODO add font to assets and use it here
+                        font_size: 40.0,
+                        color: Color::WHITE,
+                        ..default()
+                    },
+                }],
                 ..default()
             },
-        ))
-        .insert(ScoreDisplay);
+            style: Style {
+                position_type: PositionType::Absolute,
+                width: Val::Px(5.),
+                height: Val::Px(5.),
+                ..default()
+            },
+            ..default()
+        },
+    ));
 }
 
 fn update_health_bar_display(
