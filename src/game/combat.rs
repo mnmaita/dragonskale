@@ -9,7 +9,7 @@ use crate::{
 use super::{
     level::TileQuery,
     resource_pool::{Fire, Health, ResourcePool},
-    score_system::{Score, ScoreEvent, ScoreEventType, ScoreSystem},
+    score_system::{ScoreEvent, ScoreEventType},
     Enemy, Player, Tile, HALF_TILE_SIZE,
 };
 
@@ -147,15 +147,12 @@ fn spawn_projectiles(
 
 fn projectile_collision_with_player(
     mut commands: Commands,
-    mut player_query: Query<
-        (Entity, &mut ResourcePool<Health>, &mut ScoreSystem<Score>),
-        With<Player>,
-    >,
+    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
     mut score_event_writer: EventWriter<ScoreEvent>,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
     rapier_context: Res<RapierContext>,
 ) {
-    let (player_entity, mut player_hitpoints, mut player_score) = player_query.single_mut(); // A first entity with a collider attached.
+    let (player_entity, mut player_hitpoints) = player_query.single_mut(); // A first entity with a collider attached.
 
     for (projectile_entity, projectile_damage) in &projectile_query {
         if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
