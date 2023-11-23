@@ -10,7 +10,7 @@ use crate::{
 use super::{
     resource_pool::{Fire, Health, ResourcePool},
     score_system::Score,
-    InGameEntity,
+    InGameEntity, PLAYER_GROUP, PROJECTILE_GROUP,
 };
 
 pub(super) struct PlayerPlugin;
@@ -49,7 +49,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         animation_indices: AnimationIndices::new(0, 2),
         animation_timer: AnimationTimer::from_seconds(0.2),
         collider: Collider::ball(80.5),
-        collision_groups: CollisionGroups::new(Group::GROUP_1, Group::GROUP_1 | Group::GROUP_3),
+        collision_groups: CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP),
         fire_breath_resource: ResourcePool::<Fire>::new(100),
         hitpoints: ResourcePool::<Health>::new(100),
         score: Score::new(0, 1),

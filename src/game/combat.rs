@@ -10,7 +10,7 @@ use super::{
     level::TileQuery,
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{ScoreEvent, ScoreEventType},
-    Enemy, InGameEntity, Player, Tile, HALF_TILE_SIZE,
+    Enemy, InGameEntity, Player, Tile, HALF_TILE_SIZE, PLAYER_GROUP, PROJECTILE_GROUP,
 };
 
 pub(super) struct CombatPlugin;
@@ -82,7 +82,13 @@ pub struct ImpactDamage(pub i16);
 pub struct AttackDamage(pub i16);
 
 #[derive(Component, Deref, DerefMut)]
-pub struct AttackTimer(pub Timer);
+pub struct AttackTimer(Timer);
+
+impl AttackTimer {
+    pub fn new(seconds: f32) -> Self {
+        Self(Timer::from_seconds(seconds, TimerMode::Repeating))
+    }
+}
 
 #[derive(Component)]
 pub struct Projectile;
@@ -113,7 +119,10 @@ fn spawn_projectiles(
         let mut projectile_entity_commands = commands.spawn(ProjectileBundle {
             ccd: Ccd::enabled(),
             collider: Collider::cuboid(size.x / 2., size.y / 2.),
-            collision_groups: CollisionGroups::new(Group::GROUP_3, Group::GROUP_1 | Group::GROUP_3),
+            collision_groups: CollisionGroups::new(
+                PROJECTILE_GROUP,
+                PLAYER_GROUP | PROJECTILE_GROUP,
+            ),
             damage: ImpactDamage(damage),
             emitter: Emitter(emitter),
             marker: Projectile,
@@ -180,6 +189,7 @@ fn compute_damage_from_intersections(
             let other_entity = if entity1 == entity { entity2 } else { entity1 };
 
             if intersecting {
+                println!("INTERSECT");
                 if let Ok((enemy_entity, mut enemy_hitpoints)) = enemy_query.get_mut(other_entity) {
                     enemy_hitpoints.subtract(damage.0);
                     commands.entity(enemy_entity).despawn_recursive();

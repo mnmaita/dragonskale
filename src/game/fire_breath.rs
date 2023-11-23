@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_particle_systems::*;
-use bevy_rapier2d::prelude::{Collider, Sensor};
+use bevy_rapier2d::prelude::{Collider, CollisionGroups, Sensor};
 
 use crate::{
     camera::{YSorted, SKY_LAYER},
@@ -10,7 +10,7 @@ use crate::{
 use super::{
     combat::ImpactDamage,
     resource_pool::{Fire, ResourcePool},
-    InGameEntity, Player,
+    InGameEntity, Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP,
 };
 
 pub(super) struct FireBreathPlugin;
@@ -91,7 +91,12 @@ fn spawn_fire_breath(
             damage: ImpactDamage(damage),
         });
 
-        fire_breath_entity_commands.insert((InGameEntity, Playing, YSorted));
+        fire_breath_entity_commands.insert((
+            CollisionGroups::new(FIRE_BREATH_GROUP, BUILDING_GROUP | ENEMY_GROUP),
+            InGameEntity,
+            Playing,
+            YSorted,
+        ));
     }
 }
 
