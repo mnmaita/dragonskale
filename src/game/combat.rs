@@ -25,6 +25,7 @@ impl Plugin for CombatPlugin {
                 projectile_collision_with_player,
                 spawn_projectiles,
                 despawn_projectiles,
+                despawn_dead_entities,
                 compute_damage_from_intersections,
             )
                 .run_if(playing()),
@@ -178,9 +179,8 @@ fn projectile_collision_with_player(
 }
 
 fn compute_damage_from_intersections(
-    mut commands: Commands,
     fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
-    mut enemy_query: Query<(Entity, &mut ResourcePool<Health>), With<Enemy>>,
+    mut enemy_query: Query<&mut ResourcePool<Health>, With<Enemy>>,
     mut score_event_writer: EventWriter<ScoreEvent>,
     rapier_context: Res<RapierContext>,
 ) {
@@ -189,10 +189,8 @@ fn compute_damage_from_intersections(
             let other_entity = if entity1 == entity { entity2 } else { entity1 };
 
             if intersecting {
-                println!("INTERSECT");
-                if let Ok((enemy_entity, mut enemy_hitpoints)) = enemy_query.get_mut(other_entity) {
+                if let Ok(mut enemy_hitpoints) = enemy_query.get_mut(other_entity) {
                     enemy_hitpoints.subtract(damage.0);
-                    commands.entity(enemy_entity).despawn_recursive();
                     score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
                 }
             }
@@ -200,7 +198,18 @@ fn compute_damage_from_intersections(
     }
 }
 
-pub fn despawn_projectiles(
+fn despawn_dead_entities(
+    mut commands: Commands,
+    query: Query<(Entity, &ResourcePool<Health>), (Without<Player>, Changed<ResourcePool<Health>>)>,
+) {
+    for (entity, health) in &query {
+        if health.current() == 0 {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}
+
+fn despawn_projectiles(
     mut commands: Commands,
     projectile_query: Query<(Entity, &Transform, &Velocity), With<Projectile>>,
     tile_query: TileQuery,
