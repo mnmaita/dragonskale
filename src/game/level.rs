@@ -10,8 +10,9 @@ use pathfinding::prelude::Matrix;
 use rand::{random, seq::SliceRandom};
 
 use crate::{
-    audio::PlayMusicEvent,
+    audio::{PlayMusicEvent, SoundEffect},
     camera::{YSorted, BACKGROUND_LAYER, GROUND_LAYER},
+    entity_cleanup,
     game::{
         InGameEntity, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, GRID_SIZE, HALF_GRID_SIZE,
         HALF_TILE_SIZE, TILE_SIZE,
@@ -46,6 +47,11 @@ impl Plugin for LevelPlugin {
             PreUpdate,
             // FIXME: Replace run_once to fix buildings not spawning after restarting.
             spawn_buildings.run_if(playing().and_then(run_once())),
+        );
+
+        app.add_systems(
+            OnExit(AppState::InGame),
+            entity_cleanup::<With<SoundEffect>>,
         );
     }
 }
