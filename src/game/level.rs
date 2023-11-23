@@ -142,7 +142,7 @@ fn spawn_buildings(mut commands: Commands, tile_query: Query<(&Transform, &Tile)
                     BUILDING_GROUP,
                     ENEMY_GROUP | FIRE_BREATH_GROUP,
                 ),
-                hitpoints: ResourcePool::<Health>::new(100),
+                hitpoints: ResourcePool::<Health>::new(1000),
                 marker: Enemy,
                 range: Range(TILE_SIZE.x * 15.),
                 render_layers: RenderLayers::layer(GROUND_LAYER),

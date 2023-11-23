@@ -123,7 +123,7 @@ fn mouse_input(
         // TODO: replace constant with sprite dimensions
         let fire_position = player_transform.translation.truncate() + player_direction * 90.;
 
-        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1000, fire_position));
+        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1, fire_position));
     }
 }
 
