@@ -37,7 +37,7 @@ pub struct EnemyBundle {
     pub marker: Enemy,
     pub range: Range,
     pub speed: Speed,
-    pub sprite: SpriteBundle,
+    pub sprite: SpriteSheetBundle,
     pub collider: Collider,
     pub render_layers: RenderLayers,
     pub rigid_body: RigidBody,
@@ -63,10 +63,17 @@ pub enum Behavior {
 
 fn spawn_enemies(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     time: Res<Time>,
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
     tile_query: Query<&Transform, With<BorderTile>>,
 ) {
+     let texture = asset_server
+        .get_handle("textures/enemy_archer.png")
+        .unwrap_or_default();
+    let texture_atlas = TextureAtlas::from_grid(texture, Vec2::new(50., 75.), 32, 8, None, None);
+    let texture_atlas_handle = asset_server.add(texture_atlas);
+
     if enemy_spawn_timer.tick(time.delta()).just_finished() {
         let mut rng = rand::thread_rng();
         if let Some(tile_transform) = tile_query.iter().choose(&mut rng) {
@@ -81,12 +88,9 @@ fn spawn_enemies(
                 marker: Enemy,
                 range: Range(TILE_SIZE.x * 12.),
                 speed: Speed(2.),
-                sprite: SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::BLACK,
-                        custom_size: Some(TILE_SIZE),
-                        ..default()
-                    },
+                sprite: SpriteSheetBundle {
+                    sprite: TextureAtlasSprite::new(0),
+                    texture_atlas: texture_atlas_handle.clone(),
                     transform: Transform::from_translation(translation),
                     ..default()
                 },
