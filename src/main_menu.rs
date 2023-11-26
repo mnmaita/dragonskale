@@ -41,7 +41,7 @@ enum MainMenuButtonAction {
     Exit,
 }
 
-fn setup_main_menu(mut commands: Commands) {
+fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             NodeBundle {
@@ -71,6 +71,9 @@ fn setup_main_menu(mut commands: Commands) {
                         "New Game",
                         TextStyle {
                             color: Color::BLACK,
+                            font: asset_server
+                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                                .unwrap_or_default(),
                             font_size: 32.0,
                             ..default()
                         },
@@ -92,6 +95,9 @@ fn setup_main_menu(mut commands: Commands) {
                         "Settings",
                         TextStyle {
                             color: Color::BLACK,
+                            font: asset_server
+                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                                .unwrap_or_default(),
                             font_size: 32.0,
                             ..default()
                         },
@@ -114,6 +120,9 @@ fn setup_main_menu(mut commands: Commands) {
                         "Exit",
                         TextStyle {
                             color: Color::BLACK,
+                            font: asset_server
+                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                                .unwrap_or_default(),
                             font_size: 32.0,
                             ..default()
                         },

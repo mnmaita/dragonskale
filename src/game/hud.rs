@@ -39,7 +39,7 @@ struct FireBreathBar;
 #[derive(Component)]
 struct ScoreDisplay;
 
-fn spawn_hud(mut commands: Commands) {
+fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             InGameEntity,
@@ -120,9 +120,11 @@ fn spawn_hud(mut commands: Commands) {
                 sections: vec![TextSection {
                     value: "Score: 0".to_string(),
                     style: TextStyle {
-                        // TODO add font to assets and use it here
+                        font: asset_server
+                            .get_handle("fonts/Prince Valiant.ttf")
+                            .unwrap_or_default(),
                         font_size: 40.0,
-                        color: Color::WHITE,
+                        color: Color::GOLD,
                         ..default()
                     },
                 }],
