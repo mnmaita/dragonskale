@@ -34,14 +34,16 @@ fn main() {
     let mut app = App::new();
 
     app.add_plugins((
-        // FIXME: Remove setting the backend explicitly to avoid noisy warnings
-        // when https://github.com/gfx-rs/wgpu/issues/3959 gets fixed.
-        DefaultPlugins.set(RenderPlugin {
-            render_creation: RenderCreation::Automatic(WgpuSettings {
-                backends: Some(Backends::DX12),
-                ..default()
-            }),
-        }),
+        DefaultPlugins
+            // FIXME: Remove setting the backend explicitly to avoid noisy warnings
+            // when https://github.com/gfx-rs/wgpu/issues/3959 gets fixed.
+            .set(RenderPlugin {
+                render_creation: RenderCreation::Automatic(WgpuSettings {
+                    backends: Some(Backends::DX12),
+                    ..default()
+                }),
+            })
+            .set(ImagePlugin::default_nearest()),
         AnimationPlugin,
         AudioPlugin,
         CameraPlugin,
@@ -56,6 +58,8 @@ fn main() {
     ));
 
     app.add_state::<AppState>();
+
+    app.insert_resource(Msaa::Off);
 
     app.add_systems(
         Update,
