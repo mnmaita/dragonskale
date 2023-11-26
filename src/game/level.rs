@@ -17,7 +17,7 @@ use crate::{
         InGameEntity, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, GRID_SIZE, HALF_GRID_SIZE,
         HALF_TILE_SIZE, TILE_SIZE,
     },
-    playing, AppState,
+    AppState,
 };
 
 use super::{
@@ -40,13 +40,7 @@ impl Plugin for LevelPlugin {
 
         app.add_systems(
             OnEnter(AppState::InGame),
-            (spawn_level_tiles, play_background_music).chain(),
-        );
-
-        app.add_systems(
-            PreUpdate,
-            // FIXME: Replace run_once to fix buildings not spawning after restarting.
-            spawn_buildings.run_if(playing().and_then(run_once())),
+            (spawn_level_tiles, spawn_buildings, play_background_music).chain(),
         );
 
         app.add_systems(
@@ -114,31 +108,20 @@ fn spawn_level_tiles(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
     }
 }
 
-fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
-    play_music_event_writer.send(PlayMusicEvent::new(
-        "theme2.ogg",
-        Some(PlaybackSettings {
-            volume: Volume::Absolute(VolumeLevel::new(0.25)),
-            ..default()
-        }),
-        None,
-    ));
-}
-
-fn spawn_buildings(mut commands: Commands, tile_query: Query<(&Transform, &Tile)>) {
+fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
     const BUILDING_SPAWN_CHANCE: f32 = 0.01;
 
-    let grass_tiles: Vec<&Transform> = tile_query
-        .iter()
+    let grass_tiles: Vec<Vec2> = level_matrix
+        .items()
         .filter(|(_, tile)| **tile == Tile::Grass)
-        .map(|(transform, _)| transform)
+        .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
     let total_buildings = (GRID_SIZE.x * GRID_SIZE.y * BUILDING_SPAWN_CHANCE).ceil() as u32;
     let mut rng = rand::thread_rng();
 
     for _ in 0..total_buildings {
-        if let Some(transform) = grass_tiles.choose(&mut rng) {
-            let translation = transform.translation.truncate().extend(1.);
+        if let Some(position) = grass_tiles.choose(&mut rng) {
+            let translation = position.extend(1.);
             let mut building_entity_commands = commands.spawn(BuildingBundle {
                 active_collision_types: ActiveCollisionTypes::all(),
                 attack_damage: AttackDamage(5),
@@ -169,7 +152,18 @@ fn spawn_buildings(mut commands: Commands, tile_query: Query<(&Transform, &Tile)
     }
 }
 
-#[derive(Resource)]
+fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
+    play_music_event_writer.send(PlayMusicEvent::new(
+        "theme2.ogg",
+        Some(PlaybackSettings {
+            volume: Volume::Absolute(VolumeLevel::new(0.25)),
+            ..default()
+        }),
+        None,
+    ));
+}
+
+#[derive(Resource, Deref)]
 pub struct LevelMatrix(Matrix<Tile>);
 
 #[derive(Bundle)]
