@@ -5,6 +5,7 @@ use bevy::{
     render::view::RenderLayers,
 };
 use noise::{NoiseFn, Perlin};
+use pathfinding::prelude::Matrix;
 use rand::random;
 
 use crate::{
@@ -19,13 +20,21 @@ pub(super) struct LevelPlugin;
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
+            OnTransition {
+                from: AppState::MainMenu,
+                to: AppState::InGame,
+            },
+            generate_level_matrix,
+        );
+
+        app.add_systems(
             OnEnter(AppState::InGame),
-            (generate_level, play_background_music).chain(),
+            (spawn_level_tiles, play_background_music).chain(),
         );
     }
 }
 
-fn generate_level(mut commands: Commands) {
+fn generate_level_matrix(mut commands: Commands) {
     const MAP_OFFSET_X: f64 = 0.;
     const MAP_OFFSET_Y: f64 = 0.;
     const MAP_SCALE: f64 = 20.;
@@ -33,9 +42,10 @@ fn generate_level(mut commands: Commands) {
     let seed = random();
     let perlin = Perlin::new(seed);
     let tile_count = Tile::_LAST as u8;
+    let mut level_matrix = Matrix::new(GRID_SIZE.y as usize, GRID_SIZE.x as usize, Tile::_LAST);
 
-    for y in 0..GRID_SIZE.y as i32 {
-        for x in 0..GRID_SIZE.x as i32 {
+    for y in 0..GRID_SIZE.y as usize {
+        for x in 0..GRID_SIZE.x as usize {
             let point = [
                 (x as f64 - MAP_OFFSET_X) / MAP_SCALE,
                 (y as f64 - MAP_OFFSET_Y) / MAP_SCALE,
@@ -44,32 +54,40 @@ fn generate_level(mut commands: Commands) {
             let scaled_noise_value =
                 (noise_value * tile_count as f64).clamp(0., tile_count as f64 - 1.);
             let int_noise_value = scaled_noise_value.floor() as u8;
-            let tile: Tile = int_noise_value.into();
-            let color = tile.into();
-            let custom_size = Some(TILE_SIZE);
-            let position = (Vec2::new(x as f32, y as f32) - HALF_GRID_SIZE) * TILE_SIZE;
-            let translation = position.extend(0.0);
-            let transform = Transform::from_translation(translation);
 
-            let mut tile_entity = commands.spawn(TileBundle {
-                render_layers: RenderLayers::layer(BACKGROUND_LAYER),
-                sprite: SpriteBundle {
-                    sprite: Sprite {
-                        color,
-                        custom_size,
-                        ..default()
-                    },
-                    transform,
+            if let Some(tile) = level_matrix.get_mut((x, y)) {
+                *tile = int_noise_value.into();
+            }
+        }
+    }
+
+    commands.insert_resource(LevelMatrix(level_matrix));
+}
+
+fn spawn_level_tiles(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
+    for ((x, y), tile) in level_matrix.0.items() {
+        let tile = *tile;
+        let position = translate_grid_position_to_world_space(&(x, y));
+        let translation = position.extend(0.0);
+        let transform = Transform::from_translation(translation);
+        let mut tile_entity = commands.spawn(TileBundle {
+            render_layers: RenderLayers::layer(BACKGROUND_LAYER),
+            sprite: SpriteBundle {
+                sprite: Sprite {
+                    color: tile.into(),
+                    custom_size: Some(TILE_SIZE),
                     ..default()
                 },
-                tile,
-            });
+                transform,
+                ..default()
+            },
+            tile,
+        });
 
-            tile_entity.insert(InGameEntity);
+        tile_entity.insert(InGameEntity);
 
-            if y == 0 || x == 0 || y == GRID_SIZE.y as i32 - 1 || x == GRID_SIZE.x as i32 - 1 {
-                tile_entity.insert(BorderTile);
-            }
+        if y == 0 || x == 0 || y == GRID_SIZE.y as usize - 1 || x == GRID_SIZE.x as usize - 1 {
+            tile_entity.insert(BorderTile);
         }
     }
 }
@@ -85,6 +103,9 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
     ));
 }
 
+#[derive(Resource)]
+pub struct LevelMatrix(Matrix<Tile>);
+
 #[derive(Component)]
 pub struct BorderTile;
 
@@ -95,7 +116,7 @@ pub struct TileBundle {
     pub tile: Tile,
 }
 
-#[derive(Component, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Tile {
     Water,
     Sand,
@@ -163,4 +184,10 @@ pub fn translate_transform_to_grid_space(transform: &Transform) -> (usize, usize
     } else {
         (0, 0)
     }
+}
+
+pub fn translate_grid_position_to_world_space(pos: &(usize, usize)) -> Vec2 {
+    let x = (pos.0 as f32 - HALF_GRID_SIZE.x) * TILE_SIZE.x;
+    let y = (pos.1 as f32 - HALF_GRID_SIZE.y) * TILE_SIZE.y;
+    Vec2::new(x, y)
 }
