@@ -158,8 +158,8 @@ fn spawn_projectiles(
 
 fn projectile_collision_with_player(
     mut commands: Commands,
-    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
     mut score_event_writer: EventWriter<ScoreEvent>,
+    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
     rapier_context: Res<RapierContext>,
 ) {
@@ -179,9 +179,8 @@ fn projectile_collision_with_player(
 }
 
 fn compute_damage_from_intersections(
-    fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
     mut enemy_query: Query<&mut ResourcePool<Health>, With<Enemy>>,
-    mut score_event_writer: EventWriter<ScoreEvent>,
+    fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
     rapier_context: Res<RapierContext>,
 ) {
     for (entity, damage) in &fire_query {
@@ -191,7 +190,6 @@ fn compute_damage_from_intersections(
             if intersecting {
                 if let Ok(mut enemy_hitpoints) = enemy_query.get_mut(other_entity) {
                     enemy_hitpoints.subtract(damage.0);
-                    score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
                 }
             }
         }
@@ -200,11 +198,13 @@ fn compute_damage_from_intersections(
 
 fn despawn_dead_entities(
     mut commands: Commands,
+    mut score_event_writer: EventWriter<ScoreEvent>,
     query: Query<(Entity, &ResourcePool<Health>), (Without<Player>, Changed<ResourcePool<Health>>)>,
 ) {
     for (entity, health) in &query {
         if health.current() == 0 {
             commands.entity(entity).despawn_recursive();
+            score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
         }
     }
 }
