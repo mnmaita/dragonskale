@@ -4,15 +4,26 @@ use bevy::{
     prelude::*,
     render::view::RenderLayers,
 };
+use bevy_rapier2d::prelude::*;
 use noise::{NoiseFn, Perlin};
 use pathfinding::prelude::Matrix;
-use rand::random;
+use rand::{random, seq::SliceRandom};
 
 use crate::{
-    audio::PlayMusicEvent,
-    camera::BACKGROUND_LAYER,
-    game::{InGameEntity, GRID_SIZE, HALF_GRID_SIZE, TILE_SIZE},
+    audio::{PlayMusicEvent, SoundEffect},
+    camera::{YSorted, BACKGROUND_LAYER, GROUND_LAYER},
+    entity_cleanup,
+    game::{
+        InGameEntity, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, GRID_SIZE, HALF_GRID_SIZE,
+        HALF_TILE_SIZE, TILE_SIZE,
+    },
     AppState,
+};
+
+use super::{
+    combat::{AttackDamage, AttackTimer, Range},
+    resource_pool::{Health, ResourcePool},
+    Enemy,
 };
 
 pub(super) struct LevelPlugin;
@@ -29,7 +40,12 @@ impl Plugin for LevelPlugin {
 
         app.add_systems(
             OnEnter(AppState::InGame),
-            (spawn_level_tiles, play_background_music).chain(),
+            (spawn_level_tiles, spawn_buildings, play_background_music).chain(),
+        );
+
+        app.add_systems(
+            OnExit(AppState::InGame),
+            entity_cleanup::<With<SoundEffect>>,
         );
     }
 }
@@ -92,6 +108,50 @@ fn spawn_level_tiles(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
     }
 }
 
+fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
+    const BUILDING_SPAWN_CHANCE: f32 = 0.01;
+
+    let grass_tiles: Vec<Vec2> = level_matrix
+        .items()
+        .filter(|(_, tile)| **tile == Tile::Grass)
+        .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
+        .collect();
+    let total_buildings = (GRID_SIZE.x * GRID_SIZE.y * BUILDING_SPAWN_CHANCE).ceil() as u32;
+    let mut rng = rand::thread_rng();
+
+    for _ in 0..total_buildings {
+        if let Some(position) = grass_tiles.choose(&mut rng) {
+            let translation = position.extend(1.);
+            let mut building_entity_commands = commands.spawn(BuildingBundle {
+                active_collision_types: ActiveCollisionTypes::all(),
+                attack_damage: AttackDamage(5),
+                attack_timer: AttackTimer::new(6.),
+                collider: Collider::ball(HALF_TILE_SIZE.x),
+                collision_groups: CollisionGroups::new(
+                    BUILDING_GROUP,
+                    ENEMY_GROUP | FIRE_BREATH_GROUP,
+                ),
+                hitpoints: ResourcePool::<Health>::new(1000),
+                marker: Enemy,
+                range: Range(TILE_SIZE.x * 15.),
+                render_layers: RenderLayers::layer(GROUND_LAYER),
+                rigid_body: RigidBody::Fixed,
+                sprite: SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::DARK_GRAY,
+                        custom_size: Some(TILE_SIZE),
+                        ..default()
+                    },
+                    transform: Transform::from_translation(translation),
+                    ..default()
+                },
+            });
+
+            building_entity_commands.insert((InGameEntity, YSorted));
+        }
+    }
+}
+
 fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
     play_music_event_writer.send(PlayMusicEvent::new(
         "theme2.ogg",
@@ -103,8 +163,23 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
     ));
 }
 
-#[derive(Resource)]
+#[derive(Resource, Deref)]
 pub struct LevelMatrix(Matrix<Tile>);
+
+#[derive(Bundle)]
+pub struct BuildingBundle {
+    pub active_collision_types: ActiveCollisionTypes,
+    pub attack_damage: AttackDamage,
+    pub attack_timer: AttackTimer,
+    pub collider: Collider,
+    pub collision_groups: CollisionGroups,
+    pub hitpoints: ResourcePool<Health>,
+    pub marker: Enemy,
+    pub range: Range,
+    pub sprite: SpriteBundle,
+    pub render_layers: RenderLayers,
+    pub rigid_body: RigidBody,
+}
 
 #[derive(Component)]
 pub struct BorderTile;

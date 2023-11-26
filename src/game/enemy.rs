@@ -11,7 +11,8 @@ use crate::{
 use super::{
     combat::{AttackDamage, AttackTimer, Range, SpawnProjectileEvent},
     resource_pool::{Health, ResourcePool},
-    BorderTile, InGameEntity, Player, HALF_TILE_SIZE, TILE_SIZE,
+    BorderTile, InGameEntity, Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP,
+    HALF_TILE_SIZE, TILE_SIZE,
 };
 
 pub(super) struct EnemyPlugin;
@@ -72,7 +73,7 @@ fn spawn_enemies(
             let translation = tile_transform.translation.truncate().extend(1.);
             let mut enemy_entity_commands = commands.spawn(EnemyBundle {
                 attack_damage: AttackDamage(5),
-                attack_timer: AttackTimer(Timer::from_seconds(5., TimerMode::Repeating)),
+                attack_timer: AttackTimer::new(4.),
                 behavior: Behavior::FollowPlayer {
                     distance: TILE_SIZE.x * 6.,
                 },
@@ -92,7 +93,10 @@ fn spawn_enemies(
                 collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
                 render_layers: RenderLayers::layer(GROUND_LAYER),
                 rigid_body: RigidBody::Dynamic,
-                collision_groups: CollisionGroups::new(Group::GROUP_2, Group::GROUP_2),
+                collision_groups: CollisionGroups::new(
+                    ENEMY_GROUP,
+                    ENEMY_GROUP | BUILDING_GROUP | FIRE_BREATH_GROUP,
+                ),
             });
 
             enemy_entity_commands.insert((InGameEntity, LockedAxes::ROTATION_LOCKED, YSorted));

@@ -134,6 +134,9 @@ impl PlaySoundEffectEvent {
 #[derive(Component)]
 pub struct BackgroundMusic;
 
+#[derive(Component)]
+pub struct SoundEffect;
+
 fn handle_play_music_events(
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -182,7 +185,7 @@ fn handle_play_sound_effect_events(
         let settings = settings.unwrap_or(PlaybackSettings::DESPAWN);
         let path = format!("{ASSET_FOLDER_SFX}/{file_name}");
         let source = asset_server.get_handle(path).unwrap_or_default();
-        let mut entity = commands.spawn(AudioBundle { source, settings });
+        let mut entity = commands.spawn((AudioBundle { source, settings }, SoundEffect));
 
         if let Some(transform) = spatial_transform {
             entity.insert(SpatialBundle::from_transform(*transform));

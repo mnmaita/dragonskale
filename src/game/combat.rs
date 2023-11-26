@@ -10,7 +10,7 @@ use super::{
     level::TileQuery,
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{ScoreEvent, ScoreEventType},
-    Enemy, InGameEntity, Player, Tile, HALF_TILE_SIZE,
+    Enemy, InGameEntity, Player, Tile, HALF_TILE_SIZE, PLAYER_GROUP, PROJECTILE_GROUP,
 };
 
 pub(super) struct CombatPlugin;
@@ -25,6 +25,7 @@ impl Plugin for CombatPlugin {
                 projectile_collision_with_player,
                 spawn_projectiles,
                 despawn_projectiles,
+                despawn_dead_entities,
                 compute_damage_from_intersections,
             )
                 .run_if(playing()),
@@ -82,7 +83,13 @@ pub struct ImpactDamage(pub i16);
 pub struct AttackDamage(pub i16);
 
 #[derive(Component, Deref, DerefMut)]
-pub struct AttackTimer(pub Timer);
+pub struct AttackTimer(Timer);
+
+impl AttackTimer {
+    pub fn new(seconds: f32) -> Self {
+        Self(Timer::from_seconds(seconds, TimerMode::Repeating))
+    }
+}
 
 #[derive(Component)]
 pub struct Projectile;
@@ -113,7 +120,10 @@ fn spawn_projectiles(
         let mut projectile_entity_commands = commands.spawn(ProjectileBundle {
             ccd: Ccd::enabled(),
             collider: Collider::cuboid(size.x / 2., size.y / 2.),
-            collision_groups: CollisionGroups::new(Group::GROUP_3, Group::GROUP_1 | Group::GROUP_3),
+            collision_groups: CollisionGroups::new(
+                PROJECTILE_GROUP,
+                PLAYER_GROUP | PROJECTILE_GROUP,
+            ),
             damage: ImpactDamage(damage),
             emitter: Emitter(emitter),
             marker: Projectile,
@@ -148,8 +158,8 @@ fn spawn_projectiles(
 
 fn projectile_collision_with_player(
     mut commands: Commands,
-    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
     mut score_event_writer: EventWriter<ScoreEvent>,
+    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
     rapier_context: Res<RapierContext>,
 ) {
@@ -169,10 +179,8 @@ fn projectile_collision_with_player(
 }
 
 fn compute_damage_from_intersections(
-    mut commands: Commands,
+    mut enemy_query: Query<&mut ResourcePool<Health>, With<Enemy>>,
     fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
-    mut enemy_query: Query<(Entity, &mut ResourcePool<Health>), With<Enemy>>,
-    mut score_event_writer: EventWriter<ScoreEvent>,
     rapier_context: Res<RapierContext>,
 ) {
     for (entity, damage) in &fire_query {
@@ -180,17 +188,28 @@ fn compute_damage_from_intersections(
             let other_entity = if entity1 == entity { entity2 } else { entity1 };
 
             if intersecting {
-                if let Ok((enemy_entity, mut enemy_hitpoints)) = enemy_query.get_mut(other_entity) {
+                if let Ok(mut enemy_hitpoints) = enemy_query.get_mut(other_entity) {
                     enemy_hitpoints.subtract(damage.0);
-                    commands.entity(enemy_entity).despawn_recursive();
-                    score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
                 }
             }
         }
     }
 }
 
-pub fn despawn_projectiles(
+fn despawn_dead_entities(
+    mut commands: Commands,
+    mut score_event_writer: EventWriter<ScoreEvent>,
+    query: Query<(Entity, &ResourcePool<Health>), (Without<Player>, Changed<ResourcePool<Health>>)>,
+) {
+    for (entity, health) in &query {
+        if health.current() == 0 {
+            commands.entity(entity).despawn_recursive();
+            score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
+        }
+    }
+}
+
+fn despawn_projectiles(
     mut commands: Commands,
     projectile_query: Query<(Entity, &Transform, &Velocity), With<Projectile>>,
     tile_query: TileQuery,
