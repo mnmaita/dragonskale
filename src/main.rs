@@ -51,6 +51,14 @@ fn main() {
             .set(AssetPlugin {
                 mode: AssetMode::Unprocessed,
                 ..default()
+            })
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "DragonSkale".into(),
+                    resolution: (1024., 768.).into(),
+                    ..default()
+                }),
+                ..default()
             }),
         AnimationPlugin,
         AudioPlugin,
