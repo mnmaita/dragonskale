@@ -25,6 +25,7 @@ impl Plugin for CameraPlugin {
                 )
                     .chain(),
                 y_sorting,
+                inverse_y_sorting,
             ),
         );
     }
@@ -82,6 +83,9 @@ pub struct MainCamera;
 
 #[derive(Component)]
 pub struct YSorted;
+
+#[derive(Component)]
+pub struct YSortedInverse;
 
 fn setup_camera(mut commands: Commands) {
     commands
@@ -141,5 +145,13 @@ fn constrain_camera_position_to_level(
 pub fn y_sorting(mut query: Query<&mut Transform, (Changed<Transform>, With<YSorted>)>) {
     for mut transform in &mut query {
         transform.translation.z = transform.translation.normalize().y;
+    }
+}
+
+pub fn inverse_y_sorting(
+    mut query: Query<&mut Transform, (Changed<Transform>, With<YSortedInverse>)>,
+) {
+    for mut transform in &mut query {
+        transform.translation.z = -transform.translation.normalize().y;
     }
 }
