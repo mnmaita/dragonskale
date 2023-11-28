@@ -116,39 +116,35 @@ fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
         .filter(|(_, tile)| **tile == Tile::Grass)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
-    let total_buildings = (GRID_SIZE.x * GRID_SIZE.y * BUILDING_SPAWN_CHANCE).ceil() as u32;
+    let total_buildings = (grass_tiles.len() as f32 * BUILDING_SPAWN_CHANCE).ceil() as usize;
     let mut rng = rand::thread_rng();
+    let random_spawn_points = grass_tiles.choose_multiple(&mut rng, total_buildings);
 
-    for _ in 0..total_buildings {
-        if let Some(position) = grass_tiles.choose(&mut rng) {
-            let translation = position.extend(1.);
-            let mut building_entity_commands = commands.spawn(BuildingBundle {
-                active_collision_types: ActiveCollisionTypes::all(),
-                attack_damage: AttackDamage(5),
-                attack_timer: AttackTimer::new(6.),
-                collider: Collider::ball(HALF_TILE_SIZE.x),
-                collision_groups: CollisionGroups::new(
-                    BUILDING_GROUP,
-                    ENEMY_GROUP | FIRE_BREATH_GROUP,
-                ),
-                hitpoints: ResourcePool::<Health>::new(1000),
-                marker: Enemy,
-                range: Range(TILE_SIZE.x * 15.),
-                render_layers: RenderLayers::layer(GROUND_LAYER),
-                rigid_body: RigidBody::Fixed,
-                sprite: SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::DARK_GRAY,
-                        custom_size: Some(TILE_SIZE),
-                        ..default()
-                    },
-                    transform: Transform::from_translation(translation),
+    for position in random_spawn_points {
+        let translation = position.extend(1.);
+        let mut building_entity_commands = commands.spawn(BuildingBundle {
+            active_collision_types: ActiveCollisionTypes::all(),
+            attack_damage: AttackDamage(5),
+            attack_timer: AttackTimer::new(6.),
+            collider: Collider::ball(HALF_TILE_SIZE.x),
+            collision_groups: CollisionGroups::new(BUILDING_GROUP, ENEMY_GROUP | FIRE_BREATH_GROUP),
+            hitpoints: ResourcePool::<Health>::new(1000),
+            marker: Enemy,
+            range: Range(TILE_SIZE.x * 15.),
+            render_layers: RenderLayers::layer(GROUND_LAYER),
+            rigid_body: RigidBody::Fixed,
+            sprite: SpriteBundle {
+                sprite: Sprite {
+                    color: Color::DARK_GRAY,
+                    custom_size: Some(TILE_SIZE),
                     ..default()
                 },
-            });
+                transform: Transform::from_translation(translation),
+                ..default()
+            },
+        });
 
-            building_entity_commands.insert((InGameEntity, YSorted));
-        }
+        building_entity_commands.insert((InGameEntity, YSorted));
     }
 }
 
