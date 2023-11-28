@@ -7,7 +7,7 @@ use bevy::{
 use bevy_rapier2d::prelude::*;
 use noise::{NoiseFn, Perlin};
 use pathfinding::prelude::Matrix;
-use rand::{random, seq::SliceRandom};
+use rand::{random, seq::SliceRandom, Rng};
 
 use crate::{
     audio::{PlayMusicEvent, SoundEffect},
@@ -40,7 +40,13 @@ impl Plugin for LevelPlugin {
 
         app.add_systems(
             OnEnter(AppState::InGame),
-            (spawn_level_tiles, spawn_buildings, play_background_music).chain(),
+            (
+                spawn_level_tiles,
+                spawn_buildings,
+                spawn_hills,
+                play_background_music,
+            )
+                .chain(),
         );
 
         app.add_systems(
@@ -169,6 +175,39 @@ fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
     }
 }
 
+fn spawn_hills(
+    mut commands: Commands,
+    level_matrix: Res<LevelMatrix>,
+    tileset_objects_texture_atlas_handle: Res<TilesetObjectsTextureAtlasHandle>,
+) {
+    let hill_tiles: Vec<Vec2> = level_matrix
+        .items()
+        .filter(|(_, tile)| **tile == Tile::Hills)
+        .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
+        .collect();
+    let mut rng = rand::thread_rng();
+
+    for position in hill_tiles {
+        let position_offset = Vec2::new(
+            rng.gen::<f32>() * 5.,
+            -HALF_TILE_SIZE.y + rng.gen::<f32>() * 5.,
+        );
+        let translation = (position + position_offset).extend(1.);
+        let mut hill_entity_commands = commands.spawn(SpriteSheetBundle {
+            sprite: TextureAtlasSprite {
+                anchor: bevy::sprite::Anchor::BottomCenter,
+                index: 95,
+                ..default()
+            },
+            texture_atlas: tileset_objects_texture_atlas_handle.clone(),
+            transform: Transform::from_translation(translation),
+            ..default()
+        });
+
+        hill_entity_commands.insert((InGameEntity, YSorted));
+    }
+}
+
 fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
     play_music_event_writer.send(PlayMusicEvent::new(
         "theme2.ogg",
@@ -270,7 +309,6 @@ impl From<Tile> for usize {
                 }
             }
             Tile::_LAST => 0,
-            _ => 0,
         }
     }
 }
