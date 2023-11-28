@@ -3,6 +3,7 @@ use bevy::{
     ecs::system::SystemParam,
     prelude::*,
     render::view::RenderLayers,
+    sprite::Anchor,
 };
 use bevy_rapier2d::prelude::*;
 use noise::{NoiseFn, Perlin};
@@ -11,7 +12,7 @@ use rand::{random, seq::SliceRandom, Rng};
 
 use crate::{
     audio::{PlayMusicEvent, SoundEffect},
-    camera::{YSorted, BACKGROUND_LAYER, GROUND_LAYER},
+    camera::{RenderLayer, YSorted, YSortedInverse},
     entity_cleanup,
     game::{
         InGameEntity, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, GRID_SIZE, HALF_GRID_SIZE,
@@ -44,6 +45,7 @@ impl Plugin for LevelPlugin {
                 spawn_level_tiles,
                 spawn_buildings,
                 spawn_hills,
+                spawn_mountains,
                 play_background_music,
             )
                 .chain(),
@@ -117,7 +119,7 @@ fn spawn_level_tiles(
         let translation = position.extend(0.0);
         let transform = Transform::from_translation(translation);
         let mut tile_entity = commands.spawn(TileBundle {
-            render_layers: RenderLayers::layer(BACKGROUND_LAYER),
+            render_layers: RenderLayers::layer(RenderLayer::Background.into()),
             sprite: SpriteSheetBundle {
                 sprite: TextureAtlasSprite::new(tile.into()),
                 texture_atlas: tileset_ground_texture_atlas_handle.clone(),
@@ -158,7 +160,7 @@ fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
             hitpoints: ResourcePool::<Health>::new(1000),
             marker: Enemy,
             range: Range(TILE_SIZE.x * 15.),
-            render_layers: RenderLayers::layer(GROUND_LAYER),
+            render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
             rigid_body: RigidBody::Fixed,
             sprite: SpriteBundle {
                 sprite: Sprite {
@@ -186,11 +188,12 @@ fn spawn_hills(
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
     let mut rng = rand::thread_rng();
+    let offset_factor = 5.;
 
     for position in hill_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * 5.,
-            -HALF_TILE_SIZE.y + rng.gen::<f32>() * 5.,
+            rng.gen::<f32>() * offset_factor,
+            -HALF_TILE_SIZE.y + rng.gen::<f32>() * offset_factor,
         );
         let translation = (position + position_offset).extend(1.);
         let mut hill_entity_commands = commands.spawn(SpriteSheetBundle {
@@ -204,7 +207,52 @@ fn spawn_hills(
             ..default()
         });
 
-        hill_entity_commands.insert((InGameEntity, YSorted));
+        hill_entity_commands.insert((
+            RenderLayers::layer(RenderLayer::Topography.into()),
+            InGameEntity,
+            YSorted,
+        ));
+    }
+}
+
+fn spawn_mountains(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    level_matrix: Res<LevelMatrix>,
+) {
+    let mountain_tiles: Vec<Vec2> = level_matrix
+        .items()
+        .filter(|(_, tile)| **tile == Tile::Mountains)
+        .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
+        .collect();
+    let mut rng = rand::thread_rng();
+    let offset_factor = 20.;
+
+    for position in mountain_tiles {
+        let position_offset = Vec2::new(
+            rng.gen::<f32>() * offset_factor,
+            -HALF_TILE_SIZE.y * 3. + rng.gen::<f32>() * offset_factor,
+        );
+        let texture = asset_server
+            .get_handle("textures/tileset_objects.png")
+            .unwrap_or_default();
+        let translation = (position + position_offset).extend(1.);
+        let mut mountain_entity_commands = commands.spawn(SpriteBundle {
+            sprite: Sprite {
+                anchor: Anchor::BottomCenter,
+                rect: Some(Rect::from_corners(Vec2::ZERO, Vec2::ONE * 48.)),
+                ..default()
+            },
+            texture,
+            transform: Transform::from_translation(translation),
+            ..default()
+        });
+
+        mountain_entity_commands.insert((
+            RenderLayers::layer(RenderLayer::Topography.into()),
+            InGameEntity,
+            YSortedInverse,
+        ));
     }
 }
 

@@ -5,10 +5,19 @@ use crate::{
     game::{GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
 };
 
-pub const BACKGROUND_LAYER: u8 = 0;
-pub const GROUND_LAYER: u8 = 1;
-pub const SKY_LAYER: u8 = 2;
-pub const UI_LAYER: u8 = 3;
+pub enum RenderLayer {
+    Background = 0,
+    Topography,
+    Ground,
+    Sky,
+    Ui,
+}
+
+impl From<RenderLayer> for u8 {
+    fn from(value: RenderLayer) -> Self {
+        value as u8
+    }
+}
 
 pub struct CameraPlugin;
 
@@ -89,11 +98,14 @@ pub struct YSortedInverse;
 
 fn setup_camera(mut commands: Commands) {
     commands
-        .spawn(MainCameraBundle::from_layer(BACKGROUND_LAYER))
+        .spawn(MainCameraBundle::from_layer(RenderLayer::Background.into()))
         .with_children(|builder| {
-            builder.spawn(SubLayerCameraBundle::from_layer(GROUND_LAYER));
-            builder.spawn(SubLayerCameraBundle::from_layer(SKY_LAYER));
-            builder.spawn(SubLayerCameraBundle::from_layer(UI_LAYER));
+            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Ground.into()));
+            builder.spawn(SubLayerCameraBundle::from_layer(
+                RenderLayer::Topography.into(),
+            ));
+            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Sky.into()));
+            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Ui.into()));
         });
 }
 

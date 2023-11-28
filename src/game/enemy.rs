@@ -3,7 +3,7 @@ use bevy_rapier2d::prelude::*;
 use rand::seq::IteratorRandom;
 
 use crate::{
-    camera::{YSorted, GROUND_LAYER},
+    camera::{RenderLayer, YSorted},
     physics::Speed,
     playing,
 };
@@ -91,7 +91,7 @@ fn spawn_enemies(
                     ..default()
                 },
                 collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
-                render_layers: RenderLayers::layer(GROUND_LAYER),
+                render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
                 rigid_body: RigidBody::Dynamic,
                 collision_groups: CollisionGroups::new(
                     ENEMY_GROUP,

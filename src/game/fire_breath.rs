@@ -3,7 +3,7 @@ use bevy_particle_systems::*;
 use bevy_rapier2d::prelude::{Collider, CollisionGroups, Sensor};
 
 use crate::{
-    camera::{YSorted, SKY_LAYER},
+    camera::{RenderLayer, YSorted},
     playing,
 };
 
@@ -85,7 +85,7 @@ fn spawn_fire_breath(
                 },
                 ..ParticleSystemBundle::default()
             },
-            render_layers: RenderLayers::layer(SKY_LAYER),
+            render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
             sensor: Sensor,
             collider: Collider::ball(25.0),
             damage: ImpactDamage(damage),
