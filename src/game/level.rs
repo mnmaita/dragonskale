@@ -180,29 +180,40 @@ fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
 fn spawn_hills(
     mut commands: Commands,
     level_matrix: Res<LevelMatrix>,
-    tileset_objects_texture_atlas_handle: Res<TilesetObjectsTextureAtlasHandle>,
+    asset_server: Res<AssetServer>,
 ) {
+    const POSITION_OFFSET_FACTOR: f32 = 15.;
+
     let hill_tiles: Vec<Vec2> = level_matrix
         .items()
         .filter(|(_, tile)| **tile == Tile::Hills)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
     let mut rng = rand::thread_rng();
-    let offset_factor = 5.;
+    let hill_tile_variants = [
+        Rect::from_corners(Vec2::new(320., 64.), Vec2::new(368., 96.)),
+        Rect::from_corners(Vec2::new(368., 64.), Vec2::new(400., 96.)),
+        Rect::from_corners(Vec2::new(400., 80.), Vec2::new(432., 96.)),
+        Rect::from_corners(Vec2::new(432., 80.), Vec2::new(448., 96.)),
+    ];
+    let texture = asset_server
+        .get_handle("textures/tileset_objects.png")
+        .unwrap_or_default();
 
     for position in hill_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * offset_factor,
-            -HALF_TILE_SIZE.y + rng.gen::<f32>() * offset_factor,
+            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            -HALF_TILE_SIZE.y + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (position + position_offset).extend(1.);
-        let mut hill_entity_commands = commands.spawn(SpriteSheetBundle {
-            sprite: TextureAtlasSprite {
+        let mut hill_entity_commands = commands.spawn(SpriteBundle {
+            sprite: Sprite {
                 anchor: bevy::sprite::Anchor::BottomCenter,
-                index: 95,
+                flip_x: rng.gen_bool(0.2),
+                rect: Some(*hill_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
             },
-            texture_atlas: tileset_objects_texture_atlas_handle.clone(),
+            texture: texture.clone(),
             transform: Transform::from_translation(translation),
             ..default()
         });
@@ -220,30 +231,45 @@ fn spawn_mountains(
     asset_server: Res<AssetServer>,
     level_matrix: Res<LevelMatrix>,
 ) {
+    const MOUNTAIN_TILE_SIZE: Vec2 = Vec2::new(64., 48.);
+    const POSITION_OFFSET_FACTOR: f32 = 20.;
+
     let mountain_tiles: Vec<Vec2> = level_matrix
         .items()
         .filter(|(_, tile)| **tile == Tile::Mountains)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
     let mut rng = rand::thread_rng();
-    let offset_factor = 20.;
+    let mountain_tile_variants = [
+        Rect::from_corners(Vec2::ZERO, MOUNTAIN_TILE_SIZE),
+        Rect::from_corners(
+            Vec2::X * MOUNTAIN_TILE_SIZE.x,
+            MOUNTAIN_TILE_SIZE + (Vec2::X * MOUNTAIN_TILE_SIZE.x),
+        ),
+        Rect::from_corners(
+            Vec2::Y * MOUNTAIN_TILE_SIZE.y,
+            MOUNTAIN_TILE_SIZE + (Vec2::Y * MOUNTAIN_TILE_SIZE.y),
+        ),
+        Rect::from_corners(MOUNTAIN_TILE_SIZE, MOUNTAIN_TILE_SIZE * 2.),
+    ];
+    let texture = asset_server
+        .get_handle("textures/tileset_objects.png")
+        .unwrap_or_default();
 
     for position in mountain_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * offset_factor,
-            -HALF_TILE_SIZE.y * 3. + rng.gen::<f32>() * offset_factor,
+            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            -MOUNTAIN_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
         );
-        let texture = asset_server
-            .get_handle("textures/tileset_objects.png")
-            .unwrap_or_default();
         let translation = (position + position_offset).extend(1.);
         let mut mountain_entity_commands = commands.spawn(SpriteBundle {
             sprite: Sprite {
                 anchor: Anchor::BottomCenter,
-                rect: Some(Rect::from_corners(Vec2::ZERO, Vec2::ONE * 48.)),
+                flip_x: rng.gen_bool(0.3),
+                rect: Some(*mountain_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
             },
-            texture,
+            texture: texture.clone(),
             transform: Transform::from_translation(translation),
             ..default()
         });
