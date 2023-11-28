@@ -137,7 +137,11 @@ fn spawn_level_tiles(
     }
 }
 
-fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
+fn spawn_buildings(
+    mut commands: Commands,
+    level_matrix: Res<LevelMatrix>,
+    asset_server: Res<AssetServer>,
+) {
     const BUILDING_SPAWN_CHANCE: f32 = 0.01;
 
     let grass_tiles: Vec<Vec2> = level_matrix
@@ -148,6 +152,13 @@ fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
     let total_buildings = (grass_tiles.len() as f32 * BUILDING_SPAWN_CHANCE).ceil() as usize;
     let mut rng = rand::thread_rng();
     let random_spawn_points = grass_tiles.choose_multiple(&mut rng, total_buildings);
+    let building_tile_variants = [
+        Rect::from_corners(Vec2::new(352., 96.), Vec2::new(400., 144.)),
+        Rect::from_corners(Vec2::new(400., 96.), Vec2::new(448., 144.)),
+    ];
+    let texture = asset_server
+        .get_handle("textures/tileset_objects.png")
+        .unwrap_or_default();
 
     for position in random_spawn_points {
         let translation = position.extend(1.);
@@ -164,10 +175,11 @@ fn spawn_buildings(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
             rigid_body: RigidBody::Fixed,
             sprite: SpriteBundle {
                 sprite: Sprite {
-                    color: Color::DARK_GRAY,
-                    custom_size: Some(TILE_SIZE),
+                    flip_x: rng.gen_bool(0.5),
+                    rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
                     ..default()
                 },
+                texture: texture.clone(),
                 transform: Transform::from_translation(translation),
                 ..default()
             },
