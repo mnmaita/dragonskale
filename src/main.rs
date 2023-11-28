@@ -55,7 +55,7 @@ fn main() {
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "DragonSkale".into(),
-                    resolution: (1024., 768.).into(),
+                    fit_canvas_to_parent: true,
                     ..default()
                 }),
                 ..default()
