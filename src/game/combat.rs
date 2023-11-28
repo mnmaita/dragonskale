@@ -148,7 +148,7 @@ fn spawn_projectiles(
         projectile_entity_commands.insert((
             Damping {
                 linear_damping: 1.0,
-                ..default()
+                angular_damping: 10.0,
             },
             InGameEntity,
             YSorted,
