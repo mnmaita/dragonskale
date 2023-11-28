@@ -10,7 +10,7 @@ pub struct TexturesPlugin;
 impl Plugin for TexturesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TexturesLoadState>();
-        app.init_resource::<TextureFolderHandle>();
+        app.init_resource::<TextureHandles>();
         app.add_systems(Startup, load_textures);
         app.add_systems(
             Update,
@@ -20,35 +20,89 @@ impl Plugin for TexturesPlugin {
 }
 
 #[derive(Resource, PartialEq)]
-struct TexturesLoadState(RecursiveDependencyLoadState);
+enum TexturesLoadState {
+    NotLoaded,
+    Loading,
+    Loaded,
+    Failed,
+}
 
 impl Default for TexturesLoadState {
     fn default() -> Self {
-        Self(RecursiveDependencyLoadState::NotLoaded)
+        Self::NotLoaded
     }
 }
 
-impl TexturesLoadState {
-    pub const LOADED: Self = Self(RecursiveDependencyLoadState::Loaded);
+impl From<RecursiveDependencyLoadState> for TexturesLoadState {
+    fn from(value: RecursiveDependencyLoadState) -> Self {
+        match value {
+            RecursiveDependencyLoadState::NotLoaded => Self::NotLoaded,
+            RecursiveDependencyLoadState::Loading => Self::Loading,
+            RecursiveDependencyLoadState::Loaded => Self::Loaded,
+            RecursiveDependencyLoadState::Failed => Self::Failed,
+        }
+    }
 }
 
 #[derive(Resource, Default, Deref, DerefMut)]
-struct TextureFolderHandle(Handle<LoadedFolder>);
+struct TextureHandles(
+    #[cfg(not(target_family = "wasm"))] Handle<LoadedFolder>,
+    #[cfg(target_family = "wasm")] Vec<Handle<Image>>,
+);
 
 fn load_textures(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let textures_folder_handle = asset_server.load_folder(ASSET_FOLDER_TEXTURES);
-    commands.insert_resource(TextureFolderHandle(textures_folder_handle));
+    let texture_handles = {
+        #[cfg(not(target_family = "wasm"))]
+        {
+            asset_server.load_folder(ASSET_FOLDER_TEXTURES)
+        }
+
+        #[cfg(target_family = "wasm")]
+        {
+            let asset_textures_list = [
+                format!("{ASSET_FOLDER_TEXTURES}/background.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/dragon.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/fire_breath.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/tileset_ground.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/tileset_objects.png"),
+            ];
+            asset_textures_list
+                .iter()
+                .map(|path| asset_server.load::<Image>(path))
+                .collect::<Vec<Handle<Image>>>()
+        }
+    };
+
+    commands.insert_resource(TextureHandles(texture_handles));
 }
 
 fn update_texture_assets_load_state(
     mut textures_load_state: ResMut<TexturesLoadState>,
-    textures_folder_handle: Res<TextureFolderHandle>,
+    texture_handles: Res<TextureHandles>,
     asset_server: Res<AssetServer>,
 ) {
-    textures_load_state.0 =
-        asset_server.recursive_dependency_load_state(textures_folder_handle.id());
+    *textures_load_state = {
+        #[cfg(not(target_family = "wasm"))]
+        {
+            asset_server
+                .recursive_dependency_load_state(texture_handles.id())
+                .into()
+        }
+        #[cfg(target_family = "wasm")]
+        {
+            let all_loaded = texture_handles.iter().all(|handle| {
+                asset_server.recursive_dependency_load_state(handle.id())
+                    == RecursiveDependencyLoadState::Loaded
+            });
+            if all_loaded {
+                RecursiveDependencyLoadState::Loaded.into()
+            } else {
+                RecursiveDependencyLoadState::NotLoaded.into()
+            }
+        }
+    };
 }
 
 pub fn texture_assets_loaded() -> impl Condition<()> {
-    IntoSystem::into_system(resource_equals(TexturesLoadState::LOADED))
+    IntoSystem::into_system(resource_equals(TexturesLoadState::Loaded))
 }

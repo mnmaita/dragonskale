@@ -10,6 +10,7 @@ use bevy::{
         RenderPlugin,
     },
 };
+use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
 use camera::CameraPlugin;
 use fonts::{font_assets_loaded, FontsPlugin};
 use game::GamePlugin;
@@ -34,6 +35,9 @@ fn main() {
     let mut app = App::new();
 
     app.add_plugins((
+        EmbeddedAssetPlugin {
+            mode: PluginMode::ReplaceDefault,
+        },
         DefaultPlugins
             // FIXME: Remove setting the backend explicitly to avoid noisy warnings
             // when https://github.com/gfx-rs/wgpu/issues/3959 gets fixed.
@@ -43,7 +47,19 @@ fn main() {
                     ..default()
                 }),
             })
-            .set(ImagePlugin::default_nearest()),
+            .set(ImagePlugin::default_nearest())
+            .set(AssetPlugin {
+                mode: AssetMode::Unprocessed,
+                ..default()
+            })
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "DragonSkale".into(),
+                    fit_canvas_to_parent: true,
+                    ..default()
+                }),
+                ..default()
+            }),
         AnimationPlugin,
         AudioPlugin,
         CameraPlugin,
