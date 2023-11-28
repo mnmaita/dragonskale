@@ -35,7 +35,7 @@ impl Plugin for LevelPlugin {
                 from: AppState::MainMenu,
                 to: AppState::InGame,
             },
-            generate_level_matrix,
+            (generate_level_matrix, generate_tilemaps),
         );
 
         app.add_systems(
@@ -48,6 +48,26 @@ impl Plugin for LevelPlugin {
             entity_cleanup::<With<SoundEffect>>,
         );
     }
+}
+
+fn generate_tilemaps(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let tileset_ground_texture = asset_server
+        .get_handle("textures/tileset_ground.png")
+        .unwrap_or_default();
+    let tileset_objects_texture = asset_server
+        .get_handle("textures/tileset_objects.png")
+        .unwrap_or_default();
+    let tileset_ground_texture_atlas =
+        TextureAtlas::from_grid(tileset_ground_texture, TILE_SIZE, 16, 18, None, None);
+    let tileset_objects_texture_atlas =
+        TextureAtlas::from_grid(tileset_objects_texture, TILE_SIZE, 38, 14, None, None);
+
+    commands.insert_resource(TilesetGroundTextureAtlasHandle(
+        asset_server.add(tileset_ground_texture_atlas),
+    ));
+    commands.insert_resource(TilesetObjectsTextureAtlasHandle(
+        asset_server.add(tileset_objects_texture_atlas),
+    ));
 }
 
 fn generate_level_matrix(mut commands: Commands) {
@@ -80,7 +100,11 @@ fn generate_level_matrix(mut commands: Commands) {
     commands.insert_resource(LevelMatrix(level_matrix));
 }
 
-fn spawn_level_tiles(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
+fn spawn_level_tiles(
+    mut commands: Commands,
+    level_matrix: Res<LevelMatrix>,
+    tileset_ground_texture_atlas_handle: Res<TilesetGroundTextureAtlasHandle>,
+) {
     for ((x, y), tile) in level_matrix.0.items() {
         let tile = *tile;
         let position = translate_grid_position_to_world_space(&(x, y));
@@ -88,12 +112,9 @@ fn spawn_level_tiles(mut commands: Commands, level_matrix: Res<LevelMatrix>) {
         let transform = Transform::from_translation(translation);
         let mut tile_entity = commands.spawn(TileBundle {
             render_layers: RenderLayers::layer(BACKGROUND_LAYER),
-            sprite: SpriteBundle {
-                sprite: Sprite {
-                    color: tile.into(),
-                    custom_size: Some(TILE_SIZE),
-                    ..default()
-                },
+            sprite: SpriteSheetBundle {
+                sprite: TextureAtlasSprite::new(tile.into()),
+                texture_atlas: tileset_ground_texture_atlas_handle.clone(),
                 transform,
                 ..default()
             },
@@ -160,6 +181,12 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
 }
 
 #[derive(Resource, Deref)]
+pub struct TilesetGroundTextureAtlasHandle(Handle<TextureAtlas>);
+
+#[derive(Resource, Deref)]
+pub struct TilesetObjectsTextureAtlasHandle(Handle<TextureAtlas>);
+
+#[derive(Resource, Deref)]
 pub struct LevelMatrix(Matrix<Tile>);
 
 #[derive(Bundle)]
@@ -183,7 +210,7 @@ pub struct BorderTile;
 #[derive(Bundle)]
 pub struct TileBundle {
     pub render_layers: RenderLayers,
-    pub sprite: SpriteBundle,
+    pub sprite: SpriteSheetBundle,
     pub tile: Tile,
 }
 
@@ -223,6 +250,27 @@ impl From<Tile> for Color {
             Tile::Water => Self::BLUE,
             Tile::Sand => Self::BEIGE,
             Tile::_LAST => Self::default(),
+        }
+    }
+}
+
+impl From<Tile> for usize {
+    fn from(value: Tile) -> Self {
+        match value {
+            Tile::Grass => 34,
+            Tile::Hills => 242,
+            Tile::Mountains => 242,
+            Tile::Sand => 183,
+            Tile::Water => {
+                if random::<f32>() > 0.1 {
+                    145
+                } else {
+                    let mut rng = rand::thread_rng();
+                    *[146_usize, 147, 148].choose(&mut rng).unwrap()
+                }
+            }
+            Tile::_LAST => 0,
+            _ => 0,
         }
     }
 }
