@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::view::RenderLayers, sprite};
 use bevy_rapier2d::prelude::*;
 use lazy_static::lazy_static;
-use rand::seq::IteratorRandom;
+use rand::{seq::IteratorRandom, Rng};
 use std::collections::HashMap;
 
 use crate::{
@@ -119,16 +119,34 @@ fn spawn_enemies(
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
     tile_query: Query<&Transform, With<BorderTile>>,
 ) {
-    let texture = asset_server
+    let texture_archer = asset_server
         .get_handle("textures/enemy_archer.png")
         .unwrap_or_default();
-    let texture_atlas = TextureAtlas::from_grid(texture, Vec2::new(72., 78.), 16, 8, None, None);
-    let texture_atlas_handle = asset_server.add(texture_atlas);
+
+    let texture_axe = asset_server
+        .get_handle("textures/enemy_axe.png")
+        .unwrap_or_default();
+
+    let texture_atlas_archer =
+        TextureAtlas::from_grid(texture_archer, Vec2::new(72., 78.), 16, 8, None, None);
+    let texture_atlas_handle_archer = asset_server.add(texture_atlas_archer);
+
+    let texture_atlas_axe =
+        TextureAtlas::from_grid(texture_axe, Vec2::new(72., 78.), 16, 8, None, None);
+    let texture_atlas_handle_axe = asset_server.add(texture_atlas_axe);
 
     if enemy_spawn_timer.tick(time.delta()).just_finished() {
         let mut rng = rand::thread_rng();
         if let Some(tile_transform) = tile_query.iter().choose(&mut rng) {
             let translation = tile_transform.translation.truncate().extend(1.);
+
+            //pick a random texture atlas handle between archer and axe
+            let texture_atlas_handle = if rng.gen_bool(0.5) {
+                texture_atlas_handle_archer
+            } else {
+                texture_atlas_handle_axe
+            };
+
             let mut enemy_entity_commands = commands.spawn(EnemyBundle {
                 attack_damage: AttackDamage(5),
                 attack_timer: AttackTimer::new(4.),
