@@ -3,7 +3,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
-    camera::{YSorted, SKY_LAYER},
+    camera::{RenderLayer, YSorted},
     AppState,
 };
 
@@ -54,7 +54,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         hitpoints: ResourcePool::<Health>::new(100),
         score: Score::new(0, 1),
         marker: Player,
-        render_layers: RenderLayers::layer(SKY_LAYER),
+        render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
         spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
             texture_atlas: texture_atlas_handle.clone(),
