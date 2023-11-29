@@ -36,7 +36,6 @@ struct MainMenuEntity;
 #[derive(Component)]
 enum MainMenuButtonAction {
     NewGame,
-    Settings,
     #[cfg(not(target_family = "wasm"))]
     Exit,
 }
@@ -69,30 +68,6 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 button.spawn(TextBundle {
                     text: Text::from_section(
                         "New Game",
-                        TextStyle {
-                            color: Color::BLACK,
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
-                            font_size: 32.0,
-                            ..default()
-                        },
-                    ),
-                    ..default()
-                });
-            });
-
-            node.spawn((
-                ButtonBundle {
-                    background_color: Color::ALICE_BLUE.into(),
-                    ..default()
-                },
-                MainMenuButtonAction::Settings,
-            ))
-            .with_children(|button| {
-                button.spawn(TextBundle {
-                    text: Text::from_section(
-                        "Settings",
                         TextStyle {
                             color: Color::BLACK,
                             font: asset_server
@@ -144,7 +119,6 @@ fn handle_main_menu_button_interactions(
                 #[cfg(not(target_family = "wasm"))]
                 MainMenuButtonAction::Exit => exit.send(AppExit),
                 MainMenuButtonAction::NewGame => app_state.set(AppState::InGame),
-                MainMenuButtonAction::Settings => (),
             },
             Interaction::Hovered => (),
             Interaction::None => (),
