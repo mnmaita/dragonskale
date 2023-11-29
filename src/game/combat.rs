@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
-    camera::{YSorted, SKY_LAYER},
+    camera::{RenderLayer, YSorted},
     playing,
 };
 
@@ -127,7 +127,7 @@ fn spawn_projectiles(
             damage: ImpactDamage(damage),
             emitter: Emitter(emitter),
             marker: Projectile,
-            render_layers: RenderLayers::layer(SKY_LAYER),
+            render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
             rigid_body: RigidBody::Dynamic,
             sprite: SpriteBundle {
                 sprite: Sprite {
@@ -148,7 +148,7 @@ fn spawn_projectiles(
         projectile_entity_commands.insert((
             Damping {
                 linear_damping: 1.0,
-                ..default()
+                angular_damping: 10.0,
             },
             InGameEntity,
             YSorted,

@@ -5,8 +5,12 @@ use rand::{seq::IteratorRandom, Rng};
 use std::collections::HashMap;
 
 use crate::{
+<<<<<<< HEAD
     animation::{AnimationIndices, AnimationTimer},
     camera::{YSorted, GROUND_LAYER},
+=======
+    camera::{RenderLayer, YSorted},
+>>>>>>> origin/main
     physics::Speed,
     playing,
 };
@@ -167,7 +171,7 @@ fn spawn_enemies(
                     ..default()
                 },
                 collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
-                render_layers: RenderLayers::layer(GROUND_LAYER),
+                render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
                 rigid_body: RigidBody::Dynamic,
                 collision_groups: CollisionGroups::new(
                     ENEMY_GROUP,
