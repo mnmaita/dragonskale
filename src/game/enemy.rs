@@ -1,8 +1,11 @@
-use bevy::{prelude::*, render::view::RenderLayers};
+use bevy::{prelude::*, render::view::RenderLayers, sprite};
 use bevy_rapier2d::prelude::*;
+use lazy_static::lazy_static;
 use rand::seq::IteratorRandom;
+use std::collections::HashMap;
 
 use crate::{
+    animation::{AnimationIndices, AnimationTimer},
     camera::{YSorted, GROUND_LAYER},
     physics::Speed,
     playing,
@@ -14,6 +17,31 @@ use super::{
     BorderTile, InGameEntity, Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP,
     HALF_TILE_SIZE, TILE_SIZE,
 };
+
+lazy_static! {
+    static ref SPRITE_ANIMATION_INDEX_MAP: HashMap<SpriteAnimation, [usize; 2]> = {
+        let mut m = HashMap::new();
+        m.insert(SpriteAnimation::RunLeft, [0,7]);
+        m.insert(SpriteAnimation::RunUpLeft, [16,23]); //4+32*fila, 11+32*fila
+        m.insert(SpriteAnimation::RunUp, [32,39]);
+        m.insert(SpriteAnimation::RunUpRight, [48,55]);
+        m.insert(SpriteAnimation::RunRight, [64,71]);
+        m.insert(SpriteAnimation::RunDownRight, [80,87]);
+        m.insert(SpriteAnimation::RunDown, [96,103]);
+        m.insert(SpriteAnimation::RunDownLeft, [112,119]);
+
+        // TODO update all indexes
+        m.insert(SpriteAnimation::AttackLeft,[12,15]);
+        m.insert(SpriteAnimation::AttackUpLeft,[28,31]);
+        m.insert(SpriteAnimation::AttackUp,[44,47]);
+        m.insert(SpriteAnimation::AttackUpRight,[60,63]);
+        m.insert(SpriteAnimation::AttackRight,[76,79]);
+        m.insert(SpriteAnimation::AttackDownRight,[92,95]);
+        m.insert(SpriteAnimation::AttackDown,[108,111]);
+        m.insert(SpriteAnimation::AttackDownLeft,[124,127]);
+        m
+    };
+}
 
 pub(super) struct EnemyPlugin;
 
@@ -37,11 +65,34 @@ pub struct EnemyBundle {
     pub marker: Enemy,
     pub range: Range,
     pub speed: Speed,
+    pub animation_indices: AnimationIndices,
+    pub animation_timer: AnimationTimer,
+    pub sprite_orientation: SpriteAnimation,
     pub sprite: SpriteSheetBundle,
     pub collider: Collider,
     pub render_layers: RenderLayers,
     pub rigid_body: RigidBody,
     pub collision_groups: CollisionGroups,
+}
+
+#[derive(Component, Eq, PartialEq, Hash, Debug, Copy, Clone)]
+pub enum SpriteAnimation {
+    RunLeft,
+    RunUpLeft,
+    RunUp,
+    RunUpRight,
+    RunRight,
+    RunDownRight,
+    RunDown,
+    RunDownLeft,
+    AttackLeft,
+    AttackUpLeft,
+    AttackUp,
+    AttackUpRight,
+    AttackRight,
+    AttackDownRight,
+    AttackDown,
+    AttackDownLeft,
 }
 
 #[derive(Component)]
@@ -68,10 +119,10 @@ fn spawn_enemies(
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
     tile_query: Query<&Transform, With<BorderTile>>,
 ) {
-     let texture = asset_server
+    let texture = asset_server
         .get_handle("textures/enemy_archer.png")
         .unwrap_or_default();
-    let texture_atlas = TextureAtlas::from_grid(texture, Vec2::new(50., 75.), 32, 8, None, None);
+    let texture_atlas = TextureAtlas::from_grid(texture, Vec2::new(72., 78.), 16, 8, None, None);
     let texture_atlas_handle = asset_server.add(texture_atlas);
 
     if enemy_spawn_timer.tick(time.delta()).just_finished() {
@@ -88,8 +139,11 @@ fn spawn_enemies(
                 marker: Enemy,
                 range: Range(TILE_SIZE.x * 12.),
                 speed: Speed(2.),
+                animation_indices: AnimationIndices::new(4, 11),
+                animation_timer: AnimationTimer::from_seconds(0.2),
+                sprite_orientation: SpriteAnimation::RunLeft,
                 sprite: SpriteSheetBundle {
-                    sprite: TextureAtlasSprite::new(0),
+                    sprite: TextureAtlasSprite::new(4),
                     texture_atlas: texture_atlas_handle.clone(),
                     transform: Transform::from_translation(translation),
                     ..default()
@@ -109,20 +163,90 @@ fn spawn_enemies(
 }
 
 fn handle_enemy_behavior(
-    mut enemy_query: Query<(&mut Transform, &Speed, &Behavior), With<Enemy>>,
+    mut enemy_query: Query<
+        (
+            &mut Transform,
+            &Speed,
+            &Behavior,
+            &mut SpriteAnimation,
+            &mut AnimationIndices,
+            &mut TextureAtlasSprite,
+        ),
+        With<Enemy>,
+    >,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
     let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
 
-    for (mut enemy_transform, enemy_speed, enemy_behavior) in &mut enemy_query {
+    for (
+        mut enemy_transform,
+        enemy_speed,
+        enemy_behavior,
+        mut sprite_orientation,
+        mut animation_indices,
+        mut sprite_index,
+    ) in &mut enemy_query
+    {
         match enemy_behavior {
             &Behavior::FollowPlayer { distance } => {
                 let enemy_position = enemy_transform.translation.truncate();
+
+                let enemy_direction = (player_position - enemy_position).normalize();
+                let old_sprite_orientation = *sprite_orientation;
+
                 if enemy_position.distance(player_position) > distance {
-                    let enemy_direction = (player_position - enemy_position).normalize();
                     enemy_transform.translation.x += enemy_direction.x * enemy_speed.0;
                     enemy_transform.translation.y += enemy_direction.y * enemy_speed.0;
+
+                    // determine enemy quadrant based on enemy_direction
+                    // and set sprite orientation accordingly
+                    if enemy_direction.x == 0. && enemy_direction.y > 0. {
+                        *sprite_orientation = SpriteAnimation::RunUp;
+                    } else if enemy_direction.x == 0. && enemy_direction.y < 0. {
+                        *sprite_orientation = SpriteAnimation::RunDown;
+                    } else if enemy_direction.x > 0. && enemy_direction.y == 0. {
+                        *sprite_orientation = SpriteAnimation::RunRight;
+                    } else if enemy_direction.x < 0. && enemy_direction.y == 0. {
+                        *sprite_orientation = SpriteAnimation::RunLeft;
+                    } else if enemy_direction.x > 0. && enemy_direction.y > 0. {
+                        *sprite_orientation = SpriteAnimation::RunUpRight;
+                    } else if enemy_direction.x > 0. && enemy_direction.y < 0. {
+                        *sprite_orientation = SpriteAnimation::RunDownRight;
+                    } else if enemy_direction.x < 0. && enemy_direction.y > 0. {
+                        *sprite_orientation = SpriteAnimation::RunUpLeft;
+                    } else if enemy_direction.x < 0. && enemy_direction.y < 0. {
+                        *sprite_orientation = SpriteAnimation::RunDownLeft;
+                    }
+                } else {
+                    if enemy_direction.x == 0. && enemy_direction.y > 0. {
+                        *sprite_orientation = SpriteAnimation::AttackUp;
+                    } else if enemy_direction.x == 0. && enemy_direction.y < 0. {
+                        *sprite_orientation = SpriteAnimation::AttackDown;
+                    } else if enemy_direction.x > 0. && enemy_direction.y == 0. {
+                        *sprite_orientation = SpriteAnimation::AttackRight;
+                    } else if enemy_direction.x < 0. && enemy_direction.y == 0. {
+                        *sprite_orientation = SpriteAnimation::AttackLeft;
+                    } else if enemy_direction.x > 0. && enemy_direction.y > 0. {
+                        *sprite_orientation = SpriteAnimation::AttackUpRight;
+                    } else if enemy_direction.x > 0. && enemy_direction.y < 0. {
+                        *sprite_orientation = SpriteAnimation::AttackDownRight;
+                    } else if enemy_direction.x < 0. && enemy_direction.y > 0. {
+                        *sprite_orientation = SpriteAnimation::AttackUpLeft;
+                    } else if enemy_direction.x < 0. && enemy_direction.y < 0. {
+                        *sprite_orientation = SpriteAnimation::AttackDownLeft;
+                    }
+                }
+
+                // if sprite orientation changed, update animation indices and sprite index
+                if old_sprite_orientation != *sprite_orientation {
+                    match SPRITE_ANIMATION_INDEX_MAP.get(&sprite_orientation) {
+                        Some(value) => {
+                            *animation_indices = AnimationIndices::new(value[0], value[1]);
+                            *sprite_index = TextureAtlasSprite::new(value[0]);
+                        }
+                        None => {}
+                    };
                 }
             }
         }

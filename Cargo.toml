@@ -30,6 +30,8 @@ noise = "0.8.2"
 rand = "0.8.5"
 pathfinding = "4.3.3"
 bevy_embedded_assets = "0.9.1"
+lazy_static = "1.4.0"
+
 
 [profile.dev.package."*"]
 opt-level = 3
