@@ -1,16 +1,12 @@
-use bevy::{prelude::*, render::view::RenderLayers, sprite};
+use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
 use lazy_static::lazy_static;
 use rand::{seq::IteratorRandom, Rng};
 use std::collections::HashMap;
 
 use crate::{
-<<<<<<< HEAD
     animation::{AnimationIndices, AnimationTimer},
-    camera::{YSorted, GROUND_LAYER},
-=======
     camera::{RenderLayer, YSorted},
->>>>>>> origin/main
     physics::Speed,
     playing,
 };
