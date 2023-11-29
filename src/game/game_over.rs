@@ -7,6 +7,7 @@ use crate::{audio::PlayMusicEvent, entity_cleanup, playing, AppState};
 
 use super::{
     resource_pool::{Health, ResourcePool},
+    score_system::Score,
     InGameEntity, Player,
 };
 
@@ -20,7 +21,7 @@ impl Plugin for GameOverPlugin {
             FixedUpdate,
             (
                 check_game_over_condition.run_if(playing()),
-                (fade_out_screen, fade_in_text)
+                (fade_out_screen, update_score_display, fade_in_text)
                     .chain()
                     .run_if(in_state(AppState::GameOver)),
             ),
@@ -52,6 +53,9 @@ struct GameOverBackground;
 #[derive(Component)]
 struct GameOverText;
 
+#[derive(Component)]
+struct ScoreDisplay;
+
 fn check_game_over_condition(
     mut next_state: ResMut<NextState<AppState>>,
     query: Query<&ResourcePool<Health>, (With<Player>, Changed<ResourcePool<Health>>)>,
@@ -63,7 +67,7 @@ fn check_game_over_condition(
     }
 }
 
-fn display_game_over_screen(mut commands: Commands) {
+fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             GameOverBackground,
@@ -90,7 +94,29 @@ fn display_game_over_screen(mut commands: Commands) {
                         "Game Over",
                         TextStyle {
                             color: Color::WHITE.with_a(0.),
+                            font: asset_server
+                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                                .unwrap_or_default(),
                             font_size: 64.,
+                            ..default()
+                        },
+                    ),
+                    ..default()
+                },
+            ));
+
+            builder.spawn((
+                GameOverText,
+                ScoreDisplay,
+                TextBundle {
+                    text: Text::from_section(
+                        "Score:",
+                        TextStyle {
+                            color: Color::WHITE.with_a(0.),
+                            font: asset_server
+                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                                .unwrap_or_default(),
+                            font_size: 32.,
                             ..default()
                         },
                     ),
@@ -114,6 +140,9 @@ fn display_game_over_screen(mut commands: Commands) {
                                 "Back to Menu",
                                 TextStyle {
                                     color: Color::WHITE.with_a(0.),
+                                    font: asset_server
+                                        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                                        .unwrap_or_default(),
                                     font_size: 32.0,
                                     ..default()
                                 },
@@ -131,6 +160,16 @@ fn fade_out_screen(mut query: Query<&mut BackgroundColor, With<GameOverBackgroun
     if background_color.0.a() < 1. {
         let alpha = background_color.0.a();
         background_color.0.set_a(alpha + 0.01);
+    }
+}
+
+fn update_score_display(
+    mut score_display_query: Query<&mut Text, (With<GameOverText>, With<ScoreDisplay>)>,
+    player_query: Query<&Score, With<Player>>,
+) {
+    if let Ok(player_score) = player_query.get_single() {
+        let mut score_text = score_display_query.single_mut();
+        score_text.sections[0].value = format!("Score: {}", player_score.current());
     }
 }
 
