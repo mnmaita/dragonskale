@@ -3,7 +3,7 @@ use bevy::{app::PluginGroupBuilder, prelude::*};
 use super::{
     combat::CombatPlugin, enemy::EnemyPlugin, fire_breath::FireBreathPlugin,
     game_over::GameOverPlugin, hud::HudPlugin, level::LevelPlugin, player::PlayerPlugin,
-    score_system::ScoreSystemPlugin,
+    score_system::ScoreSystemPlugin, power_up::PowerUpSystemPlugin,
 };
 
 pub struct GamePlugin;
@@ -18,6 +18,7 @@ impl PluginGroup for GamePlugin {
             .add(HudPlugin)
             .add(LevelPlugin)
             .add(PlayerPlugin)
+            .add(PowerUpSystemPlugin)
             .add(ScoreSystemPlugin)
     }
 }

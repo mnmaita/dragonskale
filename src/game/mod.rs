@@ -7,6 +7,7 @@ mod hud;
 mod level;
 mod player;
 mod plugin;
+mod power_up;
 mod resource_pool;
 mod score_system;
 
