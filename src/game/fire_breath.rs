@@ -66,16 +66,37 @@ fn spawn_fire_breath(
         return;
     }
 
+    let fire_texture = asset_server
+        .get_handle("textures/fire_anim.png")
+        .unwrap_or_default();
+
+    let texture_atlas_fire =
+        TextureAtlas::from_grid(fire_texture, Vec2::new(40., 40.), 2, 1, None, None);
+    let texture_atlas_handle_fire = asset_server.add(texture_atlas_fire);
+
+    let mut indices = Vec::new();
+    indices.push(0);
+    indices.push(1);
+
+    let animated_index: AtlasIndex = AtlasIndex::Animated(AnimatedIndex {
+        indices,
+        time_step: 0.2,
+        step_offset: 0,
+    });
+
     for &SpawnFireBreathEvent { damage, position } in spawn_fire_breath_event_reader.read() {
         let mut fire_breath_entity_commands = commands.spawn(FireBreathBundle {
             marker: Fire,
             particle_system: ParticleSystemBundle {
                 transform: Transform::from_translation(position.extend(1.0)),
                 particle_system: ParticleSystem {
-                    z_value_override: Some(JitteredValue::new(0.9)),
+                    z_value_override: Some(JitteredValue::new(1.)),
                     max_particles: 10_000,
-                    texture: ParticleTexture::Sprite(asset_server.load("textures/fire_breath.png")),
-                    spawn_rate_per_second: 10.0.into(),
+                    texture: ParticleTexture::TextureAtlas {
+                        atlas: texture_atlas_handle_fire.clone(),
+                        index: animated_index.clone(),
+                    },
+                    spawn_rate_per_second: 5.0.into(),
                     initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
                     lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
                     looping: false,
