@@ -311,7 +311,7 @@ fn handle_enemy_attacks(
                     direction,
                     emitter,
                     enemy_position,
-                    1000.,
+                    800.,
                 ))
             }
         }
