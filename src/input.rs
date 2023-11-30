@@ -1,9 +1,10 @@
-use std::f32::consts::FRAC_PI_2;
+use std::{f32::consts::FRAC_PI_2, time::Duration};
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 
 use crate::{
-    camera::MainCamera, game::Player, game::SpawnFireBreathEvent, physics::Speed, playing, AppState,
+    animation::AnimationTimer, camera::MainCamera, game::Player, game::SpawnFireBreathEvent,
+    physics::Speed, playing, AppState,
 };
 
 pub struct InputPlugin;
@@ -102,11 +103,11 @@ fn mouse_input(
 }
 
 fn player_movement(
-    mut query: Query<(&mut Transform, &Speed), With<Player>>,
+    mut query: Query<(&mut Transform, &Speed, &mut AnimationTimer), With<Player>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
 ) {
     if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
-        let (mut player_transform, player_speed) = query.single_mut();
+        let (mut player_transform, player_speed, mut player_animation_timer) = query.single_mut();
         let player_position = player_transform.translation.truncate();
         let cursor_to_player_vector = cursor_position - player_position;
 
@@ -118,6 +119,11 @@ fn player_movement(
             if cursor_distance_to_player > 80.5 {
                 player_transform.translation.x += direction.x * player_speed.0 * velocity_rate;
                 player_transform.translation.y += direction.y * player_speed.0 * velocity_rate;
+                player_animation_timer.set_duration(Duration::from_secs_f32(
+                    0.2 * player_speed.0 * 0.25 * velocity_rate,
+                ));
+            } else {
+                player_animation_timer.set_duration(Duration::from_secs_f32(0.2));
             }
 
             if direction != Vec2::ZERO {
