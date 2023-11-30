@@ -2,7 +2,9 @@ use std::f32::consts::FRAC_PI_2;
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 
-use crate::{camera::MainCamera, game::Player, game::SpawnFireBreathEvent, playing, AppState};
+use crate::{
+    camera::MainCamera, game::Player, game::SpawnFireBreathEvent, physics::Speed, playing, AppState,
+};
 
 pub struct InputPlugin;
 
@@ -12,7 +14,7 @@ impl Plugin for InputPlugin {
             PreUpdate,
             (
                 clear_input.run_if(state_changed::<AppState>()),
-                mouse_input.run_if(playing()),
+                (mouse_input, player_movement).run_if(playing()),
             )
                 .chain(),
         );
@@ -50,39 +52,11 @@ struct FireBreathSfx;
 fn mouse_input(
     mut commands: Commands,
     mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
-    mut query: Query<&mut Transform, With<Player>>,
+    query: Query<&Transform, With<Player>>,
     sfx_query: Query<Entity, With<FireBreathSfx>>,
     asset_server: Res<AssetServer>,
-    cursor_world_position_checker: CursorWorldPositionChecker,
     mouse_input: ResMut<Input<MouseButton>>,
 ) {
-    if mouse_input.pressed(MouseButton::Right) {
-        if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
-            let mut player_transform = query.single_mut();
-            let player_position = player_transform.translation.truncate();
-            let cursor_to_player_vector = cursor_position - player_position;
-            let cursor_distance_to_player = cursor_position.distance(player_position);
-            let velocity_rate = cursor_distance_to_player.min(300.) / 300.;
-
-            if cursor_to_player_vector != Vec2::ZERO {
-                let direction = cursor_to_player_vector.normalize();
-
-                player_transform.translation.x += direction.x * 15. * velocity_rate;
-                player_transform.translation.y += direction.y * 15. * velocity_rate;
-
-                if direction != Vec2::ZERO {
-                    let angle = (direction).angle_between(Vec2::X);
-
-                    if angle.is_finite() {
-                        // FIXME: Rotate the image sprite to always face right?
-                        // FRAC_PI_2 is subtracted to offset the 90 degree rotation from the X axis the sprite has.
-                        player_transform.rotation = Quat::from_rotation_z(-angle - FRAC_PI_2);
-                    }
-                }
-            }
-        }
-    }
-
     if mouse_input.just_pressed(MouseButton::Left) {
         commands.spawn((
             AudioBundle {
@@ -124,6 +98,38 @@ fn mouse_input(
         let fire_position = player_transform.translation.truncate() + player_direction * 90.;
 
         spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1, fire_position));
+    }
+}
+
+fn player_movement(
+    mut query: Query<(&mut Transform, &Speed), With<Player>>,
+    cursor_world_position_checker: CursorWorldPositionChecker,
+) {
+    if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
+        let (mut player_transform, player_speed) = query.single_mut();
+        let player_position = player_transform.translation.truncate();
+        let cursor_to_player_vector = cursor_position - player_position;
+
+        if cursor_to_player_vector != Vec2::ZERO {
+            let cursor_distance_to_player = cursor_position.distance(player_position);
+            let velocity_rate = cursor_distance_to_player.min(300.) / 300.;
+            let direction = cursor_to_player_vector.normalize();
+
+            if cursor_distance_to_player > 80.5 {
+                player_transform.translation.x += direction.x * player_speed.0 * velocity_rate;
+                player_transform.translation.y += direction.y * player_speed.0 * velocity_rate;
+            }
+
+            if direction != Vec2::ZERO {
+                let angle = (direction).angle_between(Vec2::X);
+
+                if angle.is_finite() {
+                    // FIXME: Rotate the image sprite to always face right?
+                    // FRAC_PI_2 is subtracted to offset the 90 degree rotation from the X axis the sprite has.
+                    player_transform.rotation = Quat::from_rotation_z(-angle - FRAC_PI_2);
+                }
+            }
+        }
     }
 }
 

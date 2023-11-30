@@ -4,6 +4,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
     camera::{RenderLayer, YSorted},
+    physics::Speed,
     AppState,
 };
 
@@ -30,6 +31,7 @@ pub struct PlayerBundle {
     pub fire_breath_resource: ResourcePool<Fire>,
     pub hitpoints: ResourcePool<Health>,
     pub score: Score,
+    pub speed: Speed,
     pub marker: Player,
     pub render_layers: RenderLayers,
     pub spritesheet: SpriteSheetBundle,
@@ -55,10 +57,11 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         score: Score::new(0, 1),
         marker: Player,
         render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
+        speed: Speed(10.),
         spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
             texture_atlas: texture_atlas_handle.clone(),
-            transform: Transform::from_translation(Vec2::ZERO.extend(1.)),
+            transform: Transform::from_translation(Vec2::ONE.extend(1.)),
             ..default()
         },
     });
