@@ -1,11 +1,8 @@
-use bevy::{
-    app::Update,
-    prelude::*,
-    render::view::RenderLayers,
-};
+use bevy::{app::Update, prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::{
     dynamics::{LockedAxes, RigidBody},
     geometry::{Collider, CollisionGroups},
+    plugin::RapierContext,
 };
 use rand::Rng;
 
@@ -15,14 +12,18 @@ use crate::{
     playing,
 };
 
-use super::{plugin::InGameEntity, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, HALF_TILE_SIZE};
+use super::{
+    plugin::InGameEntity,
+    resource_pool::{Health, ResourcePool},
+    Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, HALF_TILE_SIZE, PLAYER_GROUP,
+};
 
 pub(super) struct PowerUpSystemPlugin;
 
 impl Plugin for PowerUpSystemPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<PowerUpEvent>();
-        app.add_systems(Update, spawn_powerups.run_if(playing()));
+        app.add_systems(Update, (spawn_powerups, consume_powerups).run_if(playing()));
     }
 }
 
@@ -106,10 +107,7 @@ fn spawn_powerups(
                         collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
                         render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
                         rigid_body: RigidBody::Dynamic,
-                        collision_groups: CollisionGroups::new(
-                            ENEMY_GROUP,
-                            ENEMY_GROUP | BUILDING_GROUP | FIRE_BREATH_GROUP,
-                        ),
+                        collision_groups: CollisionGroups::new(PLAYER_GROUP, PLAYER_GROUP),
                     });
                     powerup_entity_commands.insert((
                         InGameEntity,
@@ -121,9 +119,21 @@ fn spawn_powerups(
         }
     }
 }
-/*
+
 fn consume_powerups(
-    mut score_event_reader: EventReader<ScoreEvent>,
-    mut player_score_query: Query<&mut Score, With<Player>>,
-)
- */
+    mut commands: Commands,
+    mut powerup_query: Query<Entity, With<PowerUp>>,
+    mut player_query: Query<&mut ResourcePool<Health>, With<Player>>,
+    rapier_context: Res<RapierContext>,
+) {
+    for entity in &powerup_query {
+        for (entity1, entity2, intersecting) in rapier_context.intersections_with(entity) {
+            if intersecting {
+                if let Ok(mut hitpoints) = player_query.get_single_mut() {
+                    hitpoints.add(50)
+                }
+                commands.entity(entity).despawn_recursive();
+            }
+        }
+    }
+}
