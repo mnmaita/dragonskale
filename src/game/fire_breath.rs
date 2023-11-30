@@ -96,7 +96,7 @@ fn spawn_fire_breath(
                         atlas: texture_atlas_handle_fire.clone(),
                         index: animated_index.clone(),
                     },
-                    spawn_rate_per_second: 10.0.into(),
+                    spawn_rate_per_second: 5.0.into(),
                     initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
                     lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
                     looping: false,
