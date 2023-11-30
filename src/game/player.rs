@@ -50,7 +50,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut player_entity_commands = commands.spawn(PlayerBundle {
         animation_indices: AnimationIndices::new(0, 2),
         animation_timer: AnimationTimer::from_seconds(0.2),
-        collider: Collider::ball(80.5),
+        collider: Collider::cuboid(15., 40.),
         collision_groups: CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
         fire_breath_resource: ResourcePool::<Fire>::new(100),
         hitpoints: ResourcePool::<Health>::new(100),

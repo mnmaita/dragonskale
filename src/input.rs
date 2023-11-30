@@ -1,6 +1,7 @@
 use std::{f32::consts::FRAC_PI_2, time::Duration};
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
+use bevy_rapier2d::prelude::Collider;
 
 use crate::{
     animation::AnimationTimer, camera::MainCamera, game::Player, game::SpawnFireBreathEvent,
@@ -103,11 +104,12 @@ fn mouse_input(
 }
 
 fn player_movement(
-    mut query: Query<(&mut Transform, &Speed, &mut AnimationTimer), With<Player>>,
+    mut query: Query<(&mut Transform, &Speed, &mut AnimationTimer, &Collider), With<Player>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
 ) {
     if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
-        let (mut player_transform, player_speed, mut player_animation_timer) = query.single_mut();
+        let (mut player_transform, player_speed, mut player_animation_timer, player_collider) =
+            query.single_mut();
         let player_position = player_transform.translation.truncate();
         let cursor_to_player_vector = cursor_position - player_position;
 
@@ -116,7 +118,7 @@ fn player_movement(
             let velocity_rate = cursor_distance_to_player.min(300.) / 300.;
             let direction = cursor_to_player_vector.normalize();
 
-            if cursor_distance_to_player > 80.5 {
+            if cursor_distance_to_player > player_collider.as_cuboid().unwrap().half_extents().y {
                 player_transform.translation.x += direction.x * player_speed.0 * velocity_rate;
                 player_transform.translation.y += direction.y * player_speed.0 * velocity_rate;
                 player_animation_timer.set_duration(Duration::from_secs_f32(
