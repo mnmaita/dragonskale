@@ -11,7 +11,7 @@ use super::{
     power_up::{PowerUpEvent, PowerUpEventType},
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{ScoreEvent, ScoreEventType},
-    Enemy, InGameEntity, Player, Tile, HALF_TILE_SIZE, PLAYER_GROUP, PROJECTILE_GROUP,
+    Enemy, InGameEntity, Player, Tile, PLAYER_GROUP, PROJECTILE_GROUP, TILE_SIZE,
 };
 
 pub(super) struct CombatPlugin;
@@ -107,7 +107,7 @@ fn spawn_projectiles(
         speed,
     } in spawn_projectile_event_reader.read()
     {
-        let size = Vec2::new(HALF_TILE_SIZE.x, 3.);
+        let size = Vec2::new(TILE_SIZE.x, 4.);
         let angle = if direction != Vec2::ZERO {
             let mut angle = (direction).angle_between(Vec2::X);
             if !angle.is_finite() {
