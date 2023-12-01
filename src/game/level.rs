@@ -348,6 +348,7 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
     play_music_event_writer.send(PlayMusicEvent::new(
         "theme2.ogg",
         Some(PlaybackSettings {
+            mode: bevy::audio::PlaybackMode::Loop,
             volume: Volume::Absolute(VolumeLevel::new(0.25)),
             ..default()
         }),
