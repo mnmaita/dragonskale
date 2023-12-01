@@ -8,7 +8,7 @@ use crate::{
     animation::{AnimationIndices, AnimationTimer},
     camera::{RenderLayer, YSorted},
     physics::Speed,
-    playing,
+    playing, AppState,
 };
 
 use super::{
@@ -48,7 +48,7 @@ pub(super) struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnTimer::new(3.));
-
+        app.add_systems(OnEnter(AppState::InGame), load_atlas_handlers);
         app.add_systems(
             FixedUpdate,
             (spawn_enemies, handle_enemy_behavior, handle_enemy_attacks).run_if(playing()),
@@ -112,29 +112,42 @@ pub enum Behavior {
     FollowPlayer { distance: f32 },
 }
 
-fn spawn_enemies(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    time: Res<Time>,
-    mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
-    tile_query: Query<&Transform, With<BorderTile>>,
-) {
+#[derive(Resource)]
+pub struct TextureArcherAtlasHandle(Handle<TextureAtlas>);
+
+#[derive(Resource)]
+pub struct TextureAxeAtlasHandle(Handle<TextureAtlas>);
+
+fn load_atlas_handlers(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture_archer = asset_server
         .get_handle("textures/enemy_archer.png")
-        .unwrap_or_default();
-
-    let texture_axe = asset_server
-        .get_handle("textures/enemy_axe.png")
         .unwrap_or_default();
 
     let texture_atlas_archer =
         TextureAtlas::from_grid(texture_archer, Vec2::new(72., 78.), 16, 8, None, None);
     let texture_atlas_handle_archer = asset_server.add(texture_atlas_archer);
 
+    commands.insert_resource(TextureArcherAtlasHandle(texture_atlas_handle_archer));
+
+    let texture_axe = asset_server
+        .get_handle("textures/enemy_axe.png")
+        .unwrap_or_default();
+
     let texture_atlas_axe =
         TextureAtlas::from_grid(texture_axe, Vec2::new(72., 78.), 16, 8, None, None);
     let texture_atlas_handle_axe = asset_server.add(texture_atlas_axe);
 
+    commands.insert_resource(TextureAxeAtlasHandle(texture_atlas_handle_axe));
+}
+
+fn spawn_enemies(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
+    tile_query: Query<&Transform, With<BorderTile>>,
+    texture_archer_atlas_handle: Res<TextureArcherAtlasHandle>,
+    texture_axeman_atlas_handle: Res<TextureAxeAtlasHandle>,
+) {
     if enemy_spawn_timer.tick(time.delta()).just_finished() {
         let mut rng = rand::thread_rng();
         if let Some(tile_transform) = tile_query.iter().choose(&mut rng) {
@@ -142,9 +155,9 @@ fn spawn_enemies(
 
             //pick a random texture atlas handle between archer and axe
             let texture_atlas_handle = if rng.gen_bool(0.5) {
-                texture_atlas_handle_archer
+                texture_archer_atlas_handle.0.clone()
             } else {
-                texture_atlas_handle_axe
+                texture_axeman_atlas_handle.0.clone()
             };
 
             let mut enemy_entity_commands = commands.spawn(EnemyBundle {
