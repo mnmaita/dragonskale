@@ -181,13 +181,13 @@ fn spawn_enemies(
 
             let mut enemy_entity_commands = commands.spawn(EnemyBundle {
                 attack_damage: AttackDamage(5),
-                attack_timer: AttackTimer::new(4.),
+                attack_timer: AttackTimer::new(3.),
                 behavior: Behavior::FollowPlayer {
                     distance: TILE_SIZE.x * 6.,
                 },
                 hitpoints: ResourcePool::<Health>::new(1),
                 marker: Enemy,
-                range: Range(TILE_SIZE.x * 12.),
+                range: Range(TILE_SIZE.x * 15.),
                 speed: Speed(2.),
                 animation_indices: AnimationIndices::new(4, 11),
                 animation_timer: AnimationTimer::from_seconds(0.2),

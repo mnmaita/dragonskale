@@ -166,12 +166,12 @@ fn spawn_buildings(
         let mut building_entity_commands = commands.spawn(BuildingBundle {
             active_collision_types: ActiveCollisionTypes::all(),
             attack_damage: AttackDamage(5),
-            attack_timer: AttackTimer::new(6.),
+            attack_timer: AttackTimer::new(4.),
             collider: Collider::ball(HALF_TILE_SIZE.x),
             collision_groups: CollisionGroups::new(BUILDING_GROUP, ENEMY_GROUP | FIRE_BREATH_GROUP),
             hitpoints: ResourcePool::<Health>::new(1000),
             marker: Enemy,
-            range: Range(TILE_SIZE.x * 15.),
+            range: Range(TILE_SIZE.x * 20.),
             render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
             rigid_body: RigidBody::Fixed,
             sprite: SpriteBundle {
