@@ -41,6 +41,10 @@ enum MainMenuButtonAction {
 }
 
 fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server
+        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+        .unwrap_or_default();
+
     commands
         .spawn((
             NodeBundle {
@@ -84,11 +88,8 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         "New Game",
                         TextStyle {
                             color: Color::BLACK,
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
+                            font: font.clone(),
                             font_size: 32.0,
-                            ..default()
                         },
                     ),
                     ..default()
@@ -114,11 +115,8 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         "Exit",
                         TextStyle {
                             color: Color::BLACK,
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
+                            font: font.clone(),
                             font_size: 32.0,
-                            ..default()
                         },
                     ),
                     ..default()

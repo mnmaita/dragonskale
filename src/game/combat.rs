@@ -210,7 +210,7 @@ fn despawn_dead_entities(
             commands.entity(entity).despawn_recursive();
             score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
             powerup_event_writer.send(PowerUpEvent::new(
-                transform.clone(),
+                *transform,
                 PowerUpEventType::HealingScale,
             ));
         }

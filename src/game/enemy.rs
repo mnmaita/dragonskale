@@ -272,34 +272,29 @@ fn handle_enemy_behavior(
                     } else if enemy_direction.x < 0. && enemy_direction.y < 0. {
                         *sprite_orientation = SpriteAnimation::RunDownLeft;
                     }
-                } else {
-                    if enemy_direction.x == 0. && enemy_direction.y > 0. {
-                        *sprite_orientation = SpriteAnimation::AttackUp;
-                    } else if enemy_direction.x == 0. && enemy_direction.y < 0. {
-                        *sprite_orientation = SpriteAnimation::AttackDown;
-                    } else if enemy_direction.x > 0. && enemy_direction.y == 0. {
-                        *sprite_orientation = SpriteAnimation::AttackRight;
-                    } else if enemy_direction.x < 0. && enemy_direction.y == 0. {
-                        *sprite_orientation = SpriteAnimation::AttackLeft;
-                    } else if enemy_direction.x > 0. && enemy_direction.y > 0. {
-                        *sprite_orientation = SpriteAnimation::AttackUpRight;
-                    } else if enemy_direction.x > 0. && enemy_direction.y < 0. {
-                        *sprite_orientation = SpriteAnimation::AttackDownRight;
-                    } else if enemy_direction.x < 0. && enemy_direction.y > 0. {
-                        *sprite_orientation = SpriteAnimation::AttackUpLeft;
-                    } else if enemy_direction.x < 0. && enemy_direction.y < 0. {
-                        *sprite_orientation = SpriteAnimation::AttackDownLeft;
-                    }
+                } else if enemy_direction.x == 0. && enemy_direction.y > 0. {
+                    *sprite_orientation = SpriteAnimation::AttackUp;
+                } else if enemy_direction.x == 0. && enemy_direction.y < 0. {
+                    *sprite_orientation = SpriteAnimation::AttackDown;
+                } else if enemy_direction.x > 0. && enemy_direction.y == 0. {
+                    *sprite_orientation = SpriteAnimation::AttackRight;
+                } else if enemy_direction.x < 0. && enemy_direction.y == 0. {
+                    *sprite_orientation = SpriteAnimation::AttackLeft;
+                } else if enemy_direction.x > 0. && enemy_direction.y > 0. {
+                    *sprite_orientation = SpriteAnimation::AttackUpRight;
+                } else if enemy_direction.x > 0. && enemy_direction.y < 0. {
+                    *sprite_orientation = SpriteAnimation::AttackDownRight;
+                } else if enemy_direction.x < 0. && enemy_direction.y > 0. {
+                    *sprite_orientation = SpriteAnimation::AttackUpLeft;
+                } else if enemy_direction.x < 0. && enemy_direction.y < 0. {
+                    *sprite_orientation = SpriteAnimation::AttackDownLeft;
                 }
 
                 // if sprite orientation changed, update animation indices and sprite index
                 if old_sprite_orientation != *sprite_orientation {
-                    match SPRITE_ANIMATION_INDEX_MAP.get(&sprite_orientation) {
-                        Some(value) => {
-                            *animation_indices = AnimationIndices::new(value[0], value[1]);
-                            *sprite_index = TextureAtlasSprite::new(value[0]);
-                        }
-                        None => {}
+                    if let Some(value) = SPRITE_ANIMATION_INDEX_MAP.get(&sprite_orientation) {
+                        *animation_indices = AnimationIndices::new(value[0], value[1]);
+                        *sprite_index = TextureAtlasSprite::new(value[0]);
                     };
                 }
             }
