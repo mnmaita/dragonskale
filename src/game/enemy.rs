@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
 use lazy_static::lazy_static;
 use rand::{seq::IteratorRandom, Rng};
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
@@ -48,7 +48,12 @@ pub(super) struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnTimer::new(3.));
-        app.add_systems(OnEnter(AppState::InGame), load_atlas_handlers);
+
+        app.add_systems(
+            OnEnter(AppState::InGame),
+            (load_atlas_handlers, setup_enemy_spawn_counter),
+        );
+
         app.add_systems(
             FixedUpdate,
             (spawn_enemies, handle_enemy_behavior, handle_enemy_attacks).run_if(playing()),
@@ -98,6 +103,9 @@ pub enum SpriteAnimation {
 #[derive(Component)]
 pub struct Enemy;
 
+#[derive(Resource)]
+struct EnemySpawnCounter(u32);
+
 #[derive(Resource, Deref, DerefMut)]
 struct EnemySpawnTimer(Timer);
 
@@ -144,11 +152,22 @@ fn spawn_enemies(
     mut commands: Commands,
     time: Res<Time>,
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
+    mut enemy_spawn_counter: ResMut<EnemySpawnCounter>,
     tile_query: Query<&Transform, With<BorderTile>>,
     texture_archer_atlas_handle: Res<TextureArcherAtlasHandle>,
     texture_axeman_atlas_handle: Res<TextureAxeAtlasHandle>,
 ) {
+    let duration = enemy_spawn_timer.duration();
+
     if enemy_spawn_timer.tick(time.delta()).just_finished() {
+        enemy_spawn_counter.0 = enemy_spawn_counter.0.wrapping_add(1);
+
+        if enemy_spawn_counter.0 % 10 == 0 {
+            enemy_spawn_timer.set_duration(Duration::from_secs_f32(
+                1.0_f32.max(duration.as_secs_f32() - 0.5),
+            ));
+        }
+
         let mut rng = rand::thread_rng();
         if let Some(tile_transform) = tile_query.iter().choose(&mut rng) {
             let translation = tile_transform.translation.truncate().extend(1.);
@@ -191,6 +210,10 @@ fn spawn_enemies(
             enemy_entity_commands.insert((InGameEntity, LockedAxes::ROTATION_LOCKED, YSorted));
         }
     }
+}
+
+fn setup_enemy_spawn_counter(mut commands: Commands) {
+    commands.insert_resource(EnemySpawnCounter(0));
 }
 
 fn handle_enemy_behavior(
