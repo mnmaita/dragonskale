@@ -1491,6 +1491,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
+name = "dragonskale"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_embedded_assets",
+ "bevy_particle_systems",
+ "bevy_rapier2d",
+ "lazy_static",
+ "noise",
+ "pathfinding",
+ "rand 0.8.5",
+]
+
+[[package]]
 name = "either"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1700,20 +1714,6 @@ dependencies = [
  "memchr",
  "parking",
  "pin-project-lite",
-]
-
-[[package]]
-name = "game-off-2023"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_embedded_assets",
- "bevy_particle_systems",
- "bevy_rapier2d",
- "lazy_static",
- "noise",
- "pathfinding",
- "rand 0.8.5",
 ]
 
 [[package]]
