@@ -57,9 +57,23 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             MainMenuEntity,
         ))
         .with_children(|node| {
+            node.spawn(ImageBundle {
+                image: UiImage::new(
+                    asset_server
+                        .get_handle("textures/menu_background.png")
+                        .unwrap_or_default(),
+                ),
+                ..default()
+            });
+
             node.spawn((
                 ButtonBundle {
                     background_color: Color::ALICE_BLUE.into(),
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Percent(12.),
+                        ..default()
+                    },
                     ..default()
                 },
                 MainMenuButtonAction::NewGame,
@@ -85,6 +99,11 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             node.spawn((
                 ButtonBundle {
                     background_color: Color::ALICE_BLUE.into(),
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Percent(6.),
+                        ..default()
+                    },
                     ..default()
                 },
                 MainMenuButtonAction::Exit,
