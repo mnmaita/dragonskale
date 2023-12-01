@@ -60,7 +60,6 @@ fn load_textures(mut commands: Commands, asset_server: Res<AssetServer>) {
         #[cfg(target_family = "wasm")]
         {
             let asset_textures_list = [
-                format!("{ASSET_FOLDER_TEXTURES}/background.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/dragon.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/enemy_archer.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/enemy_axe.png"),
