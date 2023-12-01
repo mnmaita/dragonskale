@@ -1,2 +1,2 @@
-# game-off-2023
+# DragonSkale
 Game Off 2023 submission.
