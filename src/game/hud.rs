@@ -125,7 +125,6 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
                             .unwrap_or_default(),
                         font_size: 40.0,
                         color: Color::GOLD,
-                        ..default()
                     },
                 }],
                 ..default()

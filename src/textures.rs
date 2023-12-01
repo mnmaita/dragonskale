@@ -62,7 +62,14 @@ fn load_textures(mut commands: Commands, asset_server: Res<AssetServer>) {
             let asset_textures_list = [
                 format!("{ASSET_FOLDER_TEXTURES}/background.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/dragon.png"),
-                format!("{ASSET_FOLDER_TEXTURES}/fire_breath.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/enemy_archer.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/enemy_axe.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/fire_anim_washed.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/fire_anim.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/fire_strech.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/fire_wide.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/menu_background.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/scale_anim.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/tileset_ground.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/tileset_objects.png"),
             ];

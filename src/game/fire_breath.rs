@@ -73,13 +73,8 @@ fn spawn_fire_breath(
     let texture_atlas_fire =
         TextureAtlas::from_grid(fire_texture, Vec2::new(40., 40.), 2, 1, None, None);
     let texture_atlas_handle_fire = asset_server.add(texture_atlas_fire);
-
-    let mut indices = Vec::new();
-    indices.push(0);
-    indices.push(1);
-
     let animated_index: AtlasIndex = AtlasIndex::Animated(AnimatedIndex {
-        indices,
+        indices: vec![0, 1],
         time_step: 0.2,
         step_offset: 0,
     });

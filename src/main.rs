@@ -77,6 +77,8 @@ fn main() {
 
     app.insert_resource(Msaa::Off);
 
+    app.insert_resource(ClearColor(Color::rgb(0., 0., 0.)));
+
     app.add_systems(
         Update,
         handle_asset_load.run_if(assets_loaded().and_then(run_once())),

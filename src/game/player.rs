@@ -4,6 +4,7 @@ use bevy_rapier2d::prelude::*;
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
     camera::{RenderLayer, YSorted},
+    physics::Speed,
     AppState,
 };
 
@@ -30,6 +31,7 @@ pub struct PlayerBundle {
     pub fire_breath_resource: ResourcePool<Fire>,
     pub hitpoints: ResourcePool<Health>,
     pub score: Score,
+    pub speed: Speed,
     pub marker: Player,
     pub render_layers: RenderLayers,
     pub spritesheet: SpriteSheetBundle,
@@ -48,17 +50,18 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let mut player_entity_commands = commands.spawn(PlayerBundle {
         animation_indices: AnimationIndices::new(0, 2),
         animation_timer: AnimationTimer::from_seconds(0.2),
-        collider: Collider::ball(80.5),
+        collider: Collider::cuboid(15., 40.),
         collision_groups: CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
         fire_breath_resource: ResourcePool::<Fire>::new(100),
         hitpoints: ResourcePool::<Health>::new(100),
         score: Score::new(0, 1),
         marker: Player,
         render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
+        speed: Speed(10.),
         spritesheet: SpriteSheetBundle {
             sprite: TextureAtlasSprite::new(0),
             texture_atlas: texture_atlas_handle.clone(),
-            transform: Transform::from_translation(Vec2::ZERO.extend(1.)),
+            transform: Transform::from_translation(Vec2::ONE.extend(1.)),
             ..default()
         },
     });

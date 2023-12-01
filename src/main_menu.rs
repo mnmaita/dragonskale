@@ -41,6 +41,10 @@ enum MainMenuButtonAction {
 }
 
 fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server
+        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+        .unwrap_or_default();
+
     commands
         .spawn((
             NodeBundle {
@@ -57,9 +61,23 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             MainMenuEntity,
         ))
         .with_children(|node| {
+            node.spawn(ImageBundle {
+                image: UiImage::new(
+                    asset_server
+                        .get_handle("textures/menu_background.png")
+                        .unwrap_or_default(),
+                ),
+                ..default()
+            });
+
             node.spawn((
                 ButtonBundle {
                     background_color: Color::ALICE_BLUE.into(),
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Percent(12.),
+                        ..default()
+                    },
                     ..default()
                 },
                 MainMenuButtonAction::NewGame,
@@ -70,11 +88,8 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         "New Game",
                         TextStyle {
                             color: Color::BLACK,
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
+                            font: font.clone(),
                             font_size: 32.0,
-                            ..default()
                         },
                     ),
                     ..default()
@@ -85,6 +100,11 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             node.spawn((
                 ButtonBundle {
                     background_color: Color::ALICE_BLUE.into(),
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Percent(6.),
+                        ..default()
+                    },
                     ..default()
                 },
                 MainMenuButtonAction::Exit,
@@ -95,11 +115,8 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         "Exit",
                         TextStyle {
                             color: Color::BLACK,
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
+                            font: font.clone(),
                             font_size: 32.0,
-                            ..default()
                         },
                     ),
                     ..default()

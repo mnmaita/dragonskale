@@ -7,11 +7,10 @@ use crate::{
 };
 
 use super::{
-    level::TileQuery,
     power_up::{PowerUpEvent, PowerUpEventType},
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{ScoreEvent, ScoreEventType},
-    Enemy, InGameEntity, Player, Tile, HALF_TILE_SIZE, PLAYER_GROUP, PROJECTILE_GROUP,
+    Enemy, InGameEntity, Player, PLAYER_GROUP, PROJECTILE_GROUP, TILE_SIZE,
 };
 
 pub(super) struct CombatPlugin;
@@ -107,7 +106,7 @@ fn spawn_projectiles(
         speed,
     } in spawn_projectile_event_reader.read()
     {
-        let size = Vec2::new(HALF_TILE_SIZE.x, 3.);
+        let size = Vec2::new(TILE_SIZE.x, 4.);
         let angle = if direction != Vec2::ZERO {
             let mut angle = (direction).angle_between(Vec2::X);
             if !angle.is_finite() {
@@ -211,7 +210,7 @@ fn despawn_dead_entities(
             commands.entity(entity).despawn_recursive();
             score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
             powerup_event_writer.send(PowerUpEvent::new(
-                transform.clone(),
+                *transform,
                 PowerUpEventType::HealingScale,
             ));
         }
@@ -220,20 +219,12 @@ fn despawn_dead_entities(
 
 fn despawn_projectiles(
     mut commands: Commands,
-    projectile_query: Query<(Entity, &Transform, &Velocity), With<Projectile>>,
-    tile_query: TileQuery,
+    projectile_query: Query<(Entity, &Velocity), With<Projectile>>,
 ) {
-    for (entity, transform, velocity) in &projectile_query {
+    for (entity, velocity) in &projectile_query {
         if velocity.linvel.length() < 60. {
-            if let Some(tile) = tile_query.get_from_position(transform.translation.truncate()) {
-                if *tile == Tile::Water {
-                    // TODO: Decouple this with a Despawn component
-                    commands.entity(entity).despawn_recursive();
-                } else {
-                    // TODO: Add a DespawnTimer for arrows that land on the ground
-                    commands.entity(entity).insert(ColliderDisabled);
-                }
-            }
+            // TODO: Decouple this with a Despawn component
+            commands.entity(entity).despawn_recursive();
         }
     }
 }

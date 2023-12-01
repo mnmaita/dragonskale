@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
 use lazy_static::lazy_static;
 use rand::{seq::IteratorRandom, Rng};
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
@@ -48,7 +48,12 @@ pub(super) struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnTimer::new(3.));
-        app.add_systems(OnEnter(AppState::InGame), load_atlas_handlers);
+
+        app.add_systems(
+            OnEnter(AppState::InGame),
+            (load_atlas_handlers, setup_enemy_spawn_counter),
+        );
+
         app.add_systems(
             FixedUpdate,
             (spawn_enemies, handle_enemy_behavior, handle_enemy_attacks).run_if(playing()),
@@ -98,6 +103,9 @@ pub enum SpriteAnimation {
 #[derive(Component)]
 pub struct Enemy;
 
+#[derive(Resource)]
+struct EnemySpawnCounter(u32);
+
 #[derive(Resource, Deref, DerefMut)]
 struct EnemySpawnTimer(Timer);
 
@@ -144,11 +152,22 @@ fn spawn_enemies(
     mut commands: Commands,
     time: Res<Time>,
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
+    mut enemy_spawn_counter: ResMut<EnemySpawnCounter>,
     tile_query: Query<&Transform, With<BorderTile>>,
     texture_archer_atlas_handle: Res<TextureArcherAtlasHandle>,
     texture_axeman_atlas_handle: Res<TextureAxeAtlasHandle>,
 ) {
+    let duration = enemy_spawn_timer.duration();
+
     if enemy_spawn_timer.tick(time.delta()).just_finished() {
+        enemy_spawn_counter.0 = enemy_spawn_counter.0.wrapping_add(1);
+
+        if enemy_spawn_counter.0 % 10 == 0 {
+            enemy_spawn_timer.set_duration(Duration::from_secs_f32(
+                1.0_f32.max(duration.as_secs_f32() - 0.5),
+            ));
+        }
+
         let mut rng = rand::thread_rng();
         if let Some(tile_transform) = tile_query.iter().choose(&mut rng) {
             let translation = tile_transform.translation.truncate().extend(1.);
@@ -162,13 +181,13 @@ fn spawn_enemies(
 
             let mut enemy_entity_commands = commands.spawn(EnemyBundle {
                 attack_damage: AttackDamage(5),
-                attack_timer: AttackTimer::new(4.),
+                attack_timer: AttackTimer::new(3.),
                 behavior: Behavior::FollowPlayer {
                     distance: TILE_SIZE.x * 6.,
                 },
                 hitpoints: ResourcePool::<Health>::new(1),
                 marker: Enemy,
-                range: Range(TILE_SIZE.x * 12.),
+                range: Range(TILE_SIZE.x * 15.),
                 speed: Speed(2.),
                 animation_indices: AnimationIndices::new(4, 11),
                 animation_timer: AnimationTimer::from_seconds(0.2),
@@ -191,6 +210,10 @@ fn spawn_enemies(
             enemy_entity_commands.insert((InGameEntity, LockedAxes::ROTATION_LOCKED, YSorted));
         }
     }
+}
+
+fn setup_enemy_spawn_counter(mut commands: Commands) {
+    commands.insert_resource(EnemySpawnCounter(0));
 }
 
 fn handle_enemy_behavior(
@@ -249,34 +272,29 @@ fn handle_enemy_behavior(
                     } else if enemy_direction.x < 0. && enemy_direction.y < 0. {
                         *sprite_orientation = SpriteAnimation::RunDownLeft;
                     }
-                } else {
-                    if enemy_direction.x == 0. && enemy_direction.y > 0. {
-                        *sprite_orientation = SpriteAnimation::AttackUp;
-                    } else if enemy_direction.x == 0. && enemy_direction.y < 0. {
-                        *sprite_orientation = SpriteAnimation::AttackDown;
-                    } else if enemy_direction.x > 0. && enemy_direction.y == 0. {
-                        *sprite_orientation = SpriteAnimation::AttackRight;
-                    } else if enemy_direction.x < 0. && enemy_direction.y == 0. {
-                        *sprite_orientation = SpriteAnimation::AttackLeft;
-                    } else if enemy_direction.x > 0. && enemy_direction.y > 0. {
-                        *sprite_orientation = SpriteAnimation::AttackUpRight;
-                    } else if enemy_direction.x > 0. && enemy_direction.y < 0. {
-                        *sprite_orientation = SpriteAnimation::AttackDownRight;
-                    } else if enemy_direction.x < 0. && enemy_direction.y > 0. {
-                        *sprite_orientation = SpriteAnimation::AttackUpLeft;
-                    } else if enemy_direction.x < 0. && enemy_direction.y < 0. {
-                        *sprite_orientation = SpriteAnimation::AttackDownLeft;
-                    }
+                } else if enemy_direction.x == 0. && enemy_direction.y > 0. {
+                    *sprite_orientation = SpriteAnimation::AttackUp;
+                } else if enemy_direction.x == 0. && enemy_direction.y < 0. {
+                    *sprite_orientation = SpriteAnimation::AttackDown;
+                } else if enemy_direction.x > 0. && enemy_direction.y == 0. {
+                    *sprite_orientation = SpriteAnimation::AttackRight;
+                } else if enemy_direction.x < 0. && enemy_direction.y == 0. {
+                    *sprite_orientation = SpriteAnimation::AttackLeft;
+                } else if enemy_direction.x > 0. && enemy_direction.y > 0. {
+                    *sprite_orientation = SpriteAnimation::AttackUpRight;
+                } else if enemy_direction.x > 0. && enemy_direction.y < 0. {
+                    *sprite_orientation = SpriteAnimation::AttackDownRight;
+                } else if enemy_direction.x < 0. && enemy_direction.y > 0. {
+                    *sprite_orientation = SpriteAnimation::AttackUpLeft;
+                } else if enemy_direction.x < 0. && enemy_direction.y < 0. {
+                    *sprite_orientation = SpriteAnimation::AttackDownLeft;
                 }
 
                 // if sprite orientation changed, update animation indices and sprite index
                 if old_sprite_orientation != *sprite_orientation {
-                    match SPRITE_ANIMATION_INDEX_MAP.get(&sprite_orientation) {
-                        Some(value) => {
-                            *animation_indices = AnimationIndices::new(value[0], value[1]);
-                            *sprite_index = TextureAtlasSprite::new(value[0]);
-                        }
-                        None => {}
+                    if let Some(value) = SPRITE_ANIMATION_INDEX_MAP.get(&sprite_orientation) {
+                        *animation_indices = AnimationIndices::new(value[0], value[1]);
+                        *sprite_index = TextureAtlasSprite::new(value[0]);
                     };
                 }
             }
@@ -311,7 +329,7 @@ fn handle_enemy_attacks(
                     direction,
                     emitter,
                     enemy_position,
-                    1000.,
+                    800.,
                 ))
             }
         }

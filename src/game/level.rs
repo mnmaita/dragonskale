@@ -46,6 +46,7 @@ impl Plugin for LevelPlugin {
                 spawn_buildings,
                 spawn_hills,
                 spawn_mountains,
+                spawn_waves,
                 play_background_music,
             )
                 .chain(),
@@ -165,12 +166,12 @@ fn spawn_buildings(
         let mut building_entity_commands = commands.spawn(BuildingBundle {
             active_collision_types: ActiveCollisionTypes::all(),
             attack_damage: AttackDamage(5),
-            attack_timer: AttackTimer::new(6.),
+            attack_timer: AttackTimer::new(4.),
             collider: Collider::ball(HALF_TILE_SIZE.x),
             collision_groups: CollisionGroups::new(BUILDING_GROUP, ENEMY_GROUP | FIRE_BREATH_GROUP),
             hitpoints: ResourcePool::<Health>::new(1000),
             marker: Enemy,
-            range: Range(TILE_SIZE.x * 15.),
+            range: Range(TILE_SIZE.x * 20.),
             render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
             rigid_body: RigidBody::Fixed,
             sprite: SpriteBundle {
@@ -288,6 +289,55 @@ fn spawn_mountains(
 
         mountain_entity_commands.insert((
             RenderLayers::layer(RenderLayer::Topography.into()),
+            InGameEntity,
+            YSortedInverse,
+        ));
+    }
+}
+
+fn spawn_waves(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    level_matrix: Res<LevelMatrix>,
+) {
+    const WAVE_TILE_SIZE: Vec2 = Vec2::new(32., 16.);
+    const POSITION_OFFSET_FACTOR: f32 = 8.;
+
+    let water_tiles: Vec<Vec2> = level_matrix
+        .items()
+        .filter(|(_, tile)| **tile == Tile::Water)
+        .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
+        .collect();
+    let mut rng = rand::thread_rng();
+    let wave_tiles =
+        water_tiles.choose_multiple(&mut rng, (water_tiles.len() as f32 * 0.05) as usize);
+    let texture = asset_server
+        .get_handle("textures/tileset_objects.png")
+        .unwrap_or_default();
+
+    for position in wave_tiles {
+        let position_offset = Vec2::new(
+            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            -WAVE_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+        );
+        let translation = (*position + position_offset).extend(1.);
+        let mut wave_entity_commands = commands.spawn(SpriteBundle {
+            sprite: Sprite {
+                anchor: Anchor::BottomCenter,
+                flip_x: rng.gen_bool(0.3),
+                rect: Some(Rect::from_corners(
+                    Vec2::new(208., 176.),
+                    Vec2::new(240., 192.),
+                )),
+                ..default()
+            },
+            texture: texture.clone(),
+            transform: Transform::from_translation(translation),
+            ..default()
+        });
+
+        wave_entity_commands.insert((
+            RenderLayers::layer(RenderLayer::Ground.into()),
             InGameEntity,
             YSortedInverse,
         ));

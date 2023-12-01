@@ -98,7 +98,6 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
                                 .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
                                 .unwrap_or_default(),
                             font_size: 64.,
-                            ..default()
                         },
                     ),
                     ..default()
@@ -117,7 +116,6 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
                                 .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
                                 .unwrap_or_default(),
                             font_size: 32.,
-                            ..default()
                         },
                     ),
                     ..default()
@@ -144,7 +142,6 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
                                         .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
                                         .unwrap_or_default(),
                                     font_size: 32.0,
-                                    ..default()
                                 },
                             ),
                             ..default()
