@@ -11,3 +11,4 @@ pub const ENEMY_GROUP: Group = Group::GROUP_2;
 pub const PROJECTILE_GROUP: Group = Group::GROUP_3;
 pub const BUILDING_GROUP: Group = Group::GROUP_4;
 pub const FIRE_BREATH_GROUP: Group = Group::GROUP_5;
+pub const POWERUP_GROUP: Group = Group::GROUP_6;

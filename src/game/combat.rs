@@ -8,6 +8,7 @@ use crate::{
 
 use super::{
     level::TileQuery,
+    power_up::{PowerUpEvent, PowerUpEventType},
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{ScoreEvent, ScoreEventType},
     Enemy, InGameEntity, Player, Tile, HALF_TILE_SIZE, PLAYER_GROUP, PROJECTILE_GROUP,
@@ -199,12 +200,20 @@ fn compute_damage_from_intersections(
 fn despawn_dead_entities(
     mut commands: Commands,
     mut score_event_writer: EventWriter<ScoreEvent>,
-    query: Query<(Entity, &ResourcePool<Health>), (Without<Player>, Changed<ResourcePool<Health>>)>,
+    mut powerup_event_writer: EventWriter<PowerUpEvent>,
+    query: Query<
+        (Entity, &ResourcePool<Health>, &Transform),
+        (Without<Player>, Changed<ResourcePool<Health>>),
+    >,
 ) {
-    for (entity, health) in &query {
+    for (entity, health, transform) in &query {
         if health.current() == 0 {
             commands.entity(entity).despawn_recursive();
             score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
+            powerup_event_writer.send(PowerUpEvent::new(
+                transform.clone(),
+                PowerUpEventType::HealingScale,
+            ));
         }
     }
 }
