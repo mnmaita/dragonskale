@@ -68,6 +68,7 @@ fn load_textures(mut commands: Commands, asset_server: Res<AssetServer>) {
                 format!("{ASSET_FOLDER_TEXTURES}/fire_anim.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/fire_strech.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/fire_wide.png"),
+                format!("{ASSET_FOLDER_TEXTURES}/menu_background.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/scale_anim.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/tileset_ground.png"),
                 format!("{ASSET_FOLDER_TEXTURES}/tileset_objects.png"),
