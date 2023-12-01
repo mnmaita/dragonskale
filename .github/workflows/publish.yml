@@ -16,7 +16,7 @@ jobs:
         include:
           - platform: windows
             target: x86_64-pc-windows-gnu
-            executable_name: ${{ vars.KEBAB_CASE_GAME_NAME }}.exe
+            executable_name: "${{ vars.KEBAB_CASE_GAME_NAME }}.exe"
           - platform: web
             target: wasm32-unknown-unknown
 
