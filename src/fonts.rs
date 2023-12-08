@@ -14,7 +14,7 @@ impl Plugin for FontsPlugin {
         app.add_systems(Startup, load_fonts);
         app.add_systems(
             Update,
-            update_font_assets_load_state.run_if(resource_equals(FontsLoadState::default())),
+            update_font_assets_load_state.run_if(not(resource_equals(FontsLoadState::Loaded))),
         );
     }
 }
