@@ -1,2 +1,7 @@
+[profile.web]
+inherits = "release"
+opt-level = "s"
+lto = "thin"
+
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"

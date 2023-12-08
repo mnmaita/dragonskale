@@ -33,7 +33,7 @@ impl Plugin for AudioPlugin {
                 update_sound_effect_assets_load_state,
             )
                 .chain()
-                .run_if(resource_equals(AudioLoadStates::default())),
+                .run_if(not(resource_equals(AudioLoadStates::LOADED))),
         );
     }
 }

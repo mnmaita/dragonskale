@@ -14,7 +14,8 @@ impl Plugin for TexturesPlugin {
         app.add_systems(Startup, load_textures);
         app.add_systems(
             Update,
-            update_texture_assets_load_state.run_if(resource_equals(TexturesLoadState::default())),
+            update_texture_assets_load_state
+                .run_if(not(resource_equals(TexturesLoadState::Loaded))),
         );
     }
 }

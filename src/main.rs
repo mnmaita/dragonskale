@@ -41,12 +41,17 @@ fn main() {
         DefaultPlugins
             // FIXME: Remove setting the backend explicitly to avoid noisy warnings
             // when https://github.com/gfx-rs/wgpu/issues/3959 gets fixed.
-            .set(RenderPlugin {
-                render_creation: RenderCreation::Automatic(WgpuSettings {
-                    backends: Some(Backends::DX12),
-                    ..default()
-                }),
-            })
+            .set(
+                #[cfg(not(target_family = "wasm"))]
+                RenderPlugin {
+                    render_creation: RenderCreation::Automatic(WgpuSettings {
+                        backends: Some(Backends::DX12),
+                        ..default()
+                    }),
+                },
+                #[cfg(target_family = "wasm")]
+                RenderPlugin::default(),
+            )
             .set(ImagePlugin::default_nearest())
             .set(AssetPlugin {
                 mode: AssetMode::Unprocessed,
