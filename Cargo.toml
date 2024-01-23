@@ -7,7 +7,7 @@ rust-version = "1.74.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { version = "0.12.0", default-features = false, features = [
+bevy = { version = "0.12.1", default-features = false, features = [
     "bevy_asset",
     "bevy_audio",
     "bevy_core_pipeline",
@@ -26,10 +26,10 @@ bevy = { version = "0.12.0", default-features = false, features = [
     "x11",
 ] }
 bevy_rapier2d = { version = "0.23.0", features = ["debug-render-2d"] }
-bevy_particle_systems = "0.11.1"
+bevy_particle_systems = "0.11.2"
 noise = "0.8.2"
 rand = "0.8.5"
-pathfinding = "4.3.3"
+pathfinding = "4.8.2"
 bevy_embedded_assets = "0.9.1"
 lazy_static = "1.4.0"
 
