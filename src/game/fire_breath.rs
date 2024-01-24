@@ -27,6 +27,11 @@ impl Plugin for FireBreathPlugin {
         );
 
         app.add_systems(Update, spawn_fire_breath.run_if(playing()));
+
+        app.add_systems(
+            PostUpdate,
+            update_fire_particles_render_layers.run_if(playing()),
+        );
     }
 }
 
@@ -83,9 +88,8 @@ fn spawn_fire_breath(
         let mut fire_breath_entity_commands = commands.spawn(FireBreathBundle {
             marker: Fire,
             particle_system: ParticleSystemBundle {
-                transform: Transform::from_translation(position.extend(1.0)),
+                transform: Transform::from_translation(position.extend(10.0)),
                 particle_system: ParticleSystem {
-                    z_value_override: Some(JitteredValue::new(1.)),
                     max_particles: 10_000,
                     texture: ParticleTexture::TextureAtlas {
                         atlas: texture_atlas_handle_fire.clone(),
@@ -101,7 +105,7 @@ fn spawn_fire_breath(
                 },
                 ..ParticleSystemBundle::default()
             },
-            render_layers: RenderLayers::layer(RenderLayer::Background.into()),
+            render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
             sensor: Sensor,
             collider: Collider::ball(25.0),
             damage: ImpactDamage(damage),
@@ -113,6 +117,18 @@ fn spawn_fire_breath(
             Playing,
             YSorted,
         ));
+    }
+}
+
+fn update_fire_particles_render_layers(
+    mut commands: Commands,
+    query: Query<(Entity, &Particle)>,
+    render_layers_query: Query<&RenderLayers>,
+) {
+    for (entity, particle) in &query {
+        if let Ok(render_layers) = render_layers_query.get(particle.parent_system) {
+            commands.entity(entity).insert(*render_layers);
+        }
     }
 }
 
