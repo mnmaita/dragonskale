@@ -725,9 +725,9 @@ checksum = "c77ec20c8fafcdc196508ef5ccb4f0400a8d193cb61f7b14a36ed9a25ad423cf"
 
 [[package]]
 name = "bevy_rapier2d"
-version = "0.23.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58085b0900f932a9fbd2cdb9db0869effa9a0ebb0ad9ddf9a2474cf60ce6789d"
+checksum = "457bb7e63adc64000033baf83813c2592a11f9579a0fe574f09f943d88d6815c"
 dependencies = [
  "bevy",
  "bitflags 2.4.2",
@@ -2848,9 +2848,9 @@ checksum = "9c8a99fddc9f0ba0a85884b8d14e3592853e787d581ca1816c91349b10e4eeab"
 
 [[package]]
 name = "rapier2d"
-version = "0.17.2"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f94d294a9b96694c14888dd0e8ce77620dcc4f2f49264109ef835fa5e2285b84"
+checksum = "48a3ec4ae89e0837c0ff6f29af32a8e5d78dfabe2273dcd945cfaf3f5d2b1501"
 dependencies = [
  "approx",
  "arrayvec",
@@ -2859,7 +2859,7 @@ dependencies = [
  "crossbeam",
  "downcast-rs",
  "nalgebra",
- "num-derive 0.3.3",
+ "num-derive 0.4.1",
  "num-traits",
  "parry2d",
  "rustc-hash",
