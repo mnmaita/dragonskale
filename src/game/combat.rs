@@ -184,7 +184,7 @@ fn compute_damage_from_intersections(
     rapier_context: Res<RapierContext>,
 ) {
     for (entity, damage) in &fire_query {
-        for (entity1, entity2, intersecting) in rapier_context.intersections_with(entity) {
+        for (entity1, entity2, intersecting) in rapier_context.intersection_pairs_with(entity) {
             let other_entity = if entity1 == entity { entity2 } else { entity1 };
 
             if intersecting {

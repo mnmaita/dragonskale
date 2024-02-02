@@ -132,7 +132,7 @@ fn consume_powerups(
     rapier_context: Res<RapierContext>,
 ) {
     for entity in &powerup_query {
-        for (_, _, intersecting) in rapier_context.intersections_with(entity) {
+        for (_, _, intersecting) in rapier_context.intersection_pairs_with(entity) {
             if intersecting {
                 if let Ok(mut hitpoints) = player_query.get_single_mut() {
                     hitpoints.add(50);
