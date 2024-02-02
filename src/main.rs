@@ -3,7 +3,7 @@
 use animation::AnimationPlugin;
 use audio::{audio_assets_loaded, AudioPlugin, BackgroundMusic};
 use bevy::{
-    ecs::query::ReadOnlyWorldQuery,
+    ecs::{event::EventUpdateSignal, query::ReadOnlyWorldQuery},
     prelude::*,
     render::{
         settings::{Backends, RenderCreation, WgpuSettings},
@@ -77,6 +77,8 @@ fn main() {
         PhysicsPlugin,
         TexturesPlugin,
     ));
+
+    app.world.remove_resource::<EventUpdateSignal>();
 
     app.add_state::<AppState>();
 
