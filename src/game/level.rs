@@ -320,7 +320,7 @@ fn spawn_waves(
             rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
             -WAVE_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
         );
-        let translation = (*position + position_offset).extend(1.);
+        let translation = (*position + position_offset).extend(2.);
         let mut wave_entity_commands = commands.spawn(SpriteBundle {
             sprite: Sprite {
                 anchor: Anchor::BottomCenter,
@@ -337,7 +337,7 @@ fn spawn_waves(
         });
 
         wave_entity_commands.insert((
-            RenderLayers::layer(RenderLayer::Ground.into()),
+            RenderLayers::layer(RenderLayer::Background.into()),
             InGameEntity,
             YSortedInverse,
         ));
