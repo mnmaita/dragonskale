@@ -467,10 +467,8 @@ impl<'w, 's> TileQuery<'w, 's> {
 }
 
 pub fn translate_transform_to_grid_space(transform: &Transform) -> (usize, usize) {
-    let half_columns = GRID_SIZE.x * 0.5;
-    let half_rows = GRID_SIZE.y * 0.5;
-    let x = ((transform.translation.x / TILE_SIZE.x) + half_columns).round();
-    let y = ((transform.translation.y / TILE_SIZE.y) + half_rows).round();
+    let x = ((transform.translation.x / TILE_SIZE.x) + HALF_GRID_SIZE.x).round();
+    let y = ((transform.translation.y / TILE_SIZE.y) + HALF_GRID_SIZE.y).round();
     if x >= 0.0 && y >= 0.0 {
         (x as usize, y as usize)
     } else {
