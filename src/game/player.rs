@@ -44,8 +44,9 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture = asset_server
         .get_handle("textures/dragon.png")
         .unwrap_or_default();
-    let texture_atlas = TextureAtlas::from_grid(texture, Vec2::new(191., 161.), 12, 1, None, None);
-    let texture_atlas_handle = asset_server.add(texture_atlas);
+    let texture_atlas_layout =
+        TextureAtlasLayout::from_grid(Vec2::new(191., 161.), 12, 1, None, None);
+    let texture_atlas_layout_handle = asset_server.add(texture_atlas_layout);
 
     let mut player_entity_commands = commands.spawn(PlayerBundle {
         animation_indices: AnimationIndices::new(0, 2),
@@ -59,8 +60,11 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
         speed: Speed(10.),
         spritesheet: SpriteSheetBundle {
-            sprite: TextureAtlasSprite::new(0),
-            texture_atlas: texture_atlas_handle.clone(),
+            atlas: TextureAtlas {
+                layout: texture_atlas_layout_handle,
+                index: 0,
+            },
+            texture,
             transform: Transform::from_translation(Vec2::ONE.extend(1.)),
             ..default()
         },

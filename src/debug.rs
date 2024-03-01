@@ -67,7 +67,7 @@ fn draw_camera_constraints(
 }
 
 fn draw_mouse_direction(
-    mouse_input: ResMut<Input<MouseButton>>,
+    mouse_input: ResMut<ButtonInput<MouseButton>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
     query: Query<&Transform, With<Player>>,
     mut gizmos: Gizmos,
