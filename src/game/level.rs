@@ -56,12 +56,6 @@ impl Plugin for LevelPlugin {
 }
 
 fn generate_tilemaps(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // let tileset_ground_texture = asset_server
-    //     .get_handle("textures/tileset_ground.png")
-    //     .unwrap_or_default();
-    // let tileset_objects_texture = asset_server
-    //     .get_handle("textures/tileset_objects.png")
-    //     .unwrap_or_default();
     let tileset_ground_texture_atlas_layout =
         TextureAtlasLayout::from_grid(TILE_SIZE, 16, 18, None, None);
     let tileset_objects_texture_atlas =
