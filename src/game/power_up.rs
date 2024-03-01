@@ -67,25 +67,29 @@ pub struct PowerUpBundle {
 pub struct PowerUp;
 
 #[derive(Resource)]
-pub struct ScaleTextureAtlasHandler(Handle<TextureAtlas>);
+pub struct ScaleTextureAtlasLayoutHandle(Handle<TextureAtlasLayout>);
 
 fn load_scale_atlas(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture_healing_scale = asset_server
-        .get_handle("textures/scale_anim.png")
-        .unwrap_or_default();
+    let texture_atlas_layout_healing_scale =
+        TextureAtlasLayout::from_grid(Vec2::new(40., 40.), 2, 1, None, None);
+    let texture_atlas_layout_handle_healing_scale =
+        asset_server.add(texture_atlas_layout_healing_scale);
 
-    let texture_atlas_healing_scale =
-        TextureAtlas::from_grid(texture_healing_scale, Vec2::new(40., 40.), 2, 1, None, None);
-    let texture_atlas_handle_healing_scale = asset_server.add(texture_atlas_healing_scale);
-
-    commands.insert_resource(ScaleTextureAtlasHandler(texture_atlas_handle_healing_scale));
+    commands.insert_resource(ScaleTextureAtlasLayoutHandle(
+        texture_atlas_layout_handle_healing_scale,
+    ));
 }
 
 fn spawn_powerups(
     mut commands: Commands,
-    scale_texture_atlas_handler: Res<ScaleTextureAtlasHandler>,
+    asset_server: Res<AssetServer>,
+    scale_texture_atlas_handler: Res<ScaleTextureAtlasLayoutHandle>,
     mut powerup_event_reader: EventReader<PowerUpEvent>,
 ) {
+    let texture_healing_scale = asset_server
+        .get_handle("textures/scale_anim.png")
+        .unwrap_or_default();
+
     for PowerUpEvent {
         transform,
         powerup_event_type,
@@ -93,18 +97,19 @@ fn spawn_powerups(
     {
         match powerup_event_type {
             PowerUpEventType::HealingScale => {
-                // spawn powerup entity here with transform
-
                 let mut rng = rand::thread_rng();
+
                 if rng.gen_bool(0.1) {
-                    // spawneo
                     let mut powerup_entity_commands = commands.spawn(PowerUpBundle {
                         marker: PowerUp,
                         animation_indices: AnimationIndices::new(0, 1),
                         animation_timer: AnimationTimer::from_seconds(0.2),
                         sprite: SpriteSheetBundle {
-                            sprite: TextureAtlasSprite::new(0),
-                            texture_atlas: scale_texture_atlas_handler.0.clone(),
+                            atlas: TextureAtlas {
+                                layout: scale_texture_atlas_handler.0.clone(),
+                                index: 0,
+                            },
+                            texture: texture_healing_scale.clone(),
                             transform: *transform,
                             ..default()
                         },
@@ -113,6 +118,7 @@ fn spawn_powerups(
                         sensor: Sensor,
                         collision_groups: CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP),
                     });
+
                     powerup_entity_commands.insert((
                         InGameEntity,
                         LockedAxes::ROTATION_LOCKED,

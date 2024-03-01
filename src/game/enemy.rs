@@ -121,28 +121,19 @@ pub enum Behavior {
 }
 
 #[derive(Resource)]
-pub struct TextureArcherAtlasHandle(Handle<TextureAtlas>);
+pub struct TextureArcherAtlasHandle(Handle<TextureAtlasLayout>);
 
 #[derive(Resource)]
-pub struct TextureAxeAtlasHandle(Handle<TextureAtlas>);
+pub struct TextureAxeAtlasHandle(Handle<TextureAtlasLayout>);
 
 fn load_atlas_handlers(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture_archer = asset_server
-        .get_handle("textures/enemy_archer.png")
-        .unwrap_or_default();
-
     let texture_atlas_archer =
-        TextureAtlas::from_grid(texture_archer, Vec2::new(72., 78.), 16, 8, None, None);
+        TextureAtlasLayout::from_grid(Vec2::new(72., 78.), 16, 8, None, None);
     let texture_atlas_handle_archer = asset_server.add(texture_atlas_archer);
 
     commands.insert_resource(TextureArcherAtlasHandle(texture_atlas_handle_archer));
 
-    let texture_axe = asset_server
-        .get_handle("textures/enemy_axe.png")
-        .unwrap_or_default();
-
-    let texture_atlas_axe =
-        TextureAtlas::from_grid(texture_axe, Vec2::new(72., 78.), 16, 8, None, None);
+    let texture_atlas_axe = TextureAtlasLayout::from_grid(Vec2::new(72., 78.), 16, 8, None, None);
     let texture_atlas_handle_axe = asset_server.add(texture_atlas_axe);
 
     commands.insert_resource(TextureAxeAtlasHandle(texture_atlas_handle_axe));
@@ -150,6 +141,7 @@ fn load_atlas_handlers(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn spawn_enemies(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     time: Res<Time>,
     mut enemy_spawn_timer: ResMut<EnemySpawnTimer>,
     mut enemy_spawn_counter: ResMut<EnemySpawnCounter>,
@@ -173,10 +165,20 @@ fn spawn_enemies(
             let translation = tile_transform.translation.truncate().extend(1.);
 
             //pick a random texture atlas handle between archer and axe
-            let texture_atlas_handle = if rng.gen_bool(0.5) {
-                texture_archer_atlas_handle.0.clone()
+            let (texture_atlas_handle, texture) = if rng.gen_bool(0.5) {
+                (
+                    texture_archer_atlas_handle.0.clone(),
+                    asset_server
+                        .get_handle("textures/enemy_archer.png")
+                        .unwrap_or_default(),
+                )
             } else {
-                texture_axeman_atlas_handle.0.clone()
+                (
+                    texture_axeman_atlas_handle.0.clone(),
+                    asset_server
+                        .get_handle("textures/enemy_axe.png")
+                        .unwrap_or_default(),
+                )
             };
 
             let mut enemy_entity_commands = commands.spawn(EnemyBundle {
@@ -193,8 +195,11 @@ fn spawn_enemies(
                 animation_timer: AnimationTimer::from_seconds(0.2),
                 sprite_orientation: SpriteAnimation::RunLeft,
                 sprite: SpriteSheetBundle {
-                    sprite: TextureAtlasSprite::new(4),
-                    texture_atlas: texture_atlas_handle.clone(),
+                    atlas: TextureAtlas {
+                        layout: texture_atlas_handle,
+                        index: 4,
+                    },
+                    texture,
                     transform: Transform::from_translation(translation),
                     ..default()
                 },
@@ -224,7 +229,7 @@ fn handle_enemy_behavior(
             &Behavior,
             &mut SpriteAnimation,
             &mut AnimationIndices,
-            &mut TextureAtlasSprite,
+            &mut TextureAtlas,
         ),
         With<Enemy>,
     >,
@@ -239,7 +244,7 @@ fn handle_enemy_behavior(
         enemy_behavior,
         mut sprite_orientation,
         mut animation_indices,
-        mut sprite_index,
+        mut texture_atlas,
     ) in &mut enemy_query
     {
         match enemy_behavior {
@@ -294,7 +299,7 @@ fn handle_enemy_behavior(
                 if old_sprite_orientation != *sprite_orientation {
                     if let Some(value) = SPRITE_ANIMATION_INDEX_MAP.get(&sprite_orientation) {
                         *animation_indices = AnimationIndices::new(value[0], value[1]);
-                        *sprite_index = TextureAtlasSprite::new(value[0]);
+                        texture_atlas.index = value[0];
                     };
                 }
             }
@@ -330,7 +335,7 @@ fn handle_enemy_attacks(
                     emitter,
                     enemy_position,
                     800.,
-                ))
+                ));
             }
         }
     }

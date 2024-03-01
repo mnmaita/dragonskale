@@ -3,7 +3,7 @@
 use animation::AnimationPlugin;
 use audio::{audio_assets_loaded, AudioPlugin, BackgroundMusic};
 use bevy::{
-    ecs::{event::EventUpdateSignal, query::ReadOnlyWorldQuery},
+    ecs::{event::EventUpdateSignal, query::QueryFilter},
     prelude::*,
     render::{
         settings::{Backends, RenderCreation, WgpuSettings},
@@ -48,6 +48,7 @@ fn main() {
                         backends: Some(Backends::DX12),
                         ..default()
                     }),
+                    ..default()
                 },
                 #[cfg(target_family = "wasm")]
                 RenderPlugin::default(),
@@ -60,7 +61,6 @@ fn main() {
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "DragonSkale".into(),
-                    fit_canvas_to_parent: true,
                     ..default()
                 }),
                 ..default()
@@ -80,7 +80,7 @@ fn main() {
 
     app.world.remove_resource::<EventUpdateSignal>();
 
-    app.add_state::<AppState>();
+    app.init_state::<AppState>();
 
     app.insert_resource(Msaa::Off);
 
@@ -93,7 +93,7 @@ fn main() {
 
     app.add_systems(
         Update,
-        entity_cleanup::<With<BackgroundMusic>>.run_if(state_changed::<AppState>()),
+        entity_cleanup::<With<BackgroundMusic>>.run_if(state_changed::<AppState>),
     );
 
     app.run();
@@ -114,7 +114,7 @@ fn handle_asset_load(mut state: ResMut<NextState<AppState>>) {
     state.set(AppState::MainMenu);
 }
 
-pub fn entity_cleanup<F: ReadOnlyWorldQuery>(mut commands: Commands, query: Query<Entity, F>) {
+pub fn entity_cleanup<F: QueryFilter>(mut commands: Commands, query: Query<Entity, F>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
