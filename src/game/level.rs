@@ -1,9 +1,5 @@
 use bevy::{
-    audio::{Volume, VolumeLevel},
-    ecs::system::SystemParam,
-    prelude::*,
-    render::view::RenderLayers,
-    sprite::Anchor,
+    audio::Volume, ecs::system::SystemParam, prelude::*, render::view::RenderLayers, sprite::Anchor,
 };
 use bevy_rapier2d::prelude::*;
 use noise::{NoiseFn, Perlin};
@@ -60,19 +56,13 @@ impl Plugin for LevelPlugin {
 }
 
 fn generate_tilemaps(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let tileset_ground_texture = asset_server
-        .get_handle("textures/tileset_ground.png")
-        .unwrap_or_default();
-    let tileset_objects_texture = asset_server
-        .get_handle("textures/tileset_objects.png")
-        .unwrap_or_default();
-    let tileset_ground_texture_atlas =
-        TextureAtlas::from_grid(tileset_ground_texture, TILE_SIZE, 16, 18, None, None);
+    let tileset_ground_texture_atlas_layout =
+        TextureAtlasLayout::from_grid(TILE_SIZE, 16, 18, None, None);
     let tileset_objects_texture_atlas =
-        TextureAtlas::from_grid(tileset_objects_texture, TILE_SIZE, 38, 14, None, None);
+        TextureAtlasLayout::from_grid(TILE_SIZE, 38, 14, None, None);
 
     commands.insert_resource(TilesetGroundTextureAtlasHandle(
-        asset_server.add(tileset_ground_texture_atlas),
+        asset_server.add(tileset_ground_texture_atlas_layout),
     ));
     commands.insert_resource(TilesetObjectsTextureAtlasHandle(
         asset_server.add(tileset_objects_texture_atlas),
@@ -111,9 +101,14 @@ fn generate_level_matrix(mut commands: Commands) {
 
 fn spawn_level_tiles(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     level_matrix: Res<LevelMatrix>,
-    tileset_ground_texture_atlas_handle: Res<TilesetGroundTextureAtlasHandle>,
+    tileset_ground_texture_atlas_layout_handle: Res<TilesetGroundTextureAtlasHandle>,
 ) {
+    let tileset_ground_texture = asset_server
+        .get_handle("textures/tileset_ground.png")
+        .unwrap_or_default();
+
     for ((x, y), tile) in level_matrix.0.items() {
         let tile = *tile;
         let position = translate_grid_position_to_world_space(&(x, y));
@@ -122,8 +117,11 @@ fn spawn_level_tiles(
         let mut tile_entity = commands.spawn(TileBundle {
             render_layers: RenderLayers::layer(RenderLayer::Background.into()),
             sprite: SpriteSheetBundle {
-                sprite: TextureAtlasSprite::new(tile.into()),
-                texture_atlas: tileset_ground_texture_atlas_handle.clone(),
+                atlas: TextureAtlas {
+                    layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
+                    index: tile.into(),
+                },
+                texture: tileset_ground_texture.clone(),
                 transform,
                 ..default()
             },
@@ -349,7 +347,7 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
         "theme2.ogg",
         Some(PlaybackSettings {
             mode: bevy::audio::PlaybackMode::Loop,
-            volume: Volume::Absolute(VolumeLevel::new(0.25)),
+            volume: Volume::new(0.25),
             ..default()
         }),
         None,
@@ -357,10 +355,10 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
 }
 
 #[derive(Resource, Deref)]
-pub struct TilesetGroundTextureAtlasHandle(Handle<TextureAtlas>);
+pub struct TilesetGroundTextureAtlasHandle(Handle<TextureAtlasLayout>);
 
 #[derive(Resource, Deref)]
-pub struct TilesetObjectsTextureAtlasHandle(Handle<TextureAtlas>);
+pub struct TilesetObjectsTextureAtlasHandle(Handle<TextureAtlasLayout>);
 
 #[derive(Resource, Deref)]
 pub struct LevelMatrix(Matrix<Tile>);

@@ -1,8 +1,4 @@
-use bevy::{
-    app::AppExit,
-    audio::{Volume, VolumeLevel},
-    prelude::*,
-};
+use bevy::{app::AppExit, audio::Volume, prelude::*};
 
 use crate::{audio::PlayMusicEvent, entity_cleanup, AppState};
 
@@ -134,8 +130,12 @@ fn handle_main_menu_button_interactions(
         match interaction {
             Interaction::Pressed => match main_menu_button_action {
                 #[cfg(not(target_family = "wasm"))]
-                MainMenuButtonAction::Exit => exit.send(AppExit),
-                MainMenuButtonAction::NewGame => app_state.set(AppState::InGame),
+                MainMenuButtonAction::Exit => {
+                    exit.send(AppExit);
+                }
+                MainMenuButtonAction::NewGame => {
+                    app_state.set(AppState::InGame);
+                }
             },
             Interaction::Hovered => (),
             Interaction::None => (),
@@ -147,7 +147,7 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
     play_music_event_writer.send(PlayMusicEvent::new(
         "theme1.ogg",
         Some(PlaybackSettings {
-            volume: Volume::Absolute(VolumeLevel::new(0.25)),
+            volume: Volume::new(0.25),
             ..default()
         }),
         None,

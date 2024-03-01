@@ -15,7 +15,7 @@ impl Plugin for InputPlugin {
         app.add_systems(
             PreUpdate,
             (
-                clear_input.run_if(state_changed::<AppState>()),
+                clear_input.run_if(state_changed::<AppState>),
                 (mouse_input, player_movement).run_if(playing()),
             )
                 .chain(),
@@ -57,7 +57,7 @@ fn mouse_input(
     query: Query<&Transform, With<Player>>,
     sfx_query: Query<Entity, With<FireBreathSfx>>,
     asset_server: Res<AssetServer>,
-    mouse_input: ResMut<Input<MouseButton>>,
+    mouse_input: ResMut<ButtonInput<MouseButton>>,
 ) {
     if mouse_input.just_pressed(MouseButton::Left) {
         commands.spawn((
@@ -142,8 +142,8 @@ fn player_movement(
 }
 
 fn clear_input(
-    mut keyboard_input: ResMut<Input<KeyCode>>,
-    mut mouse_input: ResMut<Input<MouseButton>>,
+    mut keyboard_input: ResMut<ButtonInput<KeyCode>>,
+    mut mouse_input: ResMut<ButtonInput<MouseButton>>,
 ) {
     keyboard_input.reset_all();
     mouse_input.reset_all()
