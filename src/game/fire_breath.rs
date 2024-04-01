@@ -74,10 +74,9 @@ fn spawn_fire_breath(
     let fire_texture = asset_server
         .get_handle("textures/fire_anim.png")
         .unwrap_or_default();
-
-    let texture_atlas_fire =
-        TextureAtlas::from_grid(fire_texture, Vec2::new(40., 40.), 2, 1, None, None);
-    let texture_atlas_handle_fire = asset_server.add(texture_atlas_fire);
+    let texture_atlas_layout_fire =
+        TextureAtlasLayout::from_grid(Vec2::new(40., 40.), 2, 1, None, None);
+    let texture_atlas_handle_fire = asset_server.add(texture_atlas_layout_fire);
     let animated_index: AtlasIndex = AtlasIndex::Animated(AnimatedIndex {
         indices: vec![0, 1],
         time_step: 0.2,
@@ -94,6 +93,7 @@ fn spawn_fire_breath(
                     texture: ParticleTexture::TextureAtlas {
                         atlas: texture_atlas_handle_fire.clone(),
                         index: animated_index.clone(),
+                        texture: fire_texture.clone(),
                     },
                     spawn_rate_per_second: 5.0.into(),
                     initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),

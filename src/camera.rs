@@ -1,4 +1,4 @@
-use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*, render::view::RenderLayers};
+use bevy::{prelude::*, render::view::RenderLayers};
 
 use crate::{
     game::Player,
@@ -29,7 +29,7 @@ impl Plugin for CameraPlugin {
             PostUpdate,
             (
                 (
-                    update_camera.run_if(any_with_component::<Player>()),
+                    update_camera.run_if(any_with_component::<Player>),
                     constrain_camera_position_to_level,
                 )
                     .chain(),
@@ -74,11 +74,9 @@ impl SubLayerCameraBundle {
         Self {
             camera_2d: Camera2dBundle {
                 camera: Camera {
+                    clear_color: ClearColorConfig::None,
                     order: layer as isize,
                     ..default()
-                },
-                camera_2d: Camera2d {
-                    clear_color: ClearColorConfig::None,
                 },
                 ..default()
             },

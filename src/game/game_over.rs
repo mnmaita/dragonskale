@@ -1,7 +1,4 @@
-use bevy::{
-    audio::{Volume, VolumeLevel},
-    prelude::*,
-};
+use bevy::{audio::Volume, prelude::*};
 
 use crate::{audio::PlayMusicEvent, entity_cleanup, playing, AppState};
 
@@ -187,7 +184,7 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
     play_music_event_writer.send(PlayMusicEvent::new(
         "theme3.ogg",
         Some(PlaybackSettings {
-            volume: Volume::Absolute(VolumeLevel::new(0.25)),
+            volume: Volume::new(0.25),
             ..default()
         }),
         None,
