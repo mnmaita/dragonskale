@@ -1565,7 +1565,6 @@ dependencies = [
  "bevy_embedded_assets",
  "bevy_particle_systems",
  "bevy_rapier2d",
- "lazy_static",
  "noise",
  "pathfinding",
  "rand",
