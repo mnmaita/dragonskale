@@ -61,13 +61,13 @@ jobs:
         run: |
           cp ./target/${{ matrix.target }}/release/${{ matrix.executable_name }} .
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: matrix.platform == 'web'
         with:
           name: ${{ matrix.platform }}
           path: ./dist/*
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: matrix.platform != 'web'
         with:
           name: ${{ matrix.platform }}
