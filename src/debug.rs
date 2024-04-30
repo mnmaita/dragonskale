@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     camera::MainCamera,
-    game::{BorderTile, Player, Tile, GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
+    game::{Player, GRID_SIZE, HALF_GRID_SIZE, HALF_LEVEL_SIZE, HALF_TILE_SIZE, TILE_SIZE},
     input::CursorWorldPositionChecker,
     playing,
 };
@@ -13,30 +13,48 @@ impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             PostUpdate,
-            (
-                debug_draw_tiles,
-                draw_camera_constraints,
-                draw_mouse_direction,
-            )
-                .run_if(playing()),
+            (draw_grid, draw_camera_constraints, draw_mouse_direction).run_if(playing()),
         );
     }
 }
 
-fn debug_draw_tiles(
-    query: Query<(&Transform, Option<&BorderTile>), With<Tile>>,
-    mut gizmos: Gizmos,
-) {
-    for (transform, border_tile) in &query {
-        gizmos.rect_2d(
-            transform.translation.truncate(),
-            0.,
-            TILE_SIZE,
-            if border_tile.is_some() {
-                Color::BLACK
-            } else {
-                Color::FUCHSIA
-            },
+fn draw_grid(mut gizmos: Gizmos) {
+    gizmos.line_2d(
+        Vec2::new(-HALF_TILE_SIZE.x, HALF_LEVEL_SIZE.y),
+        Vec2::new(-HALF_TILE_SIZE.x, -HALF_LEVEL_SIZE.y - HALF_TILE_SIZE.y),
+        Color::FUCHSIA,
+    );
+    gizmos.line_2d(
+        Vec2::new(HALF_LEVEL_SIZE.x, -HALF_TILE_SIZE.y),
+        Vec2::new(-HALF_LEVEL_SIZE.x - HALF_TILE_SIZE.x, -HALF_TILE_SIZE.y),
+        Color::FUCHSIA,
+    );
+    for x in -HALF_GRID_SIZE.x as isize..HALF_GRID_SIZE.x as isize {
+        let x: f32 = x as f32;
+        gizmos.line_2d(
+            Vec2::new(
+                (x * TILE_SIZE.x) + HALF_TILE_SIZE.x * x.signum(),
+                HALF_LEVEL_SIZE.y,
+            ),
+            Vec2::new(
+                (x * TILE_SIZE.x) + HALF_TILE_SIZE.x * x.signum(),
+                -HALF_LEVEL_SIZE.y - HALF_TILE_SIZE.y,
+            ),
+            Color::FUCHSIA,
+        );
+    }
+    for y in -HALF_GRID_SIZE.y as isize..HALF_GRID_SIZE.y as isize {
+        let y: f32 = y as f32;
+        gizmos.line_2d(
+            Vec2::new(
+                HALF_LEVEL_SIZE.x,
+                (y * TILE_SIZE.y) + HALF_TILE_SIZE.y * y.signum(),
+            ),
+            Vec2::new(
+                -HALF_LEVEL_SIZE.x - HALF_TILE_SIZE.x,
+                (y * TILE_SIZE.y) + HALF_TILE_SIZE.y * y.signum(),
+            ),
+            Color::FUCHSIA,
         );
     }
 }

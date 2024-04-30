@@ -1,6 +1,5 @@
 use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
-use lazy_static::lazy_static;
 use rand::{seq::IteratorRandom, Rng};
 use std::{collections::HashMap, time::Duration};
 
@@ -18,29 +17,31 @@ use super::{
     HALF_TILE_SIZE, TILE_SIZE,
 };
 
-lazy_static! {
-    static ref SPRITE_ANIMATION_INDEX_MAP: HashMap<SpriteAnimation, [usize; 2]> = {
-        let mut m = HashMap::new();
-        m.insert(SpriteAnimation::RunLeft, [0,7]);
-        m.insert(SpriteAnimation::RunUpLeft, [16,23]); //4+32*fila, 11+32*fila
-        m.insert(SpriteAnimation::RunUp, [32,39]);
-        m.insert(SpriteAnimation::RunUpRight, [48,55]);
-        m.insert(SpriteAnimation::RunRight, [64,71]);
-        m.insert(SpriteAnimation::RunDownRight, [80,87]);
-        m.insert(SpriteAnimation::RunDown, [96,103]);
-        m.insert(SpriteAnimation::RunDownLeft, [112,119]);
+#[derive(Resource, Deref)]
+struct SpriteAnimationMap(HashMap<SpriteAnimation, [usize; 2]>);
 
-        // TODO update all indexes
-        m.insert(SpriteAnimation::AttackLeft,[12,15]);
-        m.insert(SpriteAnimation::AttackUpLeft,[28,31]);
-        m.insert(SpriteAnimation::AttackUp,[44,47]);
-        m.insert(SpriteAnimation::AttackUpRight,[60,63]);
-        m.insert(SpriteAnimation::AttackRight,[76,79]);
-        m.insert(SpriteAnimation::AttackDownRight,[92,95]);
-        m.insert(SpriteAnimation::AttackDown,[108,111]);
-        m.insert(SpriteAnimation::AttackDownLeft,[124,127]);
-        m
-    };
+impl Default for SpriteAnimationMap {
+    fn default() -> Self {
+        Self(HashMap::from([
+            (SpriteAnimation::RunLeft, [0, 7]),
+            (SpriteAnimation::RunUpLeft, [16, 23]),
+            (SpriteAnimation::RunUp, [32, 39]),
+            (SpriteAnimation::RunUpRight, [48, 55]),
+            (SpriteAnimation::RunRight, [64, 71]),
+            (SpriteAnimation::RunDownRight, [80, 87]),
+            (SpriteAnimation::RunDown, [96, 103]),
+            (SpriteAnimation::RunDownLeft, [112, 119]),
+            // TODO update all indexes
+            (SpriteAnimation::AttackLeft, [12, 15]),
+            (SpriteAnimation::AttackUpLeft, [28, 31]),
+            (SpriteAnimation::AttackUp, [44, 47]),
+            (SpriteAnimation::AttackUpRight, [60, 63]),
+            (SpriteAnimation::AttackRight, [76, 79]),
+            (SpriteAnimation::AttackDownRight, [92, 95]),
+            (SpriteAnimation::AttackDown, [108, 111]),
+            (SpriteAnimation::AttackDownLeft, [124, 127]),
+        ]))
+    }
 }
 
 pub(super) struct EnemyPlugin;
@@ -48,6 +49,7 @@ pub(super) struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnTimer::new(3.));
+        app.insert_resource(SpriteAnimationMap::default());
 
         app.add_systems(
             OnEnter(AppState::InGame),
@@ -234,6 +236,7 @@ fn handle_enemy_behavior(
         With<Enemy>,
     >,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    sprite_animation_map: Res<SpriteAnimationMap>,
 ) {
     let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
@@ -297,7 +300,7 @@ fn handle_enemy_behavior(
 
                 // if sprite orientation changed, update animation indices and sprite index
                 if old_sprite_orientation != *sprite_orientation {
-                    if let Some(value) = SPRITE_ANIMATION_INDEX_MAP.get(&sprite_orientation) {
+                    if let Some(value) = sprite_animation_map.get(&sprite_orientation) {
                         *animation_indices = AnimationIndices::new(value[0], value[1]);
                         texture_atlas.index = value[0];
                     };
