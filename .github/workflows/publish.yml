@@ -98,4 +98,4 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
-          ./butler push ./release/ mnmaita/${{ vars.KEBAB_CASE_GAME_NAME }}:${{ matrix.platform }} --userversion ${{ github.event.release.tag_name }}
+          ./butler push ./release/ ${{ vars.ITCH_IO_USERNAME }}/${{ vars.KEBAB_CASE_GAME_NAME }}:${{ matrix.platform }} --userversion ${{ github.event.release.tag_name }}
