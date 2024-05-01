@@ -20,7 +20,6 @@ jobs:
           prefix-key: ${{ vars.CACHE_BUILD_VERSION }}-cargo-${{ runner.os }}
 
       - name: Install alsa and udev
-        if: runner.os == 'linux'
         run: sudo apt update; sudo apt install --no-install-recommends libasound2-dev libudev-dev
 
       - name: Build and run tests
