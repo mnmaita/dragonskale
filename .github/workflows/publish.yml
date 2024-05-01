@@ -51,11 +51,6 @@ jobs:
         if: matrix.platform != 'web'
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Copy binaries to working directory
-        if: matrix.platform != 'web'
-        run: |
-          cp ./target/${{ matrix.target }}/release/${{ matrix.executable_name }} .
-
       - uses: actions/upload-artifact@v4
         if: matrix.platform == 'web'
         with:
@@ -66,10 +61,9 @@ jobs:
         if: matrix.platform != 'web'
         with:
           name: ${{ matrix.platform }}
+          # We don't need to publish the `assets` folder alongside the binary as we are using bevy_embedded_assets
           path: |
-            ./assets/
-            ./${{ vars.KEBAB_CASE_GAME_NAME }}.exe
-            ./${{ vars.KEBAB_CASE_GAME_NAME }}
+            ./target/${{ matrix.target }}/release/${{ matrix.executable_name }}
 
   publish:
     runs-on: ubuntu-latest
