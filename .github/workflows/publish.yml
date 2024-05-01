@@ -34,7 +34,7 @@ jobs:
       - name: Install tools for WASM build
         if: matrix.platform == 'web'
         run: |
-          wget -qO- https://github.com/thedodd/trunk/releases/download/v0.18.7/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+          wget -qO- https://github.com/thedodd/trunk/releases/download/v0.19.3/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
 
       - uses: Swatinem/rust-cache@v2
         with:
