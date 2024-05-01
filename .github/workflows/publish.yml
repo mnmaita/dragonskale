@@ -47,9 +47,6 @@ jobs:
 
       - name: Build release
         if: matrix.platform == 'web'
-        env:
-          # WebGPU requires web_sys unstable APIs
-          RUSTFLAGS: --cfg=web_sys_unstable_apis
         run: ./trunk --config Trunk.itch.toml build --release
 
       - name: Build release
