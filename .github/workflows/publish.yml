@@ -33,8 +33,7 @@ jobs:
 
       - name: Install tools for WASM build
         if: matrix.platform == 'web'
-        run: |
-          wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.19.3/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+        run: cargo install trunk --locked --version 0.19.3
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -46,7 +45,7 @@ jobs:
 
       - name: Build release
         if: matrix.platform == 'web'
-        run: ./trunk --config Trunk.itch.toml build --release
+        run: trunk build --release --public-url="./"
 
       - name: Build release
         if: matrix.platform != 'web'
