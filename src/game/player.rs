@@ -36,7 +36,6 @@ pub struct PlayerBundle {
     pub hitpoints: ResourcePool<Health>,
     pub score: Score,
     pub damping: Damping,
-    pub external_force: ExternalForce,
     pub external_impulse: ExternalImpulse,
     pub marker: Player,
     pub rigid_body: RigidBody,
@@ -68,7 +67,6 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
         speed: Speed(10.),
         damping: Damping::default(),
-        external_force: ExternalForce::default(),
         external_impulse: ExternalImpulse::default(),
         rigid_body: RigidBody::Dynamic,
         spritesheet: SpriteSheetBundle {
@@ -103,17 +101,9 @@ impl PlayerMovementEvent {
 
 fn handle_player_movement_events(
     mut player_movement_event_reader: EventReader<PlayerMovementEvent>,
-    mut query: Query<
-        (
-            &Transform,
-            &mut ExternalForce,
-            &mut ExternalImpulse,
-            &mut Damping,
-        ),
-        With<Player>,
-    >,
+    mut query: Query<(&Transform, &mut ExternalImpulse, &mut Damping), With<Player>>,
 ) {
-    let (transform, mut external_force, mut external_impulse, mut damping) = query.single_mut();
+    let (transform, mut external_impulse, mut damping) = query.single_mut();
 
     for event in player_movement_event_reader.read() {
         match event {
@@ -130,24 +120,24 @@ fn handle_player_movement_events(
                 let direction = transform.rotation.mul_vec3(Vec3::Y).truncate();
                 let angle_with_cursor =
                     direction.angle_between(target_to_player_vector.normalize());
-                let is_in_cruise_mode = (-0.4..0.4).contains(&angle_with_cursor);
+                let is_facing_forward = (-0.4..0.4).contains(&angle_with_cursor);
+                let is_in_cruise_mode = (-0.2..0.2).contains(&angle_with_cursor);
                 let angle = target_to_player_vector.angle_between(direction);
 
-                *damping = Damping::default();
                 external_impulse.impulse = direction * velocity_scalar * 125.;
 
-                let (torque, strafe) = {
+                if is_facing_forward {
+                    damping.angular_damping = 3.;
+                    external_impulse.torque_impulse = 0.;
+                    external_impulse.impulse *= 2.;
                     if is_in_cruise_mode {
-                        external_impulse.impulse *= 2.;
-                        damping.angular_damping = 10.;
-                        (0., Vec2::ZERO)
-                    } else {
-                        (-angle * 75., direction.perp() * -angle * 31250.)
+                        damping.angular_damping = 5.;
                     }
-                };
-
-                external_impulse.torque_impulse = torque;
-                external_force.force = strafe;
+                } else {
+                    damping.angular_damping = 0.5;
+                    external_impulse.torque_impulse = -angle * 2.;
+                    damping.linear_damping = 1.5;
+                }
             }
             PlayerMovementEvent::Brake => {
                 *damping = Damping {
