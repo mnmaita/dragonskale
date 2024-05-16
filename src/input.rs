@@ -1,11 +1,16 @@
 use std::{f32::consts::FRAC_PI_2, time::Duration};
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
+use bevy_kira_audio::{Audio, AudioChannel, AudioControl};
 use bevy_rapier2d::prelude::Collider;
 
 use crate::{
-    animation::AnimationTimer, camera::MainCamera, game::Player, game::SpawnFireBreathEvent,
-    physics::Speed, playing, AppState,
+    animation::AnimationTimer,
+    audio::DragonBreathChannel,
+    camera::MainCamera,
+    game::{Fire, Player, ResourcePool, SpawnFireBreathEvent},
+    physics::Speed,
+    playing, AppState,
 };
 
 pub struct InputPlugin;
@@ -52,54 +57,47 @@ impl CursorWorldPositionChecker<'_, '_> {
 struct FireBreathSfx;
 
 fn mouse_input(
-    mut commands: Commands,
     mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
-    query: Query<&Transform, With<Player>>,
-    sfx_query: Query<Entity, With<FireBreathSfx>>,
+    query: Query<(&Transform, &ResourcePool<Fire>), With<Player>>,
     asset_server: Res<AssetServer>,
     mouse_input: ResMut<ButtonInput<MouseButton>>,
+    dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
+    audio: Res<Audio>,
 ) {
+    let (player_transform, fire_breath_resource_pool) = query.single();
+
     if mouse_input.just_pressed(MouseButton::Left) {
-        commands.spawn((
-            AudioBundle {
-                source: asset_server
-                    .get_handle("sfx/breathstart.ogg")
-                    .unwrap_or_default(),
-                settings: PlaybackSettings::DESPAWN,
-            },
-            FireBreathSfx,
-        ));
-        commands.spawn((
-            AudioBundle {
-                source: asset_server
+        dragon_breath_audio_channel.play(
+            asset_server
+                .get_handle("sfx/breathstart.ogg")
+                .unwrap_or_default(),
+        );
+        dragon_breath_audio_channel
+            .play(
+                asset_server
                     .get_handle("sfx/breathloop.ogg")
                     .unwrap_or_default(),
-                settings: PlaybackSettings::LOOP,
-            },
-            FireBreathSfx,
-        ));
+            )
+            .looped();
     } else if mouse_input.just_released(MouseButton::Left) {
-        commands.spawn((
-            AudioBundle {
-                source: asset_server
+        if !fire_breath_resource_pool.is_empty() {
+            audio.play(
+                asset_server
                     .get_handle("sfx/breathend.ogg")
                     .unwrap_or_default(),
-                settings: PlaybackSettings::DESPAWN,
-            },
-            FireBreathSfx,
-        ));
-        for entity in &sfx_query {
-            commands.entity(entity).despawn_recursive();
+            );
         }
+        dragon_breath_audio_channel.stop();
     }
 
     if mouse_input.pressed(MouseButton::Left) {
-        let player_transform = query.single();
         let player_direction = player_transform.rotation.mul_vec3(Vec3::Y).truncate();
         // TODO: replace constant with sprite dimensions
         let fire_position = player_transform.translation.truncate() + player_direction * 90.;
 
-        spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1, fire_position));
+        if !fire_breath_resource_pool.is_empty() {
+            spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1, fire_position));
+        }
     }
 }
 

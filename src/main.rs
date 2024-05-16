@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use animation::AnimationPlugin;
-use audio::{audio_assets_loaded, AudioPlugin, BackgroundMusic};
+use audio::{audio_assets_loaded, AudioPlugin, BgmChannel};
 use bevy::{
     ecs::{event::EventUpdateSignal, query::QueryFilter},
     prelude::*,
@@ -11,6 +11,7 @@ use bevy::{
     },
 };
 use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
+use bevy_kira_audio::{AudioChannel, AudioControl};
 use camera::CameraPlugin;
 use fonts::{font_assets_loaded, FontsPlugin};
 use game::GamePlugin;
@@ -93,7 +94,7 @@ fn main() {
 
     app.add_systems(
         Update,
-        entity_cleanup::<With<BackgroundMusic>>.run_if(state_changed::<AppState>),
+        stop_music_on_transition.run_if(state_changed::<AppState>),
     );
 
     app.run();
@@ -118,6 +119,10 @@ pub fn entity_cleanup<F: QueryFilter>(mut commands: Commands, query: Query<Entit
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
+}
+
+pub fn stop_music_on_transition(bgm_audio_channel: Res<AudioChannel<BgmChannel>>) {
+    bgm_audio_channel.stop();
 }
 
 pub fn playing() -> impl Condition<()> {
