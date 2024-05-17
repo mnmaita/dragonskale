@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::{audio::{PlayMusicEvent, PlaybackSettings}, entity_cleanup, playing, AppState};
+use crate::{
+    audio::{PlayMusicEvent, PlaybackSettings},
+    entity_cleanup, playing, AppState,
+};
 
 use super::{
     resource_pool::{Health, ResourcePool},
