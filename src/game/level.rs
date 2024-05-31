@@ -1,13 +1,11 @@
-use bevy::{
-    audio::Volume, ecs::system::SystemParam, prelude::*, render::view::RenderLayers, sprite::Anchor,
-};
+use bevy::{ecs::system::SystemParam, prelude::*, render::view::RenderLayers, sprite::Anchor};
 use bevy_rapier2d::prelude::*;
 use noise::{NoiseFn, Perlin};
 use pathfinding::prelude::Matrix;
 use rand::{random, seq::SliceRandom, Rng};
 
 use crate::{
-    audio::{PlayMusicEvent, SoundEffect},
+    audio::{PlayMusicEvent, PlaybackSettings, SoundEffect},
     camera::{RenderLayer, YSorted, YSortedInverse},
     entity_cleanup,
     game::{
@@ -346,8 +344,8 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
     play_music_event_writer.send(PlayMusicEvent::new(
         "theme2.ogg",
         Some(PlaybackSettings {
-            mode: bevy::audio::PlaybackMode::Loop,
-            volume: Volume::new(0.25),
+            loop_from: Some(0.0),
+            volume: 0.25,
             ..default()
         }),
         None,

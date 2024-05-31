@@ -1,6 +1,9 @@
-use bevy::{app::AppExit, audio::Volume, prelude::*};
+use bevy::{app::AppExit, prelude::*};
 
-use crate::{audio::PlayMusicEvent, entity_cleanup, AppState};
+use crate::{
+    audio::{PlayMusicEvent, PlaybackSettings},
+    entity_cleanup, AppState,
+};
 
 pub struct MainMenuPlugin;
 
@@ -147,7 +150,7 @@ fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent
     play_music_event_writer.send(PlayMusicEvent::new(
         "theme1.ogg",
         Some(PlaybackSettings {
-            volume: Volume::new(0.25),
+            volume: 0.25,
             ..default()
         }),
         None,

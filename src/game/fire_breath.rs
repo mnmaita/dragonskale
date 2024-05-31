@@ -1,8 +1,10 @@
 use bevy::{prelude::*, render::view::RenderLayers};
+use bevy_kira_audio::{Audio, AudioChannel, AudioControl};
 use bevy_particle_systems::*;
 use bevy_rapier2d::prelude::{Collider, CollisionGroups, Sensor};
 
 use crate::{
+    audio::DragonBreathChannel,
     camera::{RenderLayer, YSorted},
     playing,
 };
@@ -135,6 +137,9 @@ fn update_fire_particles_render_layers(
 fn consume_fire_breath_resource(
     mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
     spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
+    dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
+    audio: Res<Audio>,
+    asset_server: Res<AssetServer>,
 ) {
     const FIRE_BREATH_CONSUMPTION_RATIO: i16 = 1;
 
@@ -142,16 +147,26 @@ fn consume_fire_breath_resource(
         let mut fire_resource_pool = player_query.single_mut();
 
         fire_resource_pool.subtract(FIRE_BREATH_CONSUMPTION_RATIO);
+
+        if fire_resource_pool.is_empty() {
+            audio.play(
+                asset_server
+                    .get_handle("sfx/breathend.ogg")
+                    .unwrap_or_default(),
+            );
+            dragon_breath_audio_channel.stop();
+        }
     }
 }
 
 fn restore_fire_breath_resource(
     mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
     spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
+    mouse_input: Res<ButtonInput<MouseButton>>,
 ) {
     const FIRE_BREATH_RESTORATION_RATIO: i16 = 1;
 
-    if spawn_fire_breath_event_reader.is_empty() {
+    if spawn_fire_breath_event_reader.is_empty() && !mouse_input.pressed(MouseButton::Left) {
         let mut fire_resource_pool = player_query.single_mut();
 
         fire_resource_pool.add(FIRE_BREATH_RESTORATION_RATIO);
