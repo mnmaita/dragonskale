@@ -2,14 +2,7 @@
 
 use animation::AnimationPlugin;
 use audio::{audio_assets_loaded, AudioPlugin, BgmChannel};
-use bevy::{
-    ecs::query::QueryFilter,
-    prelude::*,
-    render::{
-        settings::{Backends, RenderCreation, WgpuSettings},
-        RenderPlugin,
-    },
-};
+use bevy::{asset::AssetMetaCheck, ecs::query::QueryFilter, prelude::*};
 use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
 use bevy_kira_audio::{AudioChannel, AudioControl};
 use camera::CameraPlugin;
@@ -40,23 +33,10 @@ fn main() {
             mode: PluginMode::ReplaceDefault,
         },
         DefaultPlugins
-            // FIXME: Remove setting the backend explicitly to avoid noisy warnings
-            // when https://github.com/gfx-rs/wgpu/issues/3959 gets fixed.
-            .set(
-                #[cfg(not(target_family = "wasm"))]
-                RenderPlugin {
-                    render_creation: RenderCreation::Automatic(WgpuSettings {
-                        backends: Some(Backends::DX12),
-                        ..default()
-                    }),
-                    ..default()
-                },
-                #[cfg(target_family = "wasm")]
-                RenderPlugin::default(),
-            )
             .set(ImagePlugin::default_nearest())
             .set(AssetPlugin {
                 mode: AssetMode::Unprocessed,
+                meta_check: AssetMetaCheck::Never,
                 ..default()
             })
             .set(WindowPlugin {
