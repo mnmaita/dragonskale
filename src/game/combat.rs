@@ -163,7 +163,7 @@ fn projectile_collision_with_player(
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
     rapier_context: Res<RapierContext>,
 ) {
-    let (player_entity, mut player_hitpoints) = player_query.single_mut(); // A first entity with a collider attached.
+    let (player_entity, mut player_hitpoints) = player_query.single_mut();
 
     for (projectile_entity, projectile_damage) in &projectile_query {
         if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
