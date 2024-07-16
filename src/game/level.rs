@@ -154,30 +154,36 @@ fn spawn_buildings(
 
     for position in random_spawn_points {
         let translation = position.extend(1.);
-        let mut building_entity_commands = commands.spawn(BuildingBundle {
-            active_collision_types: ActiveCollisionTypes::all(),
-            attack_damage: AttackDamage(5),
-            attack_timer: AttackTimer::new(4.),
-            collider: Collider::ball(HALF_TILE_SIZE.x),
-            collision_groups: CollisionGroups::new(BUILDING_GROUP, ENEMY_GROUP | FIRE_BREATH_GROUP),
-            hitpoints: ResourcePool::<Health>::new(1000),
-            marker: Enemy,
-            range: Range(TILE_SIZE.x * 20.),
-            render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
-            rigid_body: RigidBody::Fixed,
-            sprite: SpriteBundle {
-                sprite: Sprite {
-                    flip_x: rng.gen_bool(0.5),
-                    rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
+
+        commands.spawn((
+            BuildingBundle {
+                active_collision_types: ActiveCollisionTypes::all(),
+                attack_damage: AttackDamage(5),
+                attack_timer: AttackTimer::new(4.),
+                collider: Collider::ball(HALF_TILE_SIZE.x),
+                collision_groups: CollisionGroups::new(
+                    BUILDING_GROUP,
+                    ENEMY_GROUP | FIRE_BREATH_GROUP,
+                ),
+                hitpoints: ResourcePool::<Health>::new(1000),
+                marker: Enemy,
+                range: Range(TILE_SIZE.x * 20.),
+                render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
+                rigid_body: RigidBody::Fixed,
+                sprite: SpriteBundle {
+                    sprite: Sprite {
+                        flip_x: rng.gen_bool(0.5),
+                        rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
+                        ..default()
+                    },
+                    texture: texture.clone(),
+                    transform: Transform::from_translation(translation),
                     ..default()
                 },
-                texture: texture.clone(),
-                transform: Transform::from_translation(translation),
-                ..default()
             },
-        });
-
-        building_entity_commands.insert((StateScoped(AppState::GameOver), YSorted));
+            StateScoped(AppState::GameOver),
+            YSorted,
+        ));
     }
 }
 
@@ -210,19 +216,18 @@ fn spawn_hills(
             -HALF_TILE_SIZE.y + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (position + position_offset).extend(1.);
-        let mut hill_entity_commands = commands.spawn(SpriteBundle {
-            sprite: Sprite {
-                anchor: bevy::sprite::Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.2),
-                rect: Some(*hill_tile_variants.choose(&mut rng).unwrap()),
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    anchor: bevy::sprite::Anchor::BottomCenter,
+                    flip_x: rng.gen_bool(0.2),
+                    rect: Some(*hill_tile_variants.choose(&mut rng).unwrap()),
+                    ..default()
+                },
+                texture: texture.clone(),
+                transform: Transform::from_translation(translation),
                 ..default()
             },
-            texture: texture.clone(),
-            transform: Transform::from_translation(translation),
-            ..default()
-        });
-
-        hill_entity_commands.insert((
             RenderLayers::layer(RenderLayer::Topography.into()),
             StateScoped(AppState::GameOver),
             YSorted,
@@ -266,19 +271,19 @@ fn spawn_mountains(
             -MOUNTAIN_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (position + position_offset).extend(1.);
-        let mut mountain_entity_commands = commands.spawn(SpriteBundle {
-            sprite: Sprite {
-                anchor: Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.3),
-                rect: Some(*mountain_tile_variants.choose(&mut rng).unwrap()),
+
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    anchor: Anchor::BottomCenter,
+                    flip_x: rng.gen_bool(0.3),
+                    rect: Some(*mountain_tile_variants.choose(&mut rng).unwrap()),
+                    ..default()
+                },
+                texture: texture.clone(),
+                transform: Transform::from_translation(translation),
                 ..default()
             },
-            texture: texture.clone(),
-            transform: Transform::from_translation(translation),
-            ..default()
-        });
-
-        mountain_entity_commands.insert((
             RenderLayers::layer(RenderLayer::Topography.into()),
             StateScoped(AppState::GameOver),
             YSortedInverse,
@@ -312,22 +317,22 @@ fn spawn_waves(
             -WAVE_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (*position + position_offset).extend(2.);
-        let mut wave_entity_commands = commands.spawn(SpriteBundle {
-            sprite: Sprite {
-                anchor: Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.3),
-                rect: Some(Rect::from_corners(
-                    Vec2::new(208., 176.),
-                    Vec2::new(240., 192.),
-                )),
+
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    anchor: Anchor::BottomCenter,
+                    flip_x: rng.gen_bool(0.3),
+                    rect: Some(Rect::from_corners(
+                        Vec2::new(208., 176.),
+                        Vec2::new(240., 192.),
+                    )),
+                    ..default()
+                },
+                texture: texture.clone(),
+                transform: Transform::from_translation(translation),
                 ..default()
             },
-            texture: texture.clone(),
-            transform: Transform::from_translation(translation),
-            ..default()
-        });
-
-        wave_entity_commands.insert((
             RenderLayers::layer(RenderLayer::Background.into()),
             StateScoped(AppState::GameOver),
             YSortedInverse,

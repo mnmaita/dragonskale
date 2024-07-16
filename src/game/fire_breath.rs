@@ -86,34 +86,33 @@ fn spawn_fire_breath(
     });
 
     for &SpawnFireBreathEvent { damage, position } in spawn_fire_breath_event_reader.read() {
-        let mut fire_breath_entity_commands = commands.spawn(FireBreathBundle {
-            marker: Fire,
-            particle_system: ParticleSystemBundle {
-                transform: Transform::from_translation(position.extend(10.0)),
-                particle_system: ParticleSystem {
-                    max_particles: 10_000,
-                    texture: ParticleTexture::TextureAtlas {
-                        atlas: texture_atlas_handle_fire.clone(),
-                        index: animated_index.clone(),
-                        texture: fire_texture.clone(),
+        commands.spawn((
+            FireBreathBundle {
+                marker: Fire,
+                particle_system: ParticleSystemBundle {
+                    transform: Transform::from_translation(position.extend(10.0)),
+                    particle_system: ParticleSystem {
+                        max_particles: 10_000,
+                        texture: ParticleTexture::TextureAtlas {
+                            atlas: texture_atlas_handle_fire.clone(),
+                            index: animated_index.clone(),
+                            texture: fire_texture.clone(),
+                        },
+                        spawn_rate_per_second: 5.0.into(),
+                        initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
+                        lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
+                        looping: false,
+                        despawn_on_finish: true,
+                        system_duration_seconds: 1.0,
+                        ..ParticleSystem::default()
                     },
-                    spawn_rate_per_second: 5.0.into(),
-                    initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
-                    lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
-                    looping: false,
-                    despawn_on_finish: true,
-                    system_duration_seconds: 1.0,
-                    ..ParticleSystem::default()
+                    ..ParticleSystemBundle::default()
                 },
-                ..ParticleSystemBundle::default()
+                render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
+                sensor: Sensor,
+                collider: Collider::ball(25.0),
+                damage: ImpactDamage(damage),
             },
-            render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
-            sensor: Sensor,
-            collider: Collider::ball(25.0),
-            damage: ImpactDamage(damage),
-        });
-
-        fire_breath_entity_commands.insert((
             CollisionGroups::new(FIRE_BREATH_GROUP, BUILDING_GROUP | ENEMY_GROUP),
             StateScoped(AppState::GameOver),
             Playing,

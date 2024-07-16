@@ -49,24 +49,26 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         TextureAtlasLayout::from_grid(UVec2::new(191, 161), 12, 1, None, None);
     let texture_atlas_layout_handle = asset_server.add(texture_atlas_layout);
 
-    let mut player_entity_commands = commands.spawn(PlayerBundle {
-        animation_indices: AnimationIndices::new(0, 2),
-        animation_timer: AnimationTimer::from_seconds(0.2),
-        collider: Collider::cuboid(15., 40.),
-        collision_groups: CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
-        fire_breath_resource: ResourcePool::<Fire>::new(100),
-        hitpoints: ResourcePool::<Health>::new(100),
-        score: Score::new(0, 1),
-        marker: Player,
-        render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
-        speed: Speed(10.),
-        sprite: SpriteBundle {
-            texture,
-            transform: Transform::from_translation(Vec2::ONE.extend(1.)),
-            ..default()
+    commands.spawn((
+        PlayerBundle {
+            animation_indices: AnimationIndices::new(0, 2),
+            animation_timer: AnimationTimer::from_seconds(0.2),
+            collider: Collider::cuboid(15., 40.),
+            collision_groups: CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
+            fire_breath_resource: ResourcePool::<Fire>::new(100),
+            hitpoints: ResourcePool::<Health>::new(100),
+            score: Score::new(0, 1),
+            marker: Player,
+            render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
+            speed: Speed(10.),
+            sprite: SpriteBundle {
+                texture,
+                transform: Transform::from_translation(Vec2::ONE.extend(1.)),
+                ..default()
+            },
+            texture_atlas: texture_atlas_layout_handle.into(),
         },
-        texture_atlas: texture_atlas_layout_handle.into(),
-    });
-
-    player_entity_commands.insert((StateScoped(AppState::GameOver), YSorted));
+        StateScoped(AppState::GameOver),
+        YSorted,
+    ));
 }

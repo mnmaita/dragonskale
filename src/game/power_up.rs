@@ -100,23 +100,22 @@ fn spawn_powerups(
                 let mut rng = rand::thread_rng();
 
                 if rng.gen_bool(0.1) {
-                    let mut powerup_entity_commands = commands.spawn(PowerUpBundle {
-                        marker: PowerUp,
-                        animation_indices: AnimationIndices::new(0, 1),
-                        animation_timer: AnimationTimer::from_seconds(0.2),
-                        sprite: SpriteBundle {
-                            texture: texture_healing_scale.clone(),
-                            transform: *transform,
-                            ..default()
+                    commands.spawn((
+                        PowerUpBundle {
+                            marker: PowerUp,
+                            animation_indices: AnimationIndices::new(0, 1),
+                            animation_timer: AnimationTimer::from_seconds(0.2),
+                            sprite: SpriteBundle {
+                                texture: texture_healing_scale.clone(),
+                                transform: *transform,
+                                ..default()
+                            },
+                            texture_atlas: scale_texture_atlas_handler.0.clone().into(),
+                            collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
+                            render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
+                            sensor: Sensor,
+                            collision_groups: CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP),
                         },
-                        texture_atlas: scale_texture_atlas_handler.0.clone().into(),
-                        collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
-                        render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
-                        sensor: Sensor,
-                        collision_groups: CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP),
-                    });
-
-                    powerup_entity_commands.insert((
                         StateScoped(AppState::GameOver),
                         LockedAxes::ROTATION_LOCKED,
                         YSorted,

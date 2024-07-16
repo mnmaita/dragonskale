@@ -117,35 +117,34 @@ fn spawn_projectiles(
             0.
         };
 
-        let mut projectile_entity_commands = commands.spawn(ProjectileBundle {
-            ccd: Ccd::enabled(),
-            collider: Collider::cuboid(size.x / 2., size.y / 2.),
-            collision_groups: CollisionGroups::new(
-                PROJECTILE_GROUP,
-                PLAYER_GROUP | PROJECTILE_GROUP,
-            ),
-            damage: ImpactDamage(damage),
-            emitter: Emitter(emitter),
-            marker: Projectile,
-            render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
-            rigid_body: RigidBody::Dynamic,
-            sprite: SpriteBundle {
-                sprite: Sprite {
-                    color: Color::BLACK,
-                    custom_size: Some(size),
+        commands.spawn((
+            ProjectileBundle {
+                ccd: Ccd::enabled(),
+                collider: Collider::cuboid(size.x / 2., size.y / 2.),
+                collision_groups: CollisionGroups::new(
+                    PROJECTILE_GROUP,
+                    PLAYER_GROUP | PROJECTILE_GROUP,
+                ),
+                damage: ImpactDamage(damage),
+                emitter: Emitter(emitter),
+                marker: Projectile,
+                render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
+                rigid_body: RigidBody::Dynamic,
+                sprite: SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::BLACK,
+                        custom_size: Some(size),
+                        ..default()
+                    },
+                    transform: Transform::from_translation(position.extend(1.0))
+                        .with_rotation(Quat::from_rotation_z(-angle)),
                     ..default()
                 },
-                transform: Transform::from_translation(position.extend(1.0))
-                    .with_rotation(Quat::from_rotation_z(-angle)),
-                ..default()
+                velocity: Velocity {
+                    linvel: direction * speed,
+                    angvel: 0.,
+                },
             },
-            velocity: Velocity {
-                linvel: direction * speed,
-                angvel: 0.,
-            },
-        });
-
-        projectile_entity_commands.insert((
             Damping {
                 linear_damping: 1.0,
                 angular_damping: 10.0,

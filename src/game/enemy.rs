@@ -182,38 +182,37 @@ fn spawn_enemies(
                 )
             };
 
-            let mut enemy_entity_commands = commands.spawn(EnemyBundle {
-                attack_damage: AttackDamage(5),
-                attack_timer: AttackTimer::new(3.),
-                behavior: Behavior::FollowPlayer {
-                    distance: TILE_SIZE.x * 6.,
+            commands.spawn((
+                EnemyBundle {
+                    attack_damage: AttackDamage(5),
+                    attack_timer: AttackTimer::new(3.),
+                    behavior: Behavior::FollowPlayer {
+                        distance: TILE_SIZE.x * 6.,
+                    },
+                    hitpoints: ResourcePool::<Health>::new(1),
+                    marker: Enemy,
+                    range: Range(TILE_SIZE.x * 15.),
+                    speed: Speed(2.),
+                    animation_indices: AnimationIndices::new(4, 11),
+                    animation_timer: AnimationTimer::from_seconds(0.2),
+                    sprite_orientation: SpriteAnimation::RunLeft,
+                    sprite: SpriteBundle {
+                        texture,
+                        transform: Transform::from_translation(translation),
+                        ..default()
+                    },
+                    texture_atlas: TextureAtlas {
+                        layout: texture_atlas_handle,
+                        index: 4,
+                    },
+                    collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
+                    render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
+                    rigid_body: RigidBody::Dynamic,
+                    collision_groups: CollisionGroups::new(
+                        ENEMY_GROUP,
+                        ENEMY_GROUP | BUILDING_GROUP | FIRE_BREATH_GROUP,
+                    ),
                 },
-                hitpoints: ResourcePool::<Health>::new(1),
-                marker: Enemy,
-                range: Range(TILE_SIZE.x * 15.),
-                speed: Speed(2.),
-                animation_indices: AnimationIndices::new(4, 11),
-                animation_timer: AnimationTimer::from_seconds(0.2),
-                sprite_orientation: SpriteAnimation::RunLeft,
-                sprite: SpriteBundle {
-                    texture,
-                    transform: Transform::from_translation(translation),
-                    ..default()
-                },
-                texture_atlas: TextureAtlas {
-                    layout: texture_atlas_handle,
-                    index: 4,
-                },
-                collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
-                render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
-                rigid_body: RigidBody::Dynamic,
-                collision_groups: CollisionGroups::new(
-                    ENEMY_GROUP,
-                    ENEMY_GROUP | BUILDING_GROUP | FIRE_BREATH_GROUP,
-                ),
-            });
-
-            enemy_entity_commands.insert((
                 StateScoped(AppState::GameOver),
                 LockedAxes::ROTATION_LOCKED,
                 YSorted,
