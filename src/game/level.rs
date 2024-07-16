@@ -414,19 +414,6 @@ impl From<u8> for Tile {
     }
 }
 
-// impl From<Tile> for Color {
-//     fn from(value: Tile) -> Self {
-//         match value {
-//             Tile::Grass => Self::DARK_GREEN,
-//             Tile::Hills => Self::GRAY,
-//             Tile::Mountains => Self::DARK_GRAY,
-//             Tile::Water => Self::BLUE,
-//             Tile::Sand => Self::BEIGE,
-//             Tile::_LAST => Self::default(),
-//         }
-//     }
-// }
-
 impl From<Tile> for usize {
     fn from(value: Tile) -> Self {
         match value {
