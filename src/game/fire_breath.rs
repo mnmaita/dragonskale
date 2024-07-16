@@ -124,7 +124,7 @@ fn spawn_fire_breath(
 
 fn update_fire_particles_render_layers(
     mut commands: Commands,
-    query: Query<(Entity, &Particle)>,
+    query: Query<(Entity, &Particle), Added<Particle>>,
     render_layers_query: Query<&RenderLayers>,
 ) {
     for (entity, particle) in &query {
