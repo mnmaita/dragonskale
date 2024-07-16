@@ -5,7 +5,7 @@ use bevy::{
 
 use crate::{
     camera::MainCamera,
-    game::{Player, GRID_SIZE, HALF_GRID_SIZE, HALF_LEVEL_SIZE, HALF_TILE_SIZE, TILE_SIZE},
+    game::{Player, GRID_SIZE, HALF_TILE_SIZE, TILE_SIZE},
     input::CursorWorldPositionChecker,
     playing,
 };
@@ -22,44 +22,13 @@ impl Plugin for DebugPlugin {
 }
 
 fn draw_grid(mut gizmos: Gizmos) {
-    gizmos.line_2d(
-        Vec2::new(-HALF_TILE_SIZE.x, HALF_LEVEL_SIZE.y),
-        Vec2::new(-HALF_TILE_SIZE.x, -HALF_LEVEL_SIZE.y - HALF_TILE_SIZE.y),
+    gizmos.grid_2d(
+        -HALF_TILE_SIZE,
+        0.0,
+        GRID_SIZE.as_uvec2(),
+        TILE_SIZE,
         FUCHSIA,
     );
-    gizmos.line_2d(
-        Vec2::new(HALF_LEVEL_SIZE.x, -HALF_TILE_SIZE.y),
-        Vec2::new(-HALF_LEVEL_SIZE.x - HALF_TILE_SIZE.x, -HALF_TILE_SIZE.y),
-        FUCHSIA,
-    );
-    for x in -HALF_GRID_SIZE.x as isize..HALF_GRID_SIZE.x as isize {
-        let x: f32 = x as f32;
-        gizmos.line_2d(
-            Vec2::new(
-                (x * TILE_SIZE.x) + HALF_TILE_SIZE.x * x.signum(),
-                HALF_LEVEL_SIZE.y,
-            ),
-            Vec2::new(
-                (x * TILE_SIZE.x) + HALF_TILE_SIZE.x * x.signum(),
-                -HALF_LEVEL_SIZE.y - HALF_TILE_SIZE.y,
-            ),
-            FUCHSIA,
-        );
-    }
-    for y in -HALF_GRID_SIZE.y as isize..HALF_GRID_SIZE.y as isize {
-        let y: f32 = y as f32;
-        gizmos.line_2d(
-            Vec2::new(
-                HALF_LEVEL_SIZE.x,
-                (y * TILE_SIZE.y) + HALF_TILE_SIZE.y * y.signum(),
-            ),
-            Vec2::new(
-                -HALF_LEVEL_SIZE.x - HALF_TILE_SIZE.x,
-                (y * TILE_SIZE.y) + HALF_TILE_SIZE.y * y.signum(),
-            ),
-            FUCHSIA,
-        );
-    }
 }
 
 fn draw_camera_constraints(
