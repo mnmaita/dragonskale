@@ -2,7 +2,7 @@
 
 use animation::AnimationPlugin;
 use audio::{audio_assets_loaded, AudioPlugin, BgmChannel};
-use bevy::{asset::AssetMetaCheck, ecs::query::QueryFilter, prelude::*};
+use bevy::{asset::AssetMetaCheck, prelude::*};
 use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
 use bevy_kira_audio::{AudioChannel, AudioControl};
 use camera::CameraPlugin;
@@ -59,9 +59,9 @@ fn main() {
         TexturesPlugin,
     ));
 
-    // app.world().remove_resource::<EventUpdateSignal>();
-
     app.init_state::<AppState>();
+
+    app.enable_state_scoped_entities::<AppState>();
 
     app.insert_resource(Msaa::Off);
 
@@ -93,12 +93,6 @@ fn handle_asset_load(mut state: ResMut<NextState<AppState>>) {
     #[cfg(debug_assertions)]
     info!("Assets loaded successfully.");
     state.set(AppState::MainMenu);
-}
-
-pub fn entity_cleanup<F: QueryFilter>(mut commands: Commands, query: Query<Entity, F>) {
-    for entity in &query {
-        commands.entity(entity).despawn_recursive();
-    }
 }
 
 pub fn stop_music_on_transition(bgm_audio_channel: Res<AudioChannel<BgmChannel>>) {

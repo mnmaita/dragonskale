@@ -3,14 +3,14 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     camera::{RenderLayer, YSorted},
-    playing,
+    playing, AppState,
 };
 
 use super::{
     power_up::{PowerUpEvent, PowerUpEventType},
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{ScoreEvent, ScoreEventType},
-    Enemy, InGameEntity, Player, PLAYER_GROUP, PROJECTILE_GROUP, TILE_SIZE,
+    Enemy, Player, PLAYER_GROUP, PROJECTILE_GROUP, TILE_SIZE,
 };
 
 pub(super) struct CombatPlugin;
@@ -150,7 +150,7 @@ fn spawn_projectiles(
                 linear_damping: 1.0,
                 angular_damping: 10.0,
             },
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             YSorted,
         ));
     }

@@ -5,12 +5,11 @@ use pathfinding::prelude::Matrix;
 use rand::{random, seq::SliceRandom, Rng};
 
 use crate::{
-    audio::{PlayMusicEvent, PlaybackSettings, SoundEffect},
+    audio::{PlayMusicEvent, PlaybackSettings},
     camera::{RenderLayer, YSorted, YSortedInverse},
-    entity_cleanup,
     game::{
-        InGameEntity, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, GRID_SIZE, HALF_GRID_SIZE,
-        HALF_TILE_SIZE, TILE_SIZE,
+        BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, GRID_SIZE, HALF_GRID_SIZE, HALF_TILE_SIZE,
+        TILE_SIZE,
     },
     AppState,
 };
@@ -44,11 +43,6 @@ impl Plugin for LevelPlugin {
                 play_background_music,
             )
                 .chain(),
-        );
-
-        app.add_systems(
-            OnExit(AppState::InGame),
-            entity_cleanup::<With<SoundEffect>>,
         );
     }
 }
@@ -112,21 +106,22 @@ fn spawn_level_tiles(
         let position = translate_grid_position_to_world_space(&(x, y));
         let translation = position.extend(0.0);
         let transform = Transform::from_translation(translation);
-        let mut tile_entity = commands.spawn(TileBundle {
-            render_layers: RenderLayers::layer(RenderLayer::Background.into()),
-            sprite: SpriteBundle {
-                texture: tileset_ground_texture.clone(),
-                transform,
-                ..default()
+        let mut tile_entity = commands.spawn((
+            TileBundle {
+                render_layers: RenderLayers::layer(RenderLayer::Background.into()),
+                sprite: SpriteBundle {
+                    texture: tileset_ground_texture.clone(),
+                    transform,
+                    ..default()
+                },
+                texture_atlas: TextureAtlas {
+                    layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
+                    index: tile.into(),
+                },
+                tile,
             },
-            texture_atlas: TextureAtlas {
-                layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
-                index: tile.into(),
-            },
-            tile,
-        });
-
-        tile_entity.insert(InGameEntity);
+            StateScoped(AppState::GameOver),
+        ));
 
         if y == 0 || x == 0 || y == GRID_SIZE.y as usize - 1 || x == GRID_SIZE.x as usize - 1 {
             tile_entity.insert(BorderTile);
@@ -182,7 +177,7 @@ fn spawn_buildings(
             },
         });
 
-        building_entity_commands.insert((InGameEntity, YSorted));
+        building_entity_commands.insert((StateScoped(AppState::GameOver), YSorted));
     }
 }
 
@@ -229,7 +224,7 @@ fn spawn_hills(
 
         hill_entity_commands.insert((
             RenderLayers::layer(RenderLayer::Topography.into()),
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             YSorted,
         ));
     }
@@ -285,7 +280,7 @@ fn spawn_mountains(
 
         mountain_entity_commands.insert((
             RenderLayers::layer(RenderLayer::Topography.into()),
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             YSortedInverse,
         ));
     }
@@ -334,7 +329,7 @@ fn spawn_waves(
 
         wave_entity_commands.insert((
             RenderLayers::layer(RenderLayer::Background.into()),
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             YSortedInverse,
         ));
     }

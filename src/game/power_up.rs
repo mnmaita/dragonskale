@@ -13,7 +13,6 @@ use crate::{
 };
 
 use super::{
-    plugin::InGameEntity,
     resource_pool::{Health, ResourcePool},
     Player, HALF_TILE_SIZE, PLAYER_GROUP, POWERUP_GROUP,
 };
@@ -118,7 +117,7 @@ fn spawn_powerups(
                     });
 
                     powerup_entity_commands.insert((
-                        InGameEntity,
+                        StateScoped(AppState::GameOver),
                         LockedAxes::ROTATION_LOCKED,
                         YSorted,
                         RigidBody::Dynamic,

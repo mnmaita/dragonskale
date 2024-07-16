@@ -6,13 +6,13 @@ use bevy_rapier2d::prelude::{Collider, CollisionGroups, Sensor};
 use crate::{
     audio::DragonBreathChannel,
     camera::{RenderLayer, YSorted},
-    playing,
+    playing, AppState,
 };
 
 use super::{
     combat::ImpactDamage,
     resource_pool::{Fire, ResourcePool},
-    InGameEntity, Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP,
+    Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP,
 };
 
 pub(super) struct FireBreathPlugin;
@@ -115,7 +115,7 @@ fn spawn_fire_breath(
 
         fire_breath_entity_commands.insert((
             CollisionGroups::new(FIRE_BREATH_GROUP, BUILDING_GROUP | ENEMY_GROUP),
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             Playing,
             YSorted,
         ));

@@ -2,13 +2,13 @@ use bevy::prelude::*;
 
 use crate::{
     audio::{PlayMusicEvent, PlaybackSettings},
-    entity_cleanup, playing, AppState,
+    playing, AppState,
 };
 
 use super::{
     resource_pool::{Health, ResourcePool},
     score_system::Score,
-    InGameEntity, Player,
+    Player,
 };
 
 pub(super) struct GameOverPlugin;
@@ -31,11 +31,6 @@ impl Plugin for GameOverPlugin {
             OnEnter(AppState::GameOver),
             (play_background_music, display_game_over_screen),
         );
-
-        app.add_systems(
-            OnExit(AppState::GameOver),
-            entity_cleanup::<Or<(With<GameOverEntity>, With<InGameEntity>)>>,
-        );
     }
 }
 
@@ -43,9 +38,6 @@ impl Plugin for GameOverPlugin {
 enum GameOverButtonAction {
     BackToMenu,
 }
-
-#[derive(Component)]
-struct GameOverEntity;
 
 #[derive(Component)]
 struct GameOverBackground;
@@ -71,7 +63,7 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
     commands
         .spawn((
             GameOverBackground,
-            GameOverEntity,
+            StateScoped(AppState::GameOver),
             NodeBundle {
                 background_color: BackgroundColor(Color::BLACK.with_alpha(0.)),
                 style: Style {

@@ -9,7 +9,7 @@ use crate::{playing, AppState};
 use super::{
     resource_pool::{Fire, Health, ResourcePool},
     score_system::Score,
-    InGameEntity, Player,
+    Player,
 };
 
 const BAR_WIDTH: f32 = 150.;
@@ -46,7 +46,7 @@ struct ScoreDisplay;
 fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             NodeBundle {
                 style: Style {
                     width: Val::Percent(100.),
@@ -114,9 +114,9 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
                 });
         });
 
-    // Score text in botton middle of screen
+    // Score text in bottom middle of screen
     commands.spawn((
-        InGameEntity,
+        StateScoped(AppState::GameOver),
         ScoreDisplay,
         TextBundle {
             text: Text {

@@ -13,8 +13,7 @@ use crate::{
 use super::{
     combat::{AttackDamage, AttackTimer, Range, SpawnProjectileEvent},
     resource_pool::{Health, ResourcePool},
-    BorderTile, InGameEntity, Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP,
-    HALF_TILE_SIZE, TILE_SIZE,
+    BorderTile, Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, HALF_TILE_SIZE, TILE_SIZE,
 };
 
 #[derive(Resource, Deref)]
@@ -214,7 +213,11 @@ fn spawn_enemies(
                 ),
             });
 
-            enemy_entity_commands.insert((InGameEntity, LockedAxes::ROTATION_LOCKED, YSorted));
+            enemy_entity_commands.insert((
+                StateScoped(AppState::GameOver),
+                LockedAxes::ROTATION_LOCKED,
+                YSorted,
+            ));
         }
     }
 }

@@ -2,7 +2,7 @@ use bevy::{app::AppExit, color::palettes::css::ALICE_BLUE, prelude::*};
 
 use crate::{
     audio::{PlayMusicEvent, PlaybackSettings},
-    entity_cleanup, AppState,
+    AppState,
 };
 
 pub struct MainMenuPlugin;
@@ -21,16 +21,8 @@ impl Plugin for MainMenuPlugin {
             Update,
             handle_main_menu_button_interactions.run_if(in_state(AppState::MainMenu)),
         );
-
-        app.add_systems(
-            OnExit(AppState::MainMenu),
-            entity_cleanup::<With<MainMenuEntity>>,
-        );
     }
 }
-
-#[derive(Component)]
-struct MainMenuEntity;
 
 #[derive(Component)]
 enum MainMenuButtonAction {
@@ -57,7 +49,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ..default()
             },
-            MainMenuEntity,
+            StateScoped(AppState::MainMenu),
         ))
         .with_children(|node| {
             node.spawn(ImageBundle {

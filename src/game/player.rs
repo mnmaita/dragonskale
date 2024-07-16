@@ -11,7 +11,7 @@ use crate::{
 use super::{
     resource_pool::{Fire, Health, ResourcePool},
     score_system::Score,
-    InGameEntity, PLAYER_GROUP, POWERUP_GROUP, PROJECTILE_GROUP,
+    PLAYER_GROUP, POWERUP_GROUP, PROJECTILE_GROUP,
 };
 
 pub(super) struct PlayerPlugin;
@@ -68,5 +68,5 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         texture_atlas: texture_atlas_layout_handle.into(),
     });
 
-    player_entity_commands.insert((InGameEntity, YSorted));
+    player_entity_commands.insert((StateScoped(AppState::GameOver), YSorted));
 }
