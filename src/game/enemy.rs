@@ -129,13 +129,12 @@ pub struct TextureArcherAtlasHandle(Handle<TextureAtlasLayout>);
 pub struct TextureAxeAtlasHandle(Handle<TextureAtlasLayout>);
 
 fn load_atlas_handlers(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture_atlas_archer =
-        TextureAtlasLayout::from_grid(Vec2::new(72., 78.), 16, 8, None, None);
+    let texture_atlas_archer = TextureAtlasLayout::from_grid(UVec2::new(72, 78), 16, 8, None, None);
     let texture_atlas_handle_archer = asset_server.add(texture_atlas_archer);
 
     commands.insert_resource(TextureArcherAtlasHandle(texture_atlas_handle_archer));
 
-    let texture_atlas_axe = TextureAtlasLayout::from_grid(Vec2::new(72., 78.), 16, 8, None, None);
+    let texture_atlas_axe = TextureAtlasLayout::from_grid(UVec2::new(72, 78), 16, 8, None, None);
     let texture_atlas_handle_axe = asset_server.add(texture_atlas_axe);
 
     commands.insert_resource(TextureAxeAtlasHandle(texture_atlas_handle_axe));

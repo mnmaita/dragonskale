@@ -1,4 +1,7 @@
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::css::{FUCHSIA, RED, YELLOW},
+    prelude::*,
+};
 
 use crate::{
     camera::MainCamera,
@@ -22,12 +25,12 @@ fn draw_grid(mut gizmos: Gizmos) {
     gizmos.line_2d(
         Vec2::new(-HALF_TILE_SIZE.x, HALF_LEVEL_SIZE.y),
         Vec2::new(-HALF_TILE_SIZE.x, -HALF_LEVEL_SIZE.y - HALF_TILE_SIZE.y),
-        Color::FUCHSIA,
+        FUCHSIA,
     );
     gizmos.line_2d(
         Vec2::new(HALF_LEVEL_SIZE.x, -HALF_TILE_SIZE.y),
         Vec2::new(-HALF_LEVEL_SIZE.x - HALF_TILE_SIZE.x, -HALF_TILE_SIZE.y),
-        Color::FUCHSIA,
+        FUCHSIA,
     );
     for x in -HALF_GRID_SIZE.x as isize..HALF_GRID_SIZE.x as isize {
         let x: f32 = x as f32;
@@ -40,7 +43,7 @@ fn draw_grid(mut gizmos: Gizmos) {
                 (x * TILE_SIZE.x) + HALF_TILE_SIZE.x * x.signum(),
                 -HALF_LEVEL_SIZE.y - HALF_TILE_SIZE.y,
             ),
-            Color::FUCHSIA,
+            FUCHSIA,
         );
     }
     for y in -HALF_GRID_SIZE.y as isize..HALF_GRID_SIZE.y as isize {
@@ -54,7 +57,7 @@ fn draw_grid(mut gizmos: Gizmos) {
                 -HALF_LEVEL_SIZE.x - HALF_TILE_SIZE.x,
                 (y * TILE_SIZE.y) + HALF_TILE_SIZE.y * y.signum(),
             ),
-            Color::FUCHSIA,
+            FUCHSIA,
         );
     }
 }
@@ -74,13 +77,8 @@ fn draw_camera_constraints(
             .clamp(Vec2::ZERO, Vec2::splat(f32::MAX));
         let camera_boundary = Rect::from_center_size(-HALF_TILE_SIZE, camera_boundary_size);
 
-        gizmos.rect_2d(
-            camera_boundary.center(),
-            0.,
-            camera_boundary.size(),
-            Color::RED,
-        );
-        gizmos.circle_2d(camera_transform.translation.truncate(), 10., Color::RED);
+        gizmos.rect_2d(camera_boundary.center(), 0., camera_boundary.size(), RED);
+        gizmos.circle_2d(camera_transform.translation.truncate(), 10., RED);
     }
 }
 
@@ -95,7 +93,7 @@ fn draw_mouse_direction(
             let player_transform = query.single();
             let player_position = player_transform.translation.truncate();
 
-            gizmos.line_2d(player_position, cursor_position, Color::YELLOW);
+            gizmos.line_2d(player_position, cursor_position, YELLOW);
         }
     }
 }

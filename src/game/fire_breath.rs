@@ -77,7 +77,7 @@ fn spawn_fire_breath(
         .get_handle("textures/fire_anim.png")
         .unwrap_or_default();
     let texture_atlas_layout_fire =
-        TextureAtlasLayout::from_grid(Vec2::new(40., 40.), 2, 1, None, None);
+        TextureAtlasLayout::from_grid(UVec2::new(40, 40), 2, 1, None, None);
     let texture_atlas_handle_fire = asset_server.add(texture_atlas_layout_fire);
     let animated_index: AtlasIndex = AtlasIndex::Animated(AnimatedIndex {
         indices: vec![0, 1],
@@ -129,7 +129,7 @@ fn update_fire_particles_render_layers(
 ) {
     for (entity, particle) in &query {
         if let Ok(render_layers) = render_layers_query.get(particle.parent_system) {
-            commands.entity(entity).insert(*render_layers);
+            commands.entity(entity).insert(render_layers.clone());
         }
     }
 }

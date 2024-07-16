@@ -45,7 +45,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         .get_handle("textures/dragon.png")
         .unwrap_or_default();
     let texture_atlas_layout =
-        TextureAtlasLayout::from_grid(Vec2::new(191., 161.), 12, 1, None, None);
+        TextureAtlasLayout::from_grid(UVec2::new(191, 161), 12, 1, None, None);
     let texture_atlas_layout_handle = asset_server.add(texture_atlas_layout);
 
     let mut player_entity_commands = commands.spawn(PlayerBundle {

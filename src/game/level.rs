@@ -27,8 +27,8 @@ impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             OnTransition {
-                from: AppState::MainMenu,
-                to: AppState::InGame,
+                entered: AppState::InGame,
+                exited: AppState::MainMenu,
             },
             (generate_level_matrix, generate_tilemaps),
         );
@@ -55,9 +55,9 @@ impl Plugin for LevelPlugin {
 
 fn generate_tilemaps(mut commands: Commands, asset_server: Res<AssetServer>) {
     let tileset_ground_texture_atlas_layout =
-        TextureAtlasLayout::from_grid(TILE_SIZE, 16, 18, None, None);
+        TextureAtlasLayout::from_grid(TILE_SIZE.as_uvec2(), 16, 18, None, None);
     let tileset_objects_texture_atlas =
-        TextureAtlasLayout::from_grid(TILE_SIZE, 38, 14, None, None);
+        TextureAtlasLayout::from_grid(TILE_SIZE.as_uvec2(), 38, 14, None, None);
 
     commands.insert_resource(TilesetGroundTextureAtlasHandle(
         asset_server.add(tileset_ground_texture_atlas_layout),
@@ -413,18 +413,18 @@ impl From<u8> for Tile {
     }
 }
 
-impl From<Tile> for Color {
-    fn from(value: Tile) -> Self {
-        match value {
-            Tile::Grass => Self::DARK_GREEN,
-            Tile::Hills => Self::GRAY,
-            Tile::Mountains => Self::DARK_GRAY,
-            Tile::Water => Self::BLUE,
-            Tile::Sand => Self::BEIGE,
-            Tile::_LAST => Self::default(),
-        }
-    }
-}
+// impl From<Tile> for Color {
+//     fn from(value: Tile) -> Self {
+//         match value {
+//             Tile::Grass => Self::DARK_GREEN,
+//             Tile::Hills => Self::GRAY,
+//             Tile::Mountains => Self::DARK_GRAY,
+//             Tile::Water => Self::BLUE,
+//             Tile::Sand => Self::BEIGE,
+//             Tile::_LAST => Self::default(),
+//         }
+//     }
+// }
 
 impl From<Tile> for usize {
     fn from(value: Tile) -> Self {

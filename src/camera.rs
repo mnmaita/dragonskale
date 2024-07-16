@@ -1,4 +1,7 @@
-use bevy::{prelude::*, render::view::RenderLayers};
+use bevy::{
+    prelude::*,
+    render::view::{Layer, RenderLayers},
+};
 
 use crate::{
     game::Player,
@@ -13,9 +16,9 @@ pub enum RenderLayer {
     Ui,
 }
 
-impl From<RenderLayer> for u8 {
+impl From<RenderLayer> for Layer {
     fn from(value: RenderLayer) -> Self {
-        value as u8
+        value as Layer
     }
 }
 
@@ -48,7 +51,7 @@ pub struct MainCameraBundle {
 }
 
 impl MainCameraBundle {
-    pub fn from_layer(layer: u8) -> Self {
+    pub fn from_layer(layer: Layer) -> Self {
         Self {
             camera_2d: Camera2dBundle {
                 camera: Camera {
@@ -70,7 +73,7 @@ pub struct SubLayerCameraBundle {
 }
 
 impl SubLayerCameraBundle {
-    pub fn from_layer(layer: u8) -> Self {
+    pub fn from_layer(layer: Layer) -> Self {
         Self {
             camera_2d: Camera2dBundle {
                 camera: Camera {

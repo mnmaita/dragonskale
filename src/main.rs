@@ -3,7 +3,7 @@
 use animation::AnimationPlugin;
 use audio::{audio_assets_loaded, AudioPlugin, BgmChannel};
 use bevy::{
-    ecs::{event::EventUpdateSignal, query::QueryFilter},
+    ecs::query::QueryFilter,
     prelude::*,
     render::{
         settings::{Backends, RenderCreation, WgpuSettings},
@@ -79,7 +79,7 @@ fn main() {
         TexturesPlugin,
     ));
 
-    app.world.remove_resource::<EventUpdateSignal>();
+    // app.world().remove_resource::<EventUpdateSignal>();
 
     app.init_state::<AppState>();
 

@@ -167,7 +167,7 @@ fn projectile_collision_with_player(
 
     for (projectile_entity, projectile_damage) in &projectile_query {
         if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
-            if contact_pair.has_any_active_contacts() {
+            if contact_pair.has_any_active_contact() {
                 player_hitpoints.subtract(projectile_damage.0);
                 score_event_writer.send(ScoreEvent::new(0, ScoreEventType::ResetMultiplier));
 

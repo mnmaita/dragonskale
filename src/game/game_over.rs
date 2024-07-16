@@ -73,7 +73,7 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
             GameOverBackground,
             GameOverEntity,
             NodeBundle {
-                background_color: BackgroundColor(Color::BLACK.with_a(0.)),
+                background_color: BackgroundColor(Color::BLACK.with_alpha(0.)),
                 style: Style {
                     align_items: AlignItems::Center,
                     display: Display::Flex,
@@ -93,7 +93,7 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
                     text: Text::from_section(
                         "Game Over",
                         TextStyle {
-                            color: Color::WHITE.with_a(0.),
+                            color: Color::WHITE.with_alpha(0.),
                             font: asset_server
                                 .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
                                 .unwrap_or_default(),
@@ -111,7 +111,7 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
                     text: Text::from_section(
                         "Score:",
                         TextStyle {
-                            color: Color::WHITE.with_a(0.),
+                            color: Color::WHITE.with_alpha(0.),
                             font: asset_server
                                 .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
                                 .unwrap_or_default(),
@@ -125,7 +125,7 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
             builder
                 .spawn((
                     ButtonBundle {
-                        background_color: BackgroundColor(Color::default().with_a(0.)),
+                        background_color: BackgroundColor(Color::default().with_alpha(0.)),
                         ..default()
                     },
                     GameOverButtonAction::BackToMenu,
@@ -137,7 +137,7 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
                             text: Text::from_section(
                                 "Back to Menu",
                                 TextStyle {
-                                    color: Color::WHITE.with_a(0.),
+                                    color: Color::WHITE.with_alpha(0.),
                                     font: asset_server
                                         .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
                                         .unwrap_or_default(),
@@ -154,9 +154,9 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
 fn fade_out_screen(mut query: Query<&mut BackgroundColor, With<GameOverBackground>>) {
     let mut background_color = query.single_mut();
 
-    if background_color.0.a() < 1. {
-        let alpha = background_color.0.a();
-        background_color.0.set_a(alpha + 0.01);
+    if background_color.0.alpha() < 1. {
+        let alpha = background_color.0.alpha();
+        background_color.0.set_alpha(alpha + 0.01);
     }
 }
 
@@ -176,9 +176,9 @@ fn fade_in_text(
 ) {
     let background_color = background_query.single();
     for mut text in &mut query {
-        if background_color.0.a() >= 0.5 && text.sections[0].style.color.a() < 1. {
-            let alpha = text.sections[0].style.color.a();
-            text.sections[0].style.color.set_a(alpha + 0.001);
+        if background_color.0.alpha() >= 0.5 && text.sections[0].style.color.alpha() < 1. {
+            let alpha = text.sections[0].style.color.alpha();
+            text.sections[0].style.color.set_alpha(alpha + 0.001);
         }
     }
 }

@@ -1,4 +1,4 @@
-use bevy::{app::AppExit, prelude::*};
+use bevy::{app::AppExit, color::palettes::css::ALICE_BLUE, prelude::*};
 
 use crate::{
     audio::{PlayMusicEvent, PlaybackSettings},
@@ -71,7 +71,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 
             node.spawn((
                 ButtonBundle {
-                    background_color: Color::ALICE_BLUE.into(),
+                    background_color: ALICE_BLUE.into(),
                     style: Style {
                         position_type: PositionType::Absolute,
                         bottom: Val::Percent(12.),
@@ -98,7 +98,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             #[cfg(not(target_family = "wasm"))]
             node.spawn((
                 ButtonBundle {
-                    background_color: Color::ALICE_BLUE.into(),
+                    background_color: ALICE_BLUE.into(),
                     style: Style {
                         position_type: PositionType::Absolute,
                         bottom: Val::Percent(6.),
@@ -134,7 +134,7 @@ fn handle_main_menu_button_interactions(
             Interaction::Pressed => match main_menu_button_action {
                 #[cfg(not(target_family = "wasm"))]
                 MainMenuButtonAction::Exit => {
-                    exit.send(AppExit);
+                    exit.send(AppExit::Success);
                 }
                 MainMenuButtonAction::NewGame => {
                     app_state.set(AppState::InGame);

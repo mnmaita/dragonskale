@@ -71,7 +71,7 @@ pub struct ScaleTextureAtlasLayoutHandle(Handle<TextureAtlasLayout>);
 
 fn load_scale_atlas(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture_atlas_layout_healing_scale =
-        TextureAtlasLayout::from_grid(Vec2::new(40., 40.), 2, 1, None, None);
+        TextureAtlasLayout::from_grid(UVec2::new(40, 40), 2, 1, None, None);
     let texture_atlas_layout_handle_healing_scale =
         asset_server.add(texture_atlas_layout_healing_scale);
 
