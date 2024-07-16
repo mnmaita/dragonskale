@@ -219,7 +219,7 @@ fn despawn_dead_entities(
 
 fn despawn_projectiles(
     mut commands: Commands,
-    projectile_query: Query<(Entity, &Velocity), With<Projectile>>,
+    projectile_query: Query<(Entity, &Velocity), (With<Projectile>, Changed<Velocity>)>,
 ) {
     for (entity, velocity) in &projectile_query {
         if velocity.linvel.length() < 60. {
