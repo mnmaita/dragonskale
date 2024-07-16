@@ -56,7 +56,8 @@ pub struct PowerUpBundle {
     pub marker: PowerUp,
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
-    pub sprite: SpriteSheetBundle,
+    pub sprite: SpriteBundle,
+    pub texture_atlas: TextureAtlas,
     pub collider: Collider,
     pub render_layers: RenderLayers,
     pub sensor: Sensor,
@@ -104,15 +105,12 @@ fn spawn_powerups(
                         marker: PowerUp,
                         animation_indices: AnimationIndices::new(0, 1),
                         animation_timer: AnimationTimer::from_seconds(0.2),
-                        sprite: SpriteSheetBundle {
-                            atlas: TextureAtlas {
-                                layout: scale_texture_atlas_handler.0.clone(),
-                                index: 0,
-                            },
+                        sprite: SpriteBundle {
                             texture: texture_healing_scale.clone(),
                             transform: *transform,
                             ..default()
                         },
+                        texture_atlas: scale_texture_atlas_handler.0.clone().into(),
                         collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
                         render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
                         sensor: Sensor,

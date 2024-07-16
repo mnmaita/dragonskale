@@ -75,7 +75,8 @@ pub struct EnemyBundle {
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
     pub sprite_orientation: SpriteAnimation,
-    pub sprite: SpriteSheetBundle,
+    pub sprite: SpriteBundle,
+    pub texture_atlas: TextureAtlas,
     pub collider: Collider,
     pub render_layers: RenderLayers,
     pub rigid_body: RigidBody,
@@ -195,14 +196,14 @@ fn spawn_enemies(
                 animation_indices: AnimationIndices::new(4, 11),
                 animation_timer: AnimationTimer::from_seconds(0.2),
                 sprite_orientation: SpriteAnimation::RunLeft,
-                sprite: SpriteSheetBundle {
-                    atlas: TextureAtlas {
-                        layout: texture_atlas_handle,
-                        index: 4,
-                    },
+                sprite: SpriteBundle {
                     texture,
                     transform: Transform::from_translation(translation),
                     ..default()
+                },
+                texture_atlas: TextureAtlas {
+                    layout: texture_atlas_handle,
+                    index: 4,
                 },
                 collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
                 render_layers: RenderLayers::layer(RenderLayer::Ground.into()),

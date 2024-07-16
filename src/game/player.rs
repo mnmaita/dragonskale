@@ -34,7 +34,8 @@ pub struct PlayerBundle {
     pub speed: Speed,
     pub marker: Player,
     pub render_layers: RenderLayers,
-    pub spritesheet: SpriteSheetBundle,
+    pub sprite: SpriteBundle,
+    pub texture_atlas: TextureAtlas,
 }
 
 #[derive(Component)]
@@ -59,15 +60,12 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         marker: Player,
         render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
         speed: Speed(10.),
-        spritesheet: SpriteSheetBundle {
-            atlas: TextureAtlas {
-                layout: texture_atlas_layout_handle,
-                index: 0,
-            },
+        sprite: SpriteBundle {
             texture,
             transform: Transform::from_translation(Vec2::ONE.extend(1.)),
             ..default()
         },
+        texture_atlas: texture_atlas_layout_handle.into(),
     });
 
     player_entity_commands.insert((InGameEntity, YSorted));

@@ -114,14 +114,14 @@ fn spawn_level_tiles(
         let transform = Transform::from_translation(translation);
         let mut tile_entity = commands.spawn(TileBundle {
             render_layers: RenderLayers::layer(RenderLayer::Background.into()),
-            sprite: SpriteSheetBundle {
-                atlas: TextureAtlas {
-                    layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
-                    index: tile.into(),
-                },
+            sprite: SpriteBundle {
                 texture: tileset_ground_texture.clone(),
                 transform,
                 ..default()
+            },
+            texture_atlas: TextureAtlas {
+                layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
+                index: tile.into(),
             },
             tile,
         });
@@ -382,7 +382,8 @@ pub struct BorderTile;
 #[derive(Bundle)]
 pub struct TileBundle {
     pub render_layers: RenderLayers,
-    pub sprite: SpriteSheetBundle,
+    pub sprite: SpriteBundle,
+    pub texture_atlas: TextureAtlas,
     pub tile: Tile,
 }
 
