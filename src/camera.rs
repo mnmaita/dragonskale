@@ -31,11 +31,8 @@ impl Plugin for CameraPlugin {
         app.add_systems(
             PostUpdate,
             (
-                (
-                    update_camera.run_if(any_with_component::<Player>),
-                    constrain_camera_position_to_level,
-                )
-                    .chain(),
+                update_camera.run_if(any_with_component::<Player>),
+                constrain_camera_position_to_level.after(update_camera),
                 y_sorting,
                 inverse_y_sorting,
             ),

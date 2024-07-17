@@ -25,24 +25,20 @@ pub(super) struct LevelPlugin;
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnTransition {
-                entered: AppState::InGame,
-                exited: AppState::MainMenu,
-            },
-            (generate_level_matrix, generate_tilemaps),
-        );
-
-        app.add_systems(
             OnEnter(AppState::InGame),
             (
-                spawn_level_tiles,
-                spawn_buildings,
-                spawn_hills,
-                spawn_mountains,
-                spawn_waves,
+                generate_level_matrix,
+                generate_tilemaps,
+                (
+                    spawn_level_tiles.after(generate_tilemaps),
+                    spawn_buildings,
+                    spawn_hills,
+                    spawn_mountains,
+                    spawn_waves,
+                )
+                    .after(generate_level_matrix),
                 play_background_music,
-            )
-                .chain(),
+            ),
         );
     }
 }

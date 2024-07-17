@@ -11,10 +11,7 @@ impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             OnEnter(AppState::MainMenu),
-            (
-                setup_main_menu,
-                play_background_music.after(setup_main_menu),
-            ),
+            (setup_main_menu, play_background_music),
         );
 
         app.add_systems(

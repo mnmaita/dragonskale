@@ -21,15 +21,17 @@ impl Plugin for GameOverPlugin {
             FixedUpdate,
             (
                 check_game_over_condition.run_if(playing()),
-                (fade_out_screen, update_score_display, fade_in_text)
-                    .chain()
-                    .run_if(in_state(AppState::GameOver)),
+                (fade_out_screen, fade_in_text).run_if(in_state(AppState::GameOver)),
             ),
         );
 
         app.add_systems(
             OnEnter(AppState::GameOver),
-            (play_background_music, display_game_over_screen),
+            (
+                play_background_music,
+                display_game_over_screen,
+                update_score_display.after(display_game_over_screen),
+            ),
         );
     }
 }
