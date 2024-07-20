@@ -685,7 +685,8 @@ dependencies = [
 [[package]]
 name = "bevy_particle_systems"
 version = "0.13.0"
-source = "git+https://github.com/abnormalbrain/bevy_particle_systems.git?branch=main#8aee8fda5cbcd9e01d20f94085cedcf63ace38a2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6355fc6d813d41d32fbab7a7ebd87d9dd9b2ad0a9e8509094de7a23108d47b7"
 dependencies = [
  "bevy_app",
  "bevy_asset",

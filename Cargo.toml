@@ -24,7 +24,7 @@ bevy = { version = "0.14.0", default-features = false, features = [
     "x11",
 ] }
 bevy_rapier2d = { version = "0.27.0", features = ["debug-render-2d"] }
-bevy_particle_systems = { git = "https://github.com/abnormalbrain/bevy_particle_systems.git", branch = "main" }
+bevy_particle_systems = "0.13.0"
 noise = "0.9.0"
 rand = "0.8.5"
 pathfinding = "4.10.0"
