@@ -252,8 +252,9 @@ fn handle_stop_music_events(
     query: Query<Entity, With<BackgroundMusic>>,
 ) {
     if !event_reader.is_empty() {
-        let entity = query.single();
-        commands.entity(entity).despawn_recursive();
+        if let Ok(entity) = query.single() {
+            commands.entity(entity).despawn();
+        }
     }
     event_reader.clear();
 }

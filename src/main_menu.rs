@@ -101,7 +101,7 @@ fn handle_main_menu_button_interactions(
             Interaction::Pressed => match main_menu_button_action {
                 #[cfg(not(target_family = "wasm"))]
                 MainMenuButtonAction::Exit => {
-                    exit.send(AppExit::Success);
+                    exit.write(AppExit::Success);
                 }
                 MainMenuButtonAction::NewGame => {
                     app_state.set(AppState::InGame);
@@ -114,7 +114,7 @@ fn handle_main_menu_button_interactions(
 }
 
 fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
-    play_music_event_writer.send(PlayMusicEvent::new(
+    play_music_event_writer.write(PlayMusicEvent::new(
         "theme1.ogg",
         Some(PlaybackSettings {
             volume: 0.25,

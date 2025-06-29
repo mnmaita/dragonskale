@@ -125,37 +125,26 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn update_health_bar_display(
-    player_query: Query<&ResourcePool<Health>, (Changed<ResourcePool<Health>>, With<Player>)>,
-    mut health_bar_query: Query<&mut Node, With<HealthBar>>,
+    player_hp: Single<&ResourcePool<Health>, (Changed<ResourcePool<Health>>, With<Player>)>,
+    mut health_bar_node: Single<&mut Node, With<HealthBar>>,
 ) {
-    if let Ok(hitpoints) = player_query.get_single() {
-        let mut node = health_bar_query.single_mut();
-
-        node.width = Val::Px(BAR_WIDTH * hitpoints.current_percentage());
-    }
+    health_bar_node.width = Val::Px(BAR_WIDTH * player_hp.current_percentage());
 }
 
 fn update_fire_bar_display(
-    player_query: Query<&ResourcePool<Fire>, (Changed<ResourcePool<Fire>>, With<Player>)>,
-    mut fire_bar_query: Query<&mut Node, With<FireBreathBar>>,
+    player_fire: Single<&ResourcePool<Fire>, (Changed<ResourcePool<Fire>>, With<Player>)>,
+    mut fire_bar_node: Single<&mut Node, With<FireBreathBar>>,
 ) {
-    if let Ok(fire_breath_resource) = player_query.get_single() {
-        let mut node = fire_bar_query.single_mut();
-
-        node.width = Val::Px(BAR_WIDTH * fire_breath_resource.current_percentage());
-    }
+    fire_bar_node.width = Val::Px(BAR_WIDTH * player_fire.current_percentage());
 }
 
 fn update_score_display(
-    player_query: Query<&Score, (Changed<Score>, With<Player>)>,
-    mut score_text_display_query: Query<&mut Text, With<ScoreDisplay>>,
+    player_score: Single<&Score, (Changed<Score>, With<Player>)>,
+    mut score_text: Single<&mut Text, With<ScoreDisplay>>,
 ) {
-    if let Ok(score_system) = player_query.get_single() {
-        let mut score_text = score_text_display_query.single_mut();
-        score_text.0 = format!(
-            "Score: {} - Multiplier x {}",
-            score_system.current(),
-            score_system.multiplier()
-        );
-    }
+    score_text.0 = format!(
+        "Score: {} - Multiplier x {}",
+        player_score.current(),
+        player_score.multiplier()
+    );
 }

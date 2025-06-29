@@ -52,12 +52,10 @@ struct ScoreDisplay;
 
 fn check_game_over_condition(
     mut next_state: ResMut<NextState<AppState>>,
-    query: Query<&ResourcePool<Health>, (With<Player>, Changed<ResourcePool<Health>>)>,
+    player_health: Single<&ResourcePool<Health>, (With<Player>, Changed<ResourcePool<Health>>)>,
 ) {
-    if let Ok(player_health) = query.get_single() {
-        if player_health.current() == 0 {
-            next_state.set(AppState::GameOver);
-        }
+    if player_health.current() == 0 {
+        next_state.set(AppState::GameOver);
     }
 }
 
@@ -125,9 +123,7 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
         });
 }
 
-fn fade_out_screen(mut query: Query<&mut BackgroundColor, With<GameOverBackground>>) {
-    let mut background_color = query.single_mut();
-
+fn fade_out_screen(mut background_color: Single<&mut BackgroundColor, With<GameOverBackground>>) {
     if background_color.0.alpha() < 1. {
         let alpha = background_color.0.alpha();
         background_color.0.set_alpha(alpha + 0.01);
@@ -135,20 +131,16 @@ fn fade_out_screen(mut query: Query<&mut BackgroundColor, With<GameOverBackgroun
 }
 
 fn update_score_display(
-    mut score_display_query: Query<&mut Text, (With<GameOverText>, With<ScoreDisplay>)>,
-    player_query: Query<&Score, With<Player>>,
+    mut score_text: Single<&mut Text, (With<GameOverText>, With<ScoreDisplay>)>,
+    player_score: Single<&Score, With<Player>>,
 ) {
-    if let Ok(player_score) = player_query.get_single() {
-        let mut score_text = score_display_query.single_mut();
-        score_text.0 = format!("Score: {}", player_score.current());
-    }
+    score_text.0 = format!("Score: {}", player_score.current());
 }
 
 fn fade_in_text(
     mut query: Query<&mut TextColor, With<GameOverText>>,
-    background_query: Query<&BackgroundColor, With<GameOverBackground>>,
+    background_color: Single<&BackgroundColor, With<GameOverBackground>>,
 ) {
-    let background_color = background_query.single();
     for mut text_color in &mut query {
         if background_color.0.alpha() >= 0.5 && text_color.alpha() < 1. {
             let alpha = text_color.alpha();
@@ -158,7 +150,7 @@ fn fade_in_text(
 }
 
 fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
-    play_music_event_writer.send(PlayMusicEvent::new(
+    play_music_event_writer.write(PlayMusicEvent::new(
         "theme3.ogg",
         Some(PlaybackSettings {
             volume: 0.25,

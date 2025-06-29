@@ -228,9 +228,8 @@ fn setup_enemy_spawn_counter(mut commands: Commands) {
 
 fn update_enemy_facing_direction(
     mut enemy_query: Query<(&Transform, &Behavior, &mut FacingDirection), With<Enemy>>,
-    player_query: Query<&Transform, With<Player>>,
+    player_transform: Single<&Transform, With<Player>>,
 ) {
-    let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
 
     for (enemy_transform, enemy_behavior, mut enemy_facing_direction) in &mut enemy_query {
@@ -257,9 +256,8 @@ fn update_enemy_sprite_animation(
         ),
         With<Enemy>,
     >,
-    player_query: Query<&Transform, With<Player>>,
+    player_transform: Single<&Transform, With<Player>>,
 ) {
-    let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
 
     for (enemy_transform, enemy_behavior, facing_direction, mut sprite_animation) in
@@ -321,9 +319,8 @@ fn update_enemy_animation_indexes(
 
 fn handle_enemy_movement(
     mut enemy_query: Query<(&mut Transform, &Speed, &Behavior), With<Enemy>>,
-    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
 ) {
-    let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
 
     for (mut enemy_transform, enemy_speed, enemy_behavior) in &mut enemy_query {
@@ -349,10 +346,9 @@ fn handle_enemy_attacks(
         (Entity, &Transform, &mut AttackTimer, &Range, &AttackDamage),
         With<Enemy>,
     >,
-    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) {
-    let player_transform = player_query.single();
     let player_position = player_transform.translation.truncate();
 
     for (enemy_entity, enemy_transform, mut enemy_attack_timer, enemy_range, enemy_attack_damage) in
@@ -365,7 +361,7 @@ fn handle_enemy_attacks(
                 let direction = (player_position - enemy_position).normalize();
                 let emitter = enemy_entity;
 
-                spawn_projectile_event_writer.send(SpawnProjectileEvent::new(
+                spawn_projectile_event_writer.write(SpawnProjectileEvent::new(
                     enemy_attack_damage.0,
                     direction,
                     emitter,

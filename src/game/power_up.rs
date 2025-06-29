@@ -52,15 +52,15 @@ impl PowerUpEvent {
 
 #[derive(Component)]
 #[require(
-    AnimationIndices(|| AnimationIndices::new(0, 1)),
-    AnimationTimer(|| AnimationTimer::from_seconds(0.2)),
-    RenderLayers(|| RenderLayers::layer(RenderLayer::Sky.into())),
-    Collider(|| Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y)),
-    Sensor(|| Sensor),
-    CollisionGroups(|| CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP)),
-    StateScoped::<AppState>(|| StateScoped(AppState::GameOver)),
-    LockedAxes(|| LockedAxes::ROTATION_LOCKED),
-    RigidBody(|| RigidBody::Dynamic),
+    AnimationIndices::new(0, 1),
+    AnimationTimer::from_seconds(0.2),
+    RenderLayers::layer(RenderLayer::Sky.into()),
+    Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
+    Sensor,
+    CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP),
+    StateScoped::<AppState>(AppState::GameOver),
+    LockedAxes::ROTATION_LOCKED,
+    RigidBody::Dynamic,
 )]
 pub struct PowerUp;
 
@@ -117,18 +117,18 @@ fn spawn_powerups(
 fn consume_powerups(
     mut commands: Commands,
     powerup_query: Query<Entity, With<PowerUp>>,
-    mut player_query: Query<&mut ResourcePool<Health>, With<Player>>,
+    mut player_hp: Single<&mut ResourcePool<Health>, With<Player>>,
     rapier_context: ReadRapierContext,
 ) {
-    let rapier_context = rapier_context.single();
+    let Ok(rapier_context) = rapier_context.single() else {
+        return;
+    };
 
     for entity in &powerup_query {
         for (_, _, intersecting) in rapier_context.intersection_pairs_with(entity) {
             if intersecting {
-                if let Ok(mut hitpoints) = player_query.get_single_mut() {
-                    hitpoints.add(50);
-                    commands.entity(entity).despawn_recursive();
-                }
+                player_hp.add(50);
+                commands.entity(entity).despawn();
             }
         }
     }

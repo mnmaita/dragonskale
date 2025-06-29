@@ -1,9 +1,6 @@
 use bevy::{
     app::Update,
-    ecs::{
-        event::{Event, EventReader},
-        system::Query,
-    },
+    ecs::event::{Event, EventReader},
     prelude::*,
 };
 
@@ -86,24 +83,20 @@ impl ScoreEvent {
 
 fn update_player_score(
     mut score_event_reader: EventReader<ScoreEvent>,
-    mut player_score_query: Query<&mut Score, With<Player>>,
+    mut player_score: Single<&mut Score, With<Player>>,
 ) {
     for ScoreEvent {
         points,
         score_event_type,
     } in score_event_reader.read()
     {
-        let Ok(mut score_system) = player_score_query.get_single_mut() else {
-            return;
-        };
-
         match score_event_type {
             ScoreEventType::AddPoints => {
-                score_system.add_with_multiplier(*points);
-                score_system.increase_multiplier_by_one();
+                player_score.add_with_multiplier(*points);
+                player_score.increase_multiplier_by_one();
             }
             ScoreEventType::ResetMultiplier => {
-                score_system.reset_multiplier();
+                player_score.reset_multiplier();
             }
         }
     }

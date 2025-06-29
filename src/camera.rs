@@ -56,12 +56,12 @@ fn sub_layer_camera(layer: Layer) -> impl Bundle {
 #[derive(Component)]
 #[require(
     Camera2d,
-    Camera(|| Camera {
+    Camera {
         order: RenderLayer::Background as isize,
         ..Default::default()
-    }),
-    Msaa(|| Msaa::Off),
-    RenderLayers(|| RenderLayers::layer(RenderLayer::Background.into()))
+    },
+    Msaa::Off,
+    RenderLayers::layer(RenderLayer::Background.into())
 )]
 pub struct MainCamera;
 
@@ -81,20 +81,19 @@ fn setup_camera(mut commands: Commands) {
 }
 
 fn update_camera(
-    mut camera_query: Query<&mut Transform, (With<Camera2d>, With<MainCamera>)>,
-    player_query: Query<&Transform, (With<Player>, Without<Camera2d>)>,
+    main_camera: Single<&mut Transform, With<MainCamera>>,
+    player_transform: Single<&Transform, (With<Player>, Without<MainCamera>)>,
 ) {
-    let player_transform = player_query.single();
-    let mut camera_transform = camera_query.single_mut();
+    let mut camera_transform = main_camera.into_inner();
 
     camera_transform.translation.x = player_transform.translation.x;
     camera_transform.translation.y = player_transform.translation.y;
 }
 
 fn constrain_camera_position_to_level(
-    mut camera_query: Query<(&Camera, &mut Transform), (With<Camera2d>, With<MainCamera>)>,
+    main_camera: Single<(&Camera, &mut Transform), With<MainCamera>>,
 ) {
-    let (camera, mut camera_transform) = camera_query.single_mut();
+    let (camera, mut camera_transform) = main_camera.into_inner();
 
     if let Some(viewport_size) = camera.logical_viewport_size() {
         let level_dimensions = GRID_SIZE * TILE_SIZE;

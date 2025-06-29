@@ -24,15 +24,15 @@ impl Plugin for PlayerPlugin {
 
 #[derive(Component)]
 #[require(
-    AnimationIndices(|| AnimationIndices::new(0, 2)),
-    AnimationTimer(|| AnimationTimer::from_seconds(0.2)),
-    Collider(|| Collider::cuboid(15., 40.)),
-    CollisionGroups(|| CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP)),
-    Speed(|| Speed(10.)),
-    ResourcePool::<Fire>(|| ResourcePool::new(100)),
-    ResourcePool::<Health>(|| ResourcePool::new(100)),
-    RenderLayers(|| RenderLayers::layer(RenderLayer::Sky.into())),
-    StateScoped::<AppState>(|| StateScoped(AppState::GameOver)),
+    AnimationIndices::new(0, 2),
+    AnimationTimer::from_seconds(0.2),
+    Collider::cuboid(15., 40.),
+    CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
+    Speed(10.),
+    ResourcePool::<Fire>::new(100),
+    ResourcePool::<Health>::new(100),
+    RenderLayers::layer(RenderLayer::Sky.into()),
+    StateScoped::<AppState>(AppState::GameOver),
 )]
 pub struct Player;
 
