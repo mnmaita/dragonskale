@@ -33,12 +33,12 @@ fn animate_sprite(
     time: Res<Time>,
     mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas)>,
 ) {
-    for (indices, mut timer, mut sprite) in &mut query {
+    for (indices, mut timer, mut texture_atlas) in &mut query {
         if timer.tick(time.delta()).just_finished() {
-            sprite.index = if sprite.index == indices.last {
+            texture_atlas.index = if texture_atlas.index + 1 > indices.last {
                 indices.first
             } else {
-                sprite.index + 1
+                texture_atlas.index + 1
             };
         }
     }
