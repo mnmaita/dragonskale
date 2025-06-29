@@ -72,12 +72,15 @@ pub struct YSorted;
 pub struct YSortedInverse;
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn(MainCamera).with_children(|builder| {
-        builder.spawn(sub_layer_camera(RenderLayer::Ground.into()));
-        builder.spawn(sub_layer_camera(RenderLayer::Topography.into()));
-        builder.spawn(sub_layer_camera(RenderLayer::Sky.into()));
-        builder.spawn(sub_layer_camera(RenderLayer::Ui.into()));
-    });
+    commands.spawn((
+        MainCamera,
+        children![
+            sub_layer_camera(RenderLayer::Ground.into()),
+            sub_layer_camera(RenderLayer::Topography.into()),
+            sub_layer_camera(RenderLayer::Sky.into()),
+            sub_layer_camera(RenderLayer::Ui.into()),
+        ],
+    ));
 }
 
 fn update_camera(

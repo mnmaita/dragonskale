@@ -60,67 +60,49 @@ fn check_game_over_condition(
 }
 
 fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn((
-            GameOverBackground,
-            StateScoped(AppState::GameOver),
-            Node {
-                align_items: AlignItems::Center,
-                display: Display::Flex,
-                flex_direction: FlexDirection::Column,
-                height: Val::Percent(100.),
-                justify_content: JustifyContent::Center,
-                width: Val::Percent(100.),
-                ..default()
-            },
-            BackgroundColor(Color::BLACK.with_alpha(0.)),
-        ))
-        .with_children(|builder| {
-            builder.spawn((
+    let font = asset_server
+        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+        .unwrap_or_default();
+    commands.spawn((
+        GameOverBackground,
+        StateScoped(AppState::GameOver),
+        Node {
+            align_items: AlignItems::Center,
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            height: Val::Percent(100.),
+            justify_content: JustifyContent::Center,
+            width: Val::Percent(100.),
+            ..default()
+        },
+        BackgroundColor(Color::BLACK.with_alpha(0.)),
+        children![
+            (
                 GameOverText,
                 Text::new("Game Over"),
                 TextColor(Color::WHITE.with_alpha(0.0)),
-                TextFont::from_font(
-                    asset_server
-                        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                        .unwrap_or_default(),
-                )
-                .with_font_size(64.0),
-            ));
-
-            builder.spawn((
+                TextFont::from_font(font.clone()).with_font_size(64.0),
+            ),
+            (
                 GameOverText,
                 ScoreDisplay,
                 Text::new("Score:"),
                 TextColor(Color::WHITE.with_alpha(0.0)),
-                TextFont::from_font(
-                    asset_server
-                        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                        .unwrap_or_default(),
-                )
-                .with_font_size(32.0),
-            ));
-
-            builder
-                .spawn((
-                    Button,
-                    BackgroundColor(Color::default().with_alpha(0.)),
-                    GameOverButtonAction::BackToMenu,
-                ))
-                .with_children(|button| {
-                    button.spawn((
-                        GameOverText,
-                        Text::new("Back to Menu"),
-                        TextColor(Color::WHITE.with_alpha(0.0)),
-                        TextFont::from_font(
-                            asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
-                        )
-                        .with_font_size(32.0),
-                    ));
-                });
-        });
+                TextFont::from_font(font.clone()).with_font_size(32.0),
+            ),
+            (
+                Button,
+                BackgroundColor(Color::default().with_alpha(0.)),
+                GameOverButtonAction::BackToMenu,
+                children![(
+                    GameOverText,
+                    Text::new("Back to Menu"),
+                    TextColor(Color::WHITE.with_alpha(0.0)),
+                    TextFont::from_font(font).with_font_size(32.0),
+                )],
+            )
+        ],
+    ));
 }
 
 fn fade_out_screen(mut background_color: Single<&mut BackgroundColor, With<GameOverBackground>>) {

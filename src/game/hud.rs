@@ -43,64 +43,56 @@ struct FireBreathBar;
 struct ScoreDisplay;
 
 fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn((
-            StateScoped(AppState::GameOver),
-            Node {
-                width: Val::Percent(100.),
-                height: Val::Percent(100.),
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::SpaceBetween,
-                align_items: AlignItems::End,
-                padding: UiRect::all(Val::Px(16.)),
-                ..default()
-            },
-        ))
-        .with_children(|builder| {
-            builder
-                .spawn((
+    commands.spawn((
+        StateScoped(AppState::GameOver),
+        Node {
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
+            flex_direction: FlexDirection::Row,
+            justify_content: JustifyContent::SpaceBetween,
+            align_items: AlignItems::End,
+            padding: UiRect::all(Val::Px(16.)),
+            ..default()
+        },
+        children![
+            (
+                Node {
+                    border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
+                    width: Val::Px(BAR_WIDTH),
+                    height: Val::Px(BAR_HEIGHT),
+                    ..default()
+                },
+                BorderColor::from(Color::BLACK),
+                children![(
                     Node {
-                        border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
-                        width: Val::Px(BAR_WIDTH),
-                        height: Val::Px(BAR_HEIGHT),
+                        width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
+                        height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
                         ..default()
                     },
-                    BorderColor::from(Color::BLACK),
-                ))
-                .with_children(|health_bar_builder| {
-                    health_bar_builder.spawn((
-                        Node {
-                            width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
-                            height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
-                            ..default()
-                        },
-                        BackgroundColor::from(RED),
-                        HealthBar,
-                    ));
-                });
-
-            builder
-                .spawn((
+                    BackgroundColor::from(RED),
+                    HealthBar,
+                )],
+            ),
+            (
+                Node {
+                    border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
+                    width: Val::Px(BAR_WIDTH),
+                    height: Val::Px(BAR_HEIGHT),
+                    ..default()
+                },
+                BorderColor::from(Color::BLACK),
+                children![(
                     Node {
-                        border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
-                        width: Val::Px(BAR_WIDTH),
-                        height: Val::Px(BAR_HEIGHT),
+                        width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
+                        height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
                         ..default()
                     },
-                    BorderColor::from(Color::BLACK),
-                ))
-                .with_children(|fire_breath_bar_builder| {
-                    fire_breath_bar_builder.spawn((
-                        Node {
-                            width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
-                            height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
-                            ..default()
-                        },
-                        BackgroundColor::from(LIMEGREEN),
-                        FireBreathBar,
-                    ));
-                });
-        });
+                    BackgroundColor::from(LIMEGREEN),
+                    FireBreathBar,
+                )],
+            )
+        ],
+    ));
 
     // Score text in bottom middle of screen
     commands.spawn((
