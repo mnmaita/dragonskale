@@ -79,6 +79,7 @@ impl SubLayerCameraBundle {
                     order: layer as isize,
                     ..default()
                 },
+                msaa: Msaa::Off,
                 ..default()
             },
             render_layers: RenderLayers::layer(layer),
