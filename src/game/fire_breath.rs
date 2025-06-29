@@ -15,27 +15,27 @@ use super::{
     Player, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP,
 };
 
-// pub(super) struct FireBreathPlugin;
+pub(super) struct FireBreathPlugin;
 
-// impl Plugin for FireBreathPlugin {
-//     fn build(&self, app: &mut App) {
-//         app.add_event::<SpawnFireBreathEvent>();
+impl Plugin for FireBreathPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<SpawnFireBreathEvent>();
 
-//         app.add_plugins(ParticleSystemPlugin);
+        // app.add_plugins(ParticleSystemPlugin);
 
-//         app.add_systems(
-//             FixedUpdate,
-//             (consume_fire_breath_resource, restore_fire_breath_resource).run_if(playing()),
-//         );
+        app.add_systems(
+            FixedUpdate,
+            (consume_fire_breath_resource, restore_fire_breath_resource).run_if(playing()),
+        );
 
-//         app.add_systems(Update, spawn_fire_breath.run_if(playing()));
+        // app.add_systems(Update, spawn_fire_breath.run_if(playing()));
 
-//         app.add_systems(
-//             PostUpdate,
-//             update_fire_particles_render_layers.run_if(playing()),
-//         );
-//     }
-// }
+        // app.add_systems(
+        //     PostUpdate,
+        //     update_fire_particles_render_layers.run_if(playing()),
+        // );
+    }
+}
 
 #[derive(Event)]
 pub struct SpawnFireBreathEvent {
