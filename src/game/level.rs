@@ -317,7 +317,7 @@ fn spawn_waves(
 }
 
 fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
-    play_music_event_writer.send(PlayMusicEvent::new(
+    play_music_event_writer.write(PlayMusicEvent::new(
         "theme2.ogg",
         Some(PlaybackSettings {
             loop_from: Some(0.0),
@@ -343,8 +343,8 @@ pub struct BorderTile;
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[require(
     Sprite,
-    RenderLayers(|| RenderLayers::layer(RenderLayer::Background.into())),
-    StateScoped::<AppState>(|| StateScoped(AppState::GameOver)),
+    RenderLayers::layer(RenderLayer::Background.into()),
+    StateScoped::<AppState>(AppState::GameOver),
 )]
 pub enum Tile {
     Water,

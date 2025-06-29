@@ -79,16 +79,16 @@ impl AttackTimer {
 
 #[derive(Component)]
 #[require(
-    Ccd(Ccd::enabled),
-    Collider(|| Collider::cuboid(Projectile::DEFAULT_SIZE.x / 2., Projectile::DEFAULT_SIZE.y / 2.)),
-    CollisionGroups(|| CollisionGroups::new(PROJECTILE_GROUP, PLAYER_GROUP | PROJECTILE_GROUP)),
-    RenderLayers(|| RenderLayers::layer(RenderLayer::Sky.into())),
-    RigidBody(|| RigidBody::Dynamic),
-    Damping(|| Damping {
+    Ccd::enabled(),
+    Collider::cuboid(Projectile::DEFAULT_SIZE.x / 2., Projectile::DEFAULT_SIZE.y / 2.),
+    CollisionGroups::new(PROJECTILE_GROUP, PLAYER_GROUP | PROJECTILE_GROUP),
+    RenderLayers::layer(RenderLayer::Sky.into()),
+    RigidBody::Dynamic,
+    Damping {
         linear_damping: 1.0,
         angular_damping: 10.0,
-    }),
-    StateScoped::<AppState>(|| StateScoped(AppState::GameOver)),
+    },
+    StateScoped::<AppState>(AppState::GameOver),
 )]
 pub struct Projectile;
 
@@ -141,21 +141,23 @@ fn spawn_projectiles(
 fn projectile_collision_with_player(
     mut commands: Commands,
     mut score_event_writer: EventWriter<ScoreEvent>,
-    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
+    player: Single<(Entity, &mut ResourcePool<Health>), With<Player>>,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
     rapier_context: ReadRapierContext,
 ) {
-    let (player_entity, mut player_hitpoints) = player_query.single_mut();
-    let rapier_context = rapier_context.single();
+    let (player_entity, mut player_hitpoints) = player.into_inner();
+    let Ok(rapier_context) = rapier_context.single() else {
+        return;
+    };
 
     for (projectile_entity, projectile_damage) in &projectile_query {
         if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
             if contact_pair.has_any_active_contact() {
                 player_hitpoints.subtract(projectile_damage.0);
-                score_event_writer.send(ScoreEvent::new(0, ScoreEventType::ResetMultiplier));
+                score_event_writer.write(ScoreEvent::new(0, ScoreEventType::ResetMultiplier));
 
                 // TODO: Add "death" component or event and use it here so a different system handles despawns.
-                commands.entity(projectile_entity).despawn_recursive();
+                commands.entity(projectile_entity).despawn();
             }
         }
     }
@@ -166,7 +168,9 @@ fn compute_damage_from_intersections(
     fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
     rapier_context: ReadRapierContext,
 ) {
-    let rapier_context = rapier_context.single();
+    let Ok(rapier_context) = rapier_context.single() else {
+        return;
+    };
 
     for (entity, damage) in &fire_query {
         for (entity1, entity2, intersecting) in rapier_context.intersection_pairs_with(entity) {
@@ -192,9 +196,9 @@ fn despawn_dead_entities(
 ) {
     for (entity, health, transform) in &query {
         if health.current() == 0 {
-            commands.entity(entity).despawn_recursive();
-            score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
-            powerup_event_writer.send(PowerUpEvent::new(
+            commands.entity(entity).despawn();
+            score_event_writer.write(ScoreEvent::new(10, ScoreEventType::AddPoints));
+            powerup_event_writer.write(PowerUpEvent::new(
                 *transform,
                 PowerUpEventType::HealingScale,
             ));
@@ -209,7 +213,7 @@ fn despawn_projectiles(
     for (entity, velocity) in &projectile_query {
         if velocity.linvel.length() < 60. {
             // TODO: Decouple this with a Despawn component
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }

@@ -33,26 +33,23 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
         .unwrap_or_default();
 
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                ..default()
-            },
-            StateScoped(AppState::MainMenu),
-        ))
-        .with_children(|node| {
-            node.spawn(ImageNode::new(
+    commands.spawn((
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        StateScoped(AppState::MainMenu),
+        Children::spawn((
+            Spawn(ImageNode::new(
                 asset_server
                     .get_handle("textures/menu_background.png")
                     .unwrap_or_default(),
-            ));
-
-            node.spawn((
+            )),
+            Spawn((
                 Button,
                 Node {
                     position_type: PositionType::Absolute,
@@ -61,17 +58,14 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 BackgroundColor::from(ALICE_BLUE),
                 MainMenuButtonAction::NewGame,
-            ))
-            .with_children(|button| {
-                button.spawn((
+                children![(
                     Text::new("New Game"),
                     TextFont::from_font(font.clone()).with_font_size(32.0),
                     TextColor(Color::BLACK),
-                ));
-            });
-
+                )],
+            )),
             #[cfg(not(target_family = "wasm"))]
-            node.spawn((
+            Spawn((
                 Button,
                 Node {
                     position_type: PositionType::Absolute,
@@ -80,15 +74,14 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 BackgroundColor::from(ALICE_BLUE),
                 MainMenuButtonAction::Exit,
-            ))
-            .with_children(|button| {
-                button.spawn((
+                children![(
                     Text::new("Exit"),
                     TextFont::from_font(font).with_font_size(32.0),
                     TextColor(Color::BLACK),
-                ));
-            });
-        });
+                )],
+            )),
+        )),
+    ));
 }
 
 fn handle_main_menu_button_interactions(
@@ -101,7 +94,7 @@ fn handle_main_menu_button_interactions(
             Interaction::Pressed => match main_menu_button_action {
                 #[cfg(not(target_family = "wasm"))]
                 MainMenuButtonAction::Exit => {
-                    exit.send(AppExit::Success);
+                    exit.write(AppExit::Success);
                 }
                 MainMenuButtonAction::NewGame => {
                     app_state.set(AppState::InGame);
@@ -114,7 +107,7 @@ fn handle_main_menu_button_interactions(
 }
 
 fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
-    play_music_event_writer.send(PlayMusicEvent::new(
+    play_music_event_writer.write(PlayMusicEvent::new(
         "theme1.ogg",
         Some(PlaybackSettings {
             volume: 0.25,

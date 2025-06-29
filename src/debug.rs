@@ -26,10 +26,10 @@ fn draw_grid(mut gizmos: Gizmos) {
 }
 
 fn draw_camera_constraints(
-    camera_query: Query<(&Camera, &Transform), (With<Camera2d>, With<MainCamera>)>,
+    main_camera: Single<(&Camera, &Transform), With<MainCamera>>,
     mut gizmos: Gizmos,
 ) {
-    let (camera, camera_transform) = camera_query.single();
+    let (camera, camera_transform) = main_camera.into_inner();
 
     if let Some(viewport_size) = camera.logical_viewport_size() {
         let level_dimensions = GRID_SIZE * TILE_SIZE;
@@ -48,12 +48,11 @@ fn draw_camera_constraints(
 fn draw_mouse_direction(
     mouse_input: ResMut<ButtonInput<MouseButton>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
-    query: Query<&Transform, With<Player>>,
+    player_transform: Single<&Transform, With<Player>>,
     mut gizmos: Gizmos,
 ) {
     if mouse_input.pressed(MouseButton::Right) {
         if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
-            let player_transform = query.single();
             let player_position = player_transform.translation.truncate();
 
             gizmos.line_2d(player_position, cursor_position, YELLOW);

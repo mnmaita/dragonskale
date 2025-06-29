@@ -29,22 +29,15 @@ impl Plugin for InputPlugin {
 }
 
 #[derive(SystemParam)]
-pub struct CursorWorldPositionChecker<'w, 's> {
-    window_query: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
-    camera_query: Query<
-        'w,
-        's,
-        (&'static Camera, &'static GlobalTransform),
-        (With<Camera2d>, With<MainCamera>),
-    >,
+pub struct CursorWorldPositionChecker<'w> {
+    window: Single<'w, &'static Window, With<PrimaryWindow>>,
+    main_camera: Single<'w, (&'static Camera, &'static GlobalTransform), With<MainCamera>>,
 }
 
-impl CursorWorldPositionChecker<'_, '_> {
+impl CursorWorldPositionChecker<'_> {
     pub fn cursor_world_position(&self) -> Option<Vec2> {
-        let window = self.window_query.single();
-
-        window.cursor_position().and_then(|cursor_position| {
-            let (camera, camera_transform) = self.camera_query.single();
+        self.window.cursor_position().and_then(|cursor_position| {
+            let (camera, camera_transform) = *self.main_camera;
             camera
                 .viewport_to_world_2d(camera_transform, cursor_position)
                 .ok()
@@ -54,13 +47,13 @@ impl CursorWorldPositionChecker<'_, '_> {
 
 fn mouse_input(
     mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
-    query: Query<(&Transform, &ResourcePool<Fire>), With<Player>>,
+    player: Single<(&Transform, &ResourcePool<Fire>), With<Player>>,
     asset_server: Res<AssetServer>,
     mouse_input: ResMut<ButtonInput<MouseButton>>,
     dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
     audio: Res<Audio>,
 ) {
-    let (player_transform, fire_breath_resource_pool) = query.single();
+    let (player_transform, fire_breath_resource_pool) = player.into_inner();
 
     if mouse_input.just_pressed(MouseButton::Left) {
         dragon_breath_audio_channel.play(
@@ -92,18 +85,18 @@ fn mouse_input(
         let fire_position = player_transform.translation.truncate() + player_direction * 90.;
 
         if !fire_breath_resource_pool.is_empty() {
-            spawn_fire_breath_event_writer.send(SpawnFireBreathEvent::new(1, fire_position));
+            spawn_fire_breath_event_writer.write(SpawnFireBreathEvent::new(1, fire_position));
         }
     }
 }
 
 fn player_movement(
-    mut query: Query<(&mut Transform, &Speed, &mut AnimationTimer, &Collider), With<Player>>,
+    player: Single<(&mut Transform, &Speed, &mut AnimationTimer, &Collider), With<Player>>,
     cursor_world_position_checker: CursorWorldPositionChecker,
 ) {
     if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
         let (mut player_transform, player_speed, mut player_animation_timer, player_collider) =
-            query.single_mut();
+            player.into_inner();
         let player_position = player_transform.translation.truncate();
         let cursor_to_player_vector = cursor_position - player_position;
 

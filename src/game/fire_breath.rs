@@ -64,12 +64,8 @@ fn spawn_fire_breath(
     mut spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
     material: Res<FireBreathParticleMaterialAsset>,
     asset_server: Res<AssetServer>,
-    player_query: Query<&ResourcePool<Fire>, With<Player>>,
+    fire_resource_pool: Single<&ResourcePool<Fire>, With<Player>>,
 ) {
-    let Ok(fire_resource_pool) = player_query.get_single() else {
-        return;
-    };
-
     if fire_resource_pool.is_empty() {
         return;
     }
@@ -93,7 +89,7 @@ fn spawn_fire_breath(
 }
 
 fn consume_fire_breath_resource(
-    mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
+    mut fire_resource_pool: Single<&mut ResourcePool<Fire>, With<Player>>,
     spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
     dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
     audio: Res<Audio>,
@@ -102,8 +98,6 @@ fn consume_fire_breath_resource(
     const FIRE_BREATH_CONSUMPTION_RATIO: i16 = 1;
 
     if !spawn_fire_breath_event_reader.is_empty() {
-        let mut fire_resource_pool = player_query.single_mut();
-
         fire_resource_pool.subtract(FIRE_BREATH_CONSUMPTION_RATIO);
 
         if fire_resource_pool.is_empty() {
@@ -118,15 +112,13 @@ fn consume_fire_breath_resource(
 }
 
 fn restore_fire_breath_resource(
-    mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
+    mut fire_resource_pool: Single<&mut ResourcePool<Fire>, With<Player>>,
     spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
     mouse_input: Res<ButtonInput<MouseButton>>,
 ) {
     const FIRE_BREATH_RESTORATION_RATIO: i16 = 1;
 
     if spawn_fire_breath_event_reader.is_empty() && !mouse_input.pressed(MouseButton::Left) {
-        let mut fire_resource_pool = player_query.single_mut();
-
         fire_resource_pool.add(FIRE_BREATH_RESTORATION_RATIO);
     }
 }
