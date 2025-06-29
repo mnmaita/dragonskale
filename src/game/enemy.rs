@@ -83,7 +83,6 @@ pub struct EnemyBundle {
     pub animation_timer: AnimationTimer,
     pub sprite_orientation: SpriteAnimation,
     pub sprite: SpriteBundle,
-    pub texture_atlas: TextureAtlas,
     pub collider: Collider,
     pub render_layers: RenderLayers,
     pub rigid_body: RigidBody,
@@ -186,7 +185,7 @@ fn spawn_enemies(
             let translation = tile_transform.translation.truncate().extend(1.);
 
             //pick a random texture atlas handle between archer and axe
-            let (texture_atlas_handle, texture) = if rng.gen_bool(0.5) {
+            let (texture_atlas_handle, image) = if rng.gen_bool(0.5) {
                 (
                     texture_archer_atlas_handle.0.clone(),
                     asset_server
@@ -217,13 +216,16 @@ fn spawn_enemies(
                     animation_timer: AnimationTimer::from_seconds(0.2),
                     sprite_orientation: SpriteAnimation::RunLeft,
                     sprite: SpriteBundle {
-                        texture,
+                        sprite: Sprite {
+                            image,
+                            texture_atlas: Some(TextureAtlas {
+                                layout: texture_atlas_handle,
+                                index: 4,
+                            }),
+                            ..Default::default()
+                        },
                         transform: Transform::from_translation(translation),
                         ..default()
-                    },
-                    texture_atlas: TextureAtlas {
-                        layout: texture_atlas_handle,
-                        index: 4,
                     },
                     collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
                     render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
@@ -323,16 +325,18 @@ fn update_enemy_sprite_animation(
 
 fn update_enemy_animation_indexes(
     mut enemy_query: Query<
-        (&SpriteAnimation, &mut AnimationIndices, &mut TextureAtlas),
+        (&SpriteAnimation, &mut AnimationIndices, &mut Sprite),
         (With<Enemy>, Changed<SpriteAnimation>),
     >,
     sprite_animation_map: Res<SpriteAnimationMap>,
 ) {
-    for (sprite_animation, mut animation_indices, mut texture_atlas) in &mut enemy_query {
+    for (sprite_animation, mut animation_indices, mut sprite) in &mut enemy_query {
         if let Some(value) = sprite_animation_map.get(sprite_animation) {
             let [first, last] = *value;
             *animation_indices = AnimationIndices::new(first, last);
-            texture_atlas.index = first;
+            if let Some(ref mut texture_atlas) = sprite.texture_atlas {
+                texture_atlas.index = first;
+            }
         };
     }
 }

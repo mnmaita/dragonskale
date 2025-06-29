@@ -22,13 +22,7 @@ impl Plugin for DebugPlugin {
 }
 
 fn draw_grid(mut gizmos: Gizmos) {
-    gizmos.grid_2d(
-        -HALF_TILE_SIZE,
-        0.0,
-        GRID_SIZE.as_uvec2(),
-        TILE_SIZE,
-        FUCHSIA,
-    );
+    gizmos.grid_2d(-HALF_TILE_SIZE, GRID_SIZE.as_uvec2(), Vec2::ZERO, FUCHSIA);
 }
 
 fn draw_camera_constraints(
@@ -46,7 +40,7 @@ fn draw_camera_constraints(
             .clamp(Vec2::ZERO, Vec2::splat(f32::MAX));
         let camera_boundary = Rect::from_center_size(-HALF_TILE_SIZE, camera_boundary_size);
 
-        gizmos.rect_2d(camera_boundary.center(), 0., camera_boundary.size(), RED);
+        gizmos.rect_2d(camera_boundary.center(), camera_boundary.size(), RED);
         gizmos.circle_2d(camera_transform.translation.truncate(), 10., RED);
     }
 }

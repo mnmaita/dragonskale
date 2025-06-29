@@ -45,7 +45,9 @@ impl CursorWorldPositionChecker<'_, '_> {
 
         window.cursor_position().and_then(|cursor_position| {
             let (camera, camera_transform) = self.camera_query.single();
-            camera.viewport_to_world_2d(camera_transform, cursor_position)
+            camera
+                .viewport_to_world_2d(camera_transform, cursor_position)
+                .ok()
         })
     }
 }
@@ -121,7 +123,7 @@ fn player_movement(
             }
 
             if direction != Vec2::ZERO {
-                let angle = (direction).angle_between(Vec2::X);
+                let angle = direction.angle_to(Vec2::X);
 
                 if angle.is_finite() {
                     // FIXME: Rotate the image sprite to always face right?

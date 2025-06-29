@@ -35,14 +35,13 @@ pub struct PlayerBundle {
     pub marker: Player,
     pub render_layers: RenderLayers,
     pub sprite: SpriteBundle,
-    pub texture_atlas: TextureAtlas,
 }
 
 #[derive(Component)]
 pub struct Player;
 
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/dragon.png")
         .unwrap_or_default();
     let texture_atlas_layout =
@@ -62,11 +61,14 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
             render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
             speed: Speed(10.),
             sprite: SpriteBundle {
-                texture,
+                sprite: Sprite {
+                    image,
+                    texture_atlas: Some(texture_atlas_layout_handle.into()),
+                    ..Default::default()
+                },
                 transform: Transform::from_translation(Vec2::ONE.extend(1.)),
                 ..default()
             },
-            texture_atlas: texture_atlas_layout_handle.into(),
         },
         StateScoped(AppState::GameOver),
         YSorted,

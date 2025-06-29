@@ -1,7 +1,7 @@
 use bevy::{app::PluginGroupBuilder, prelude::*};
 
 use super::{
-    combat::CombatPlugin, enemy::EnemyPlugin, fire_breath::FireBreathPlugin,
+    combat::CombatPlugin, enemy::EnemyPlugin, /*fire_breath::FireBreathPlugin,*/
     game_over::GameOverPlugin, hud::HudPlugin, level::LevelPlugin, player::PlayerPlugin,
     power_up::PowerUpSystemPlugin, score_system::ScoreSystemPlugin,
 };
@@ -13,7 +13,7 @@ impl PluginGroup for GamePlugin {
         PluginGroupBuilder::start::<Self>()
             .add(CombatPlugin)
             .add(EnemyPlugin)
-            .add(FireBreathPlugin)
+            // .add(FireBreathPlugin)
             .add(GameOverPlugin)
             .add(HudPlugin)
             .add(LevelPlugin)

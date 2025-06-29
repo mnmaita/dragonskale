@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::{
     dynamics::{LockedAxes, RigidBody},
     geometry::{Collider, CollisionGroups, Sensor},
-    plugin::RapierContext,
+    plugin::ReadRapierContext,
 };
 use rand::Rng;
 
@@ -56,7 +56,6 @@ pub struct PowerUpBundle {
     pub animation_indices: AnimationIndices,
     pub animation_timer: AnimationTimer,
     pub sprite: SpriteBundle,
-    pub texture_atlas: TextureAtlas,
     pub collider: Collider,
     pub render_layers: RenderLayers,
     pub sensor: Sensor,
@@ -106,11 +105,16 @@ fn spawn_powerups(
                             animation_indices: AnimationIndices::new(0, 1),
                             animation_timer: AnimationTimer::from_seconds(0.2),
                             sprite: SpriteBundle {
-                                texture: texture_healing_scale.clone(),
+                                sprite: Sprite {
+                                    image: texture_healing_scale.clone(),
+                                    texture_atlas: Some(
+                                        scale_texture_atlas_handler.0.clone().into(),
+                                    ),
+                                    ..Default::default()
+                                },
                                 transform: *transform,
                                 ..default()
                             },
-                            texture_atlas: scale_texture_atlas_handler.0.clone().into(),
                             collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
                             render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
                             sensor: Sensor,
@@ -131,8 +135,10 @@ fn consume_powerups(
     mut commands: Commands,
     powerup_query: Query<Entity, With<PowerUp>>,
     mut player_query: Query<&mut ResourcePool<Health>, With<Player>>,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadRapierContext,
 ) {
+    let rapier_context = rapier_context.single();
+
     for entity in &powerup_query {
         for (_, _, intersecting) in rapier_context.intersection_pairs_with(entity) {
             if intersecting {

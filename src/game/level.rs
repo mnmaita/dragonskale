@@ -106,13 +106,16 @@ fn spawn_level_tiles(
             TileBundle {
                 render_layers: RenderLayers::layer(RenderLayer::Background.into()),
                 sprite: SpriteBundle {
-                    texture: tileset_ground_texture.clone(),
+                    sprite: Sprite {
+                        image: tileset_ground_texture.clone(),
+                        texture_atlas: Some(TextureAtlas {
+                            layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
+                            index: tile.into(),
+                        }),
+                        ..Default::default()
+                    },
                     transform,
                     ..default()
-                },
-                texture_atlas: TextureAtlas {
-                    layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
-                    index: tile.into(),
                 },
                 tile,
             },
@@ -144,7 +147,7 @@ fn spawn_buildings(
         Rect::from_corners(Vec2::new(352., 96.), Vec2::new(400., 144.)),
         Rect::from_corners(Vec2::new(400., 96.), Vec2::new(448., 144.)),
     ];
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/tileset_objects.png")
         .unwrap_or_default();
 
@@ -169,10 +172,10 @@ fn spawn_buildings(
                 sprite: SpriteBundle {
                     sprite: Sprite {
                         flip_x: rng.gen_bool(0.5),
+                        image: image.clone(),
                         rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
                         ..default()
                     },
-                    texture: texture.clone(),
                     transform: Transform::from_translation(translation),
                     ..default()
                 },
@@ -202,7 +205,7 @@ fn spawn_hills(
         Rect::from_corners(Vec2::new(400., 80.), Vec2::new(432., 96.)),
         Rect::from_corners(Vec2::new(432., 80.), Vec2::new(448., 96.)),
     ];
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/tileset_objects.png")
         .unwrap_or_default();
 
@@ -217,10 +220,10 @@ fn spawn_hills(
                 sprite: Sprite {
                     anchor: bevy::sprite::Anchor::BottomCenter,
                     flip_x: rng.gen_bool(0.2),
+                    image: image.clone(),
                     rect: Some(*hill_tile_variants.choose(&mut rng).unwrap()),
                     ..default()
                 },
-                texture: texture.clone(),
                 transform: Transform::from_translation(translation),
                 ..default()
             },
@@ -257,7 +260,7 @@ fn spawn_mountains(
         ),
         Rect::from_corners(MOUNTAIN_TILE_SIZE, MOUNTAIN_TILE_SIZE * 2.),
     ];
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/tileset_objects.png")
         .unwrap_or_default();
 
@@ -273,10 +276,10 @@ fn spawn_mountains(
                 sprite: Sprite {
                     anchor: Anchor::BottomCenter,
                     flip_x: rng.gen_bool(0.3),
+                    image: image.clone(),
                     rect: Some(*mountain_tile_variants.choose(&mut rng).unwrap()),
                     ..default()
                 },
-                texture: texture.clone(),
                 transform: Transform::from_translation(translation),
                 ..default()
             },
@@ -303,7 +306,7 @@ fn spawn_waves(
     let mut rng = rand::thread_rng();
     let wave_tiles =
         water_tiles.choose_multiple(&mut rng, (water_tiles.len() as f32 * 0.05) as usize);
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/tileset_objects.png")
         .unwrap_or_default();
 
@@ -319,13 +322,13 @@ fn spawn_waves(
                 sprite: Sprite {
                     anchor: Anchor::BottomCenter,
                     flip_x: rng.gen_bool(0.3),
+                    image: image.clone(),
                     rect: Some(Rect::from_corners(
                         Vec2::new(208., 176.),
                         Vec2::new(240., 192.),
                     )),
                     ..default()
                 },
-                texture: texture.clone(),
                 transform: Transform::from_translation(translation),
                 ..default()
             },
@@ -379,7 +382,6 @@ pub struct BorderTile;
 pub struct TileBundle {
     pub render_layers: RenderLayers,
     pub sprite: SpriteBundle,
-    pub texture_atlas: TextureAtlas,
     pub tile: Tile,
 }
 

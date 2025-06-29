@@ -1,7 +1,6 @@
 use bevy::{
     color::palettes::css::{GOLD, LIMEGREEN, RED},
     prelude::*,
-    text::BreakLineOn,
 };
 
 use crate::{playing, AppState};
@@ -48,7 +47,7 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn((
             StateScoped(AppState::GameOver),
             NodeBundle {
-                style: Style {
+                node: Node {
                     width: Val::Percent(100.),
                     height: Val::Percent(100.),
                     flex_direction: FlexDirection::Row,
@@ -64,7 +63,7 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
             builder
                 .spawn(NodeBundle {
                     border_color: BorderColor(Color::BLACK),
-                    style: Style {
+                    node: Node {
                         border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
                         width: Val::Px(BAR_WIDTH),
                         height: Val::Px(BAR_HEIGHT),
@@ -76,7 +75,7 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
                     health_bar_builder.spawn((
                         NodeBundle {
                             background_color: RED.into(),
-                            style: Style {
+                            node: Node {
                                 width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
                                 height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
                                 ..default()
@@ -90,7 +89,7 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
             builder
                 .spawn(NodeBundle {
                     border_color: BorderColor(Color::BLACK),
-                    style: Style {
+                    node: Node {
                         border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
                         width: Val::Px(BAR_WIDTH),
                         height: Val::Px(BAR_HEIGHT),
@@ -102,7 +101,7 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
                     fire_breath_bar_builder.spawn((
                         NodeBundle {
                             background_color: LIMEGREEN.into(),
-                            style: Style {
+                            node: Node {
                                 width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
                                 height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
                                 ..default()
@@ -118,51 +117,43 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         StateScoped(AppState::GameOver),
         ScoreDisplay,
-        TextBundle {
-            text: Text {
-                linebreak_behavior: BreakLineOn::NoWrap,
-                sections: vec![TextSection {
-                    value: "Score: 0".to_string(),
-                    style: TextStyle {
-                        font: asset_server
-                            .get_handle("fonts/Prince Valiant.ttf")
-                            .unwrap_or_default(),
-                        font_size: 40.0,
-                        color: GOLD.into(),
-                    },
-                }],
-                ..default()
-            },
-            style: Style {
-                position_type: PositionType::Absolute,
-                width: Val::Px(5.),
-                height: Val::Px(5.),
-                ..default()
-            },
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Px(5.),
+            height: Val::Px(5.),
             ..default()
         },
+        Text::new("Score: 0"),
+        TextFont::from_font(
+            asset_server
+                .get_handle("fonts/Prince Valiant.ttf")
+                .unwrap_or_default(),
+        )
+        .with_font_size(40.0),
+        TextColor(GOLD.into()),
+        TextLayout::new_with_no_wrap(),
     ));
 }
 
 fn update_health_bar_display(
     player_query: Query<&ResourcePool<Health>, (Changed<ResourcePool<Health>>, With<Player>)>,
-    mut health_bar_query: Query<&mut Style, With<HealthBar>>,
+    mut health_bar_query: Query<&mut Node, With<HealthBar>>,
 ) {
     if let Ok(hitpoints) = player_query.get_single() {
-        let mut style = health_bar_query.single_mut();
+        let mut node = health_bar_query.single_mut();
 
-        style.width = Val::Px(BAR_WIDTH * hitpoints.current_percentage());
+        node.width = Val::Px(BAR_WIDTH * hitpoints.current_percentage());
     }
 }
 
 fn update_fire_bar_display(
     player_query: Query<&ResourcePool<Fire>, (Changed<ResourcePool<Fire>>, With<Player>)>,
-    mut fire_bar_query: Query<&mut Style, With<FireBreathBar>>,
+    mut fire_bar_query: Query<&mut Node, With<FireBreathBar>>,
 ) {
     if let Ok(fire_breath_resource) = player_query.get_single() {
-        let mut style = fire_bar_query.single_mut();
+        let mut node = fire_bar_query.single_mut();
 
-        style.width = Val::Px(BAR_WIDTH * fire_breath_resource.current_percentage());
+        node.width = Val::Px(BAR_WIDTH * fire_breath_resource.current_percentage());
     }
 }
 
@@ -172,7 +163,7 @@ fn update_score_display(
 ) {
     if let Ok(score_system) = player_query.get_single() {
         let mut score_text = score_text_display_query.single_mut();
-        score_text.sections[0].value = format!(
+        score_text.0 = format!(
             "Score: {} - Multiplier x {}",
             score_system.current(),
             score_system.multiplier()

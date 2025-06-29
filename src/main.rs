@@ -63,13 +63,11 @@ fn main() {
 
     app.enable_state_scoped_entities::<AppState>();
 
-    app.insert_resource(Msaa::Off);
-
     app.insert_resource(ClearColor(Color::srgb(0., 0., 0.)));
 
     app.add_systems(
         Update,
-        handle_asset_load.run_if(assets_loaded().and_then(run_once())),
+        handle_asset_load.run_if(assets_loaded().and(run_once)),
     );
 
     app.add_systems(
@@ -105,6 +103,6 @@ pub fn playing() -> impl Condition<()> {
 
 fn assets_loaded() -> impl Condition<()> {
     texture_assets_loaded()
-        .and_then(audio_assets_loaded())
-        .and_then(font_assets_loaded())
+        .and(audio_assets_loaded())
+        .and(font_assets_loaded())
 }

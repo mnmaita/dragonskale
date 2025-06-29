@@ -39,7 +39,7 @@ impl From<RecursiveDependencyLoadState> for FontsLoadState {
             RecursiveDependencyLoadState::NotLoaded => Self::NotLoaded,
             RecursiveDependencyLoadState::Loading => Self::Loading,
             RecursiveDependencyLoadState::Loaded => Self::Loaded,
-            RecursiveDependencyLoadState::Failed => Self::Failed,
+            RecursiveDependencyLoadState::Failed(_) => Self::Failed,
         }
     }
 }

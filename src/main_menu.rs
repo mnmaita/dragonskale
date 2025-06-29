@@ -36,7 +36,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             NodeBundle {
-                style: Style {
+                node: Node {
                     width: Val::Percent(100.0),
                     height: Val::Percent(100.0),
                     flex_direction: FlexDirection::Column,
@@ -50,7 +50,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .with_children(|node| {
             node.spawn(ImageBundle {
-                image: UiImage::new(
+                image: ImageNode::new(
                     asset_server
                         .get_handle("textures/menu_background.png")
                         .unwrap_or_default(),
@@ -61,7 +61,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             node.spawn((
                 ButtonBundle {
                     background_color: ALICE_BLUE.into(),
-                    style: Style {
+                    node: Node {
                         position_type: PositionType::Absolute,
                         bottom: Val::Percent(12.),
                         ..default()
@@ -71,24 +71,18 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 MainMenuButtonAction::NewGame,
             ))
             .with_children(|button| {
-                button.spawn(TextBundle {
-                    text: Text::from_section(
-                        "New Game",
-                        TextStyle {
-                            color: Color::BLACK,
-                            font: font.clone(),
-                            font_size: 32.0,
-                        },
-                    ),
-                    ..default()
-                });
+                button.spawn((
+                    Text::new("New Game"),
+                    TextFont::from_font(font.clone()).with_font_size(32.0),
+                    TextColor(Color::BLACK),
+                ));
             });
 
             #[cfg(not(target_family = "wasm"))]
             node.spawn((
                 ButtonBundle {
                     background_color: ALICE_BLUE.into(),
-                    style: Style {
+                    node: Node {
                         position_type: PositionType::Absolute,
                         bottom: Val::Percent(6.),
                         ..default()
@@ -98,17 +92,11 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 MainMenuButtonAction::Exit,
             ))
             .with_children(|button| {
-                button.spawn(TextBundle {
-                    text: Text::from_section(
-                        "Exit",
-                        TextStyle {
-                            color: Color::BLACK,
-                            font: font.clone(),
-                            font_size: 32.0,
-                        },
-                    ),
-                    ..default()
-                });
+                button.spawn((
+                    Text::new("Exit"),
+                    TextFont::from_font(font).with_font_size(32.0),
+                    TextColor(Color::BLACK),
+                ));
             });
         });
 }

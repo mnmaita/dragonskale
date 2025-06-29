@@ -31,15 +31,17 @@ impl AnimationTimer {
 
 fn animate_sprite(
     time: Res<Time>,
-    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas)>,
+    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut Sprite)>,
 ) {
-    for (indices, mut timer, mut texture_atlas) in &mut query {
+    for (indices, mut timer, mut sprite) in &mut query {
         if timer.tick(time.delta()).just_finished() {
-            texture_atlas.index = if texture_atlas.index + 1 > indices.last {
-                indices.first
-            } else {
-                texture_atlas.index + 1
-            };
+            if let Some(ref mut texture_atlas) = sprite.texture_atlas {
+                texture_atlas.index = if texture_atlas.index + 1 > indices.last {
+                    indices.first
+                } else {
+                    texture_atlas.index + 1
+                };
+            }
         }
     }
 }

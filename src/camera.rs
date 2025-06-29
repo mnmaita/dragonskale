@@ -55,6 +55,7 @@ impl MainCameraBundle {
                     order: layer as isize,
                     ..default()
                 },
+                msaa: Msaa::Off,
                 ..default()
             },
             marker: MainCamera,

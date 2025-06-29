@@ -68,7 +68,7 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
             StateScoped(AppState::GameOver),
             NodeBundle {
                 background_color: BackgroundColor(Color::BLACK.with_alpha(0.)),
-                style: Style {
+                node: Node {
                     align_items: AlignItems::Center,
                     display: Display::Flex,
                     flex_direction: FlexDirection::Column,
@@ -83,37 +83,27 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
         .with_children(|builder| {
             builder.spawn((
                 GameOverText,
-                TextBundle {
-                    text: Text::from_section(
-                        "Game Over",
-                        TextStyle {
-                            color: Color::WHITE.with_alpha(0.),
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
-                            font_size: 64.,
-                        },
-                    ),
-                    ..default()
-                },
+                Text::new("Game Over"),
+                TextColor(Color::WHITE.with_alpha(0.0)),
+                TextFont::from_font(
+                    asset_server
+                        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                        .unwrap_or_default(),
+                )
+                .with_font_size(64.0),
             ));
 
             builder.spawn((
                 GameOverText,
                 ScoreDisplay,
-                TextBundle {
-                    text: Text::from_section(
-                        "Score:",
-                        TextStyle {
-                            color: Color::WHITE.with_alpha(0.),
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
-                            font_size: 32.,
-                        },
-                    ),
-                    ..default()
-                },
+                Text::new("Score:"),
+                TextColor(Color::WHITE.with_alpha(0.0)),
+                TextFont::from_font(
+                    asset_server
+                        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                        .unwrap_or_default(),
+                )
+                .with_font_size(32.0),
             ));
 
             builder
@@ -127,19 +117,14 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
                 .with_children(|button| {
                     button.spawn((
                         GameOverText,
-                        TextBundle {
-                            text: Text::from_section(
-                                "Back to Menu",
-                                TextStyle {
-                                    color: Color::WHITE.with_alpha(0.),
-                                    font: asset_server
-                                        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                        .unwrap_or_default(),
-                                    font_size: 32.0,
-                                },
-                            ),
-                            ..default()
-                        },
+                        Text::new("Back to Menu"),
+                        TextColor(Color::WHITE.with_alpha(0.0)),
+                        TextFont::from_font(
+                            asset_server
+                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+                                .unwrap_or_default(),
+                        )
+                        .with_font_size(32.0),
                     ));
                 });
         });
@@ -160,19 +145,19 @@ fn update_score_display(
 ) {
     if let Ok(player_score) = player_query.get_single() {
         let mut score_text = score_display_query.single_mut();
-        score_text.sections[0].value = format!("Score: {}", player_score.current());
+        score_text.0 = format!("Score: {}", player_score.current());
     }
 }
 
 fn fade_in_text(
-    mut query: Query<&mut Text, With<GameOverText>>,
+    mut query: Query<&mut TextColor, With<GameOverText>>,
     background_query: Query<&BackgroundColor, With<GameOverBackground>>,
 ) {
     let background_color = background_query.single();
-    for mut text in &mut query {
-        if background_color.0.alpha() >= 0.5 && text.sections[0].style.color.alpha() < 1. {
-            let alpha = text.sections[0].style.color.alpha();
-            text.sections[0].style.color.set_alpha(alpha + 0.001);
+    for mut text_color in &mut query {
+        if background_color.0.alpha() >= 0.5 && text_color.alpha() < 1. {
+            let alpha = text_color.alpha();
+            text_color.set_alpha(alpha + 0.001);
         }
     }
 }

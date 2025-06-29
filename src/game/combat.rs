@@ -108,7 +108,7 @@ fn spawn_projectiles(
     {
         let size = Vec2::new(TILE_SIZE.x, 4.);
         let angle = if direction != Vec2::ZERO {
-            let mut angle = (direction).angle_between(Vec2::X);
+            let mut angle = direction.angle_to(Vec2::X);
             if !angle.is_finite() {
                 angle = 0.;
             }
@@ -160,9 +160,10 @@ fn projectile_collision_with_player(
     mut score_event_writer: EventWriter<ScoreEvent>,
     mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadRapierContext,
 ) {
     let (player_entity, mut player_hitpoints) = player_query.single_mut();
+    let rapier_context = rapier_context.single();
 
     for (projectile_entity, projectile_damage) in &projectile_query {
         if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
@@ -180,8 +181,10 @@ fn projectile_collision_with_player(
 fn compute_damage_from_intersections(
     mut enemy_query: Query<&mut ResourcePool<Health>, With<Enemy>>,
     fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadRapierContext,
 ) {
+    let rapier_context = rapier_context.single();
+
     for (entity, damage) in &fire_query {
         for (entity1, entity2, intersecting) in rapier_context.intersection_pairs_with(entity) {
             let other_entity = if entity1 == entity { entity2 } else { entity1 };
