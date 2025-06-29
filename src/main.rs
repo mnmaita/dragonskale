@@ -70,11 +70,6 @@ fn main() {
         handle_asset_load.run_if(assets_loaded().and(run_once)),
     );
 
-    app.add_systems(
-        Update,
-        stop_music_on_transition.run_if(state_changed::<AppState>),
-    );
-
     app.run();
 }
 

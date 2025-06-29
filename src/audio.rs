@@ -215,6 +215,11 @@ fn handle_play_music_events(
         } = event;
 
         let path = format_music_file_name(file_name);
+
+        if bgm_audio_channel.is_playing_sound() {
+            bgm_audio_channel.stop();
+        }
+
         let mut play_audio_command =
             bgm_audio_channel.play(asset_server.get_handle(path).unwrap_or_default());
         let Some(settings) = settings else {
