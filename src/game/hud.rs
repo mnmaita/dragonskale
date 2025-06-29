@@ -46,68 +46,57 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn((
             StateScoped(AppState::GameOver),
-            NodeBundle {
-                node: Node {
-                    width: Val::Percent(100.),
-                    height: Val::Percent(100.),
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::SpaceBetween,
-                    align_items: AlignItems::End,
-                    padding: UiRect::all(Val::Px(16.)),
-                    ..default()
-                },
+            Node {
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::End,
+                padding: UiRect::all(Val::Px(16.)),
                 ..default()
             },
         ))
         .with_children(|builder| {
             builder
-                .spawn(NodeBundle {
-                    border_color: BorderColor(Color::BLACK),
-                    node: Node {
+                .spawn((
+                    Node {
                         border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
                         width: Val::Px(BAR_WIDTH),
                         height: Val::Px(BAR_HEIGHT),
                         ..default()
                     },
-                    ..default()
-                })
+                    BorderColor::from(Color::BLACK),
+                ))
                 .with_children(|health_bar_builder| {
                     health_bar_builder.spawn((
-                        NodeBundle {
-                            background_color: RED.into(),
-                            node: Node {
-                                width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
-                                height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
-                                ..default()
-                            },
+                        Node {
+                            width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
+                            height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
                             ..default()
                         },
+                        BackgroundColor::from(RED),
                         HealthBar,
                     ));
                 });
 
             builder
-                .spawn(NodeBundle {
-                    border_color: BorderColor(Color::BLACK),
-                    node: Node {
+                .spawn((
+                    Node {
                         border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
                         width: Val::Px(BAR_WIDTH),
                         height: Val::Px(BAR_HEIGHT),
                         ..default()
                     },
-                    ..default()
-                })
+                    BorderColor::from(Color::BLACK),
+                ))
                 .with_children(|fire_breath_bar_builder| {
                     fire_breath_bar_builder.spawn((
-                        NodeBundle {
-                            background_color: LIMEGREEN.into(),
-                            node: Node {
-                                width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
-                                height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
-                                ..default()
-                            },
+                        Node {
+                            width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
+                            height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
                             ..default()
                         },
+                        BackgroundColor::from(LIMEGREEN),
                         FireBreathBar,
                     ));
                 });

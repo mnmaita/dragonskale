@@ -66,19 +66,16 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
         .spawn((
             GameOverBackground,
             StateScoped(AppState::GameOver),
-            NodeBundle {
-                background_color: BackgroundColor(Color::BLACK.with_alpha(0.)),
-                node: Node {
-                    align_items: AlignItems::Center,
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Column,
-                    height: Val::Percent(100.),
-                    justify_content: JustifyContent::Center,
-                    width: Val::Percent(100.),
-                    ..default()
-                },
+            Node {
+                align_items: AlignItems::Center,
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                height: Val::Percent(100.),
+                justify_content: JustifyContent::Center,
+                width: Val::Percent(100.),
                 ..default()
             },
+            BackgroundColor(Color::BLACK.with_alpha(0.)),
         ))
         .with_children(|builder| {
             builder.spawn((
@@ -108,10 +105,8 @@ fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServe
 
             builder
                 .spawn((
-                    ButtonBundle {
-                        background_color: BackgroundColor(Color::default().with_alpha(0.)),
-                        ..default()
-                    },
+                    Button,
+                    BackgroundColor(Color::default().with_alpha(0.)),
                     GameOverButtonAction::BackToMenu,
                 ))
                 .with_children(|button| {

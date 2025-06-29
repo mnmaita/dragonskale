@@ -35,39 +35,31 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands
         .spawn((
-            NodeBundle {
-                node: Node {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
             StateScoped(AppState::MainMenu),
         ))
         .with_children(|node| {
-            node.spawn(ImageBundle {
-                image: ImageNode::new(
-                    asset_server
-                        .get_handle("textures/menu_background.png")
-                        .unwrap_or_default(),
-                ),
-                ..default()
-            });
+            node.spawn(ImageNode::new(
+                asset_server
+                    .get_handle("textures/menu_background.png")
+                    .unwrap_or_default(),
+            ));
 
             node.spawn((
-                ButtonBundle {
-                    background_color: ALICE_BLUE.into(),
-                    node: Node {
-                        position_type: PositionType::Absolute,
-                        bottom: Val::Percent(12.),
-                        ..default()
-                    },
+                Button,
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Percent(12.),
                     ..default()
                 },
+                BackgroundColor::from(ALICE_BLUE),
                 MainMenuButtonAction::NewGame,
             ))
             .with_children(|button| {
@@ -80,15 +72,13 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 
             #[cfg(not(target_family = "wasm"))]
             node.spawn((
-                ButtonBundle {
-                    background_color: ALICE_BLUE.into(),
-                    node: Node {
-                        position_type: PositionType::Absolute,
-                        bottom: Val::Percent(6.),
-                        ..default()
-                    },
+                Button,
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Percent(6.),
                     ..default()
                 },
+                BackgroundColor::from(ALICE_BLUE),
                 MainMenuButtonAction::Exit,
             ))
             .with_children(|button| {

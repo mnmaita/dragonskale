@@ -70,26 +70,6 @@ impl Plugin for EnemyPlugin {
     }
 }
 
-#[derive(Bundle)]
-pub struct EnemyBundle {
-    pub attack_damage: AttackDamage,
-    pub attack_timer: AttackTimer,
-    pub behavior: Behavior,
-    pub hitpoints: ResourcePool<Health>,
-    pub marker: Enemy,
-    pub range: Range,
-    pub speed: Speed,
-    pub animation_indices: AnimationIndices,
-    pub animation_timer: AnimationTimer,
-    pub sprite_orientation: SpriteAnimation,
-    pub sprite: SpriteBundle,
-    pub collider: Collider,
-    pub render_layers: RenderLayers,
-    pub rigid_body: RigidBody,
-    pub collision_groups: CollisionGroups,
-    pub facing_direction: FacingDirection,
-}
-
 #[derive(Component, Eq, PartialEq, Hash, Debug, Copy, Clone)]
 pub enum SpriteAnimation {
     RunLeft,
@@ -201,45 +181,43 @@ fn spawn_enemies(
                 )
             };
 
-            commands.spawn((
-                EnemyBundle {
-                    attack_damage: AttackDamage(5),
-                    attack_timer: AttackTimer::new(3.),
-                    behavior: Behavior::FollowPlayer {
+            commands
+                .spawn((
+                    Sprite {
+                        image,
+                        texture_atlas: Some(TextureAtlas {
+                            layout: texture_atlas_handle,
+                            index: 4,
+                        }),
+                        ..Default::default()
+                    },
+                    Transform::from_translation(translation),
+                    AttackDamage(5),
+                    AttackTimer::new(3.),
+                    Behavior::FollowPlayer {
                         distance: TILE_SIZE.x * 6.,
                     },
-                    hitpoints: ResourcePool::<Health>::new(1),
-                    marker: Enemy,
-                    range: Range(TILE_SIZE.x * 15.),
-                    speed: Speed(2.),
-                    animation_indices: AnimationIndices::new(4, 11),
-                    animation_timer: AnimationTimer::from_seconds(0.2),
-                    sprite_orientation: SpriteAnimation::RunLeft,
-                    sprite: SpriteBundle {
-                        sprite: Sprite {
-                            image,
-                            texture_atlas: Some(TextureAtlas {
-                                layout: texture_atlas_handle,
-                                index: 4,
-                            }),
-                            ..Default::default()
-                        },
-                        transform: Transform::from_translation(translation),
-                        ..default()
-                    },
-                    collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
-                    render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
-                    rigid_body: RigidBody::Dynamic,
-                    collision_groups: CollisionGroups::new(
+                    ResourcePool::<Health>::new(1),
+                    Enemy,
+                    Range(TILE_SIZE.x * 15.),
+                    Speed(2.),
+                    RenderLayers::layer(RenderLayer::Ground.into()),
+                    FacingDirection::default(),
+                    StateScoped(AppState::GameOver),
+                    YSorted,
+                ))
+                .insert((
+                    AnimationIndices::new(4, 11),
+                    AnimationTimer::from_seconds(0.2),
+                    SpriteAnimation::RunLeft,
+                    Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
+                    RigidBody::Dynamic,
+                    CollisionGroups::new(
                         ENEMY_GROUP,
                         ENEMY_GROUP | BUILDING_GROUP | FIRE_BREATH_GROUP,
                     ),
-                    facing_direction: FacingDirection::default(),
-                },
-                StateScoped(AppState::GameOver),
-                LockedAxes::ROTATION_LOCKED,
-                YSorted,
-            ));
+                    LockedAxes::ROTATION_LOCKED,
+                ));
         }
     }
 }

@@ -49,16 +49,6 @@ impl SpawnFireBreathEvent {
     }
 }
 
-#[derive(Bundle)]
-struct FireBreathBundle {
-    pub collider: Collider,
-    pub damage: ImpactDamage,
-    pub marker: Fire,
-    // pub particle_system: ParticleSystemBundle,
-    pub render_layers: RenderLayers,
-    pub sensor: Sensor,
-}
-
 fn spawn_fire_breath(
     mut commands: Commands,
     mut spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,

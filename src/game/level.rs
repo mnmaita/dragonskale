@@ -103,23 +103,16 @@ fn spawn_level_tiles(
         let translation = position.extend(0.0);
         let transform = Transform::from_translation(translation);
         let mut tile_entity = commands.spawn((
-            TileBundle {
-                render_layers: RenderLayers::layer(RenderLayer::Background.into()),
-                sprite: SpriteBundle {
-                    sprite: Sprite {
-                        image: tileset_ground_texture.clone(),
-                        texture_atlas: Some(TextureAtlas {
-                            layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
-                            index: tile.into(),
-                        }),
-                        ..Default::default()
-                    },
-                    transform,
-                    ..default()
-                },
-                tile,
+            tile,
+            transform,
+            Sprite {
+                image: tileset_ground_texture.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
+                    index: tile.into(),
+                }),
+                ..Default::default()
             },
-            StateScoped(AppState::GameOver),
         ));
 
         if y == 0 || x == 0 || y == GRID_SIZE.y as usize - 1 || x == GRID_SIZE.x as usize - 1 {
@@ -154,32 +147,25 @@ fn spawn_buildings(
     for position in random_spawn_points {
         let translation = position.extend(1.);
 
+        // TODO: Add a Building component
         commands.spawn((
-            BuildingBundle {
-                active_collision_types: ActiveCollisionTypes::all(),
-                attack_damage: AttackDamage(5),
-                attack_timer: AttackTimer::new(4.),
-                collider: Collider::ball(HALF_TILE_SIZE.x),
-                collision_groups: CollisionGroups::new(
-                    BUILDING_GROUP,
-                    ENEMY_GROUP | FIRE_BREATH_GROUP,
-                ),
-                hitpoints: ResourcePool::<Health>::new(1000),
-                marker: Enemy,
-                range: Range(TILE_SIZE.x * 20.),
-                render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
-                rigid_body: RigidBody::Fixed,
-                sprite: SpriteBundle {
-                    sprite: Sprite {
-                        flip_x: rng.gen_bool(0.5),
-                        image: image.clone(),
-                        rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
-                        ..default()
-                    },
-                    transform: Transform::from_translation(translation),
-                    ..default()
-                },
+            ActiveCollisionTypes::all(),
+            AttackDamage(5),
+            AttackTimer::new(4.),
+            Collider::ball(HALF_TILE_SIZE.x),
+            CollisionGroups::new(BUILDING_GROUP, ENEMY_GROUP | FIRE_BREATH_GROUP),
+            ResourcePool::<Health>::new(1000),
+            Enemy,
+            Range(TILE_SIZE.x * 20.),
+            RenderLayers::layer(RenderLayer::Ground.into()),
+            RigidBody::Fixed,
+            Sprite {
+                flip_x: rng.gen_bool(0.5),
+                image: image.clone(),
+                rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
+                ..default()
             },
+            Transform::from_translation(translation),
             StateScoped(AppState::GameOver),
             YSorted,
         ));
@@ -216,17 +202,14 @@ fn spawn_hills(
         );
         let translation = (position + position_offset).extend(1.);
         commands.spawn((
-            SpriteBundle {
-                sprite: Sprite {
-                    anchor: bevy::sprite::Anchor::BottomCenter,
-                    flip_x: rng.gen_bool(0.2),
-                    image: image.clone(),
-                    rect: Some(*hill_tile_variants.choose(&mut rng).unwrap()),
-                    ..default()
-                },
-                transform: Transform::from_translation(translation),
+            Sprite {
+                anchor: bevy::sprite::Anchor::BottomCenter,
+                flip_x: rng.gen_bool(0.2),
+                image: image.clone(),
+                rect: Some(*hill_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
             },
+            Transform::from_translation(translation),
             RenderLayers::layer(RenderLayer::Topography.into()),
             StateScoped(AppState::GameOver),
             YSorted,
@@ -272,17 +255,14 @@ fn spawn_mountains(
         let translation = (position + position_offset).extend(1.);
 
         commands.spawn((
-            SpriteBundle {
-                sprite: Sprite {
-                    anchor: Anchor::BottomCenter,
-                    flip_x: rng.gen_bool(0.3),
-                    image: image.clone(),
-                    rect: Some(*mountain_tile_variants.choose(&mut rng).unwrap()),
-                    ..default()
-                },
-                transform: Transform::from_translation(translation),
+            Sprite {
+                anchor: Anchor::BottomCenter,
+                flip_x: rng.gen_bool(0.3),
+                image: image.clone(),
+                rect: Some(*mountain_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
             },
+            Transform::from_translation(translation),
             RenderLayers::layer(RenderLayer::Topography.into()),
             StateScoped(AppState::GameOver),
             YSortedInverse,
@@ -318,20 +298,17 @@ fn spawn_waves(
         let translation = (*position + position_offset).extend(2.);
 
         commands.spawn((
-            SpriteBundle {
-                sprite: Sprite {
-                    anchor: Anchor::BottomCenter,
-                    flip_x: rng.gen_bool(0.3),
-                    image: image.clone(),
-                    rect: Some(Rect::from_corners(
-                        Vec2::new(208., 176.),
-                        Vec2::new(240., 192.),
-                    )),
-                    ..default()
-                },
-                transform: Transform::from_translation(translation),
+            Sprite {
+                anchor: Anchor::BottomCenter,
+                flip_x: rng.gen_bool(0.3),
+                image: image.clone(),
+                rect: Some(Rect::from_corners(
+                    Vec2::new(208., 176.),
+                    Vec2::new(240., 192.),
+                )),
                 ..default()
             },
+            Transform::from_translation(translation),
             RenderLayers::layer(RenderLayer::Background.into()),
             StateScoped(AppState::GameOver),
             YSortedInverse,
@@ -360,32 +337,15 @@ pub struct TilesetObjectsTextureAtlasHandle(Handle<TextureAtlasLayout>);
 #[derive(Resource, Deref)]
 pub struct LevelMatrix(Matrix<Tile>);
 
-#[derive(Bundle)]
-pub struct BuildingBundle {
-    pub active_collision_types: ActiveCollisionTypes,
-    pub attack_damage: AttackDamage,
-    pub attack_timer: AttackTimer,
-    pub collider: Collider,
-    pub collision_groups: CollisionGroups,
-    pub hitpoints: ResourcePool<Health>,
-    pub marker: Enemy,
-    pub range: Range,
-    pub sprite: SpriteBundle,
-    pub render_layers: RenderLayers,
-    pub rigid_body: RigidBody,
-}
-
 #[derive(Component)]
 pub struct BorderTile;
 
-#[derive(Bundle)]
-pub struct TileBundle {
-    pub render_layers: RenderLayers,
-    pub sprite: SpriteBundle,
-    pub tile: Tile,
-}
-
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[require(
+    Sprite,
+    RenderLayers(|| RenderLayers::layer(RenderLayer::Background.into())),
+    StateScoped::<AppState>(|| StateScoped(AppState::GameOver)),
+)]
 pub enum Tile {
     Water,
     Sand,

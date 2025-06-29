@@ -22,22 +22,18 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-#[derive(Bundle)]
-pub struct PlayerBundle {
-    pub animation_indices: AnimationIndices,
-    pub animation_timer: AnimationTimer,
-    pub collider: Collider,
-    pub collision_groups: CollisionGroups,
-    pub fire_breath_resource: ResourcePool<Fire>,
-    pub hitpoints: ResourcePool<Health>,
-    pub score: Score,
-    pub speed: Speed,
-    pub marker: Player,
-    pub render_layers: RenderLayers,
-    pub sprite: SpriteBundle,
-}
-
 #[derive(Component)]
+#[require(
+    AnimationIndices(|| AnimationIndices::new(0, 2)),
+    AnimationTimer(|| AnimationTimer::from_seconds(0.2)),
+    Collider(|| Collider::cuboid(15., 40.)),
+    CollisionGroups(|| CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP)),
+    Speed(|| Speed(10.)),
+    ResourcePool::<Fire>(|| ResourcePool::new(100)),
+    ResourcePool::<Health>(|| ResourcePool::new(100)),
+    RenderLayers(|| RenderLayers::layer(RenderLayer::Sky.into())),
+    StateScoped::<AppState>(|| StateScoped(AppState::GameOver)),
+)]
 pub struct Player;
 
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -49,28 +45,15 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture_atlas_layout_handle = asset_server.add(texture_atlas_layout);
 
     commands.spawn((
-        PlayerBundle {
-            animation_indices: AnimationIndices::new(0, 2),
-            animation_timer: AnimationTimer::from_seconds(0.2),
-            collider: Collider::cuboid(15., 40.),
-            collision_groups: CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
-            fire_breath_resource: ResourcePool::<Fire>::new(100),
-            hitpoints: ResourcePool::<Health>::new(100),
-            score: Score::new(0, 1),
-            marker: Player,
-            render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
-            speed: Speed(10.),
-            sprite: SpriteBundle {
-                sprite: Sprite {
-                    image,
-                    texture_atlas: Some(texture_atlas_layout_handle.into()),
-                    ..Default::default()
-                },
-                transform: Transform::from_translation(Vec2::ONE.extend(1.)),
-                ..default()
-            },
+        Player,
+        // TODO: Score could be a bevy Resource
+        Score::new(0, 1),
+        Sprite {
+            image,
+            texture_atlas: Some(texture_atlas_layout_handle.into()),
+            ..Default::default()
         },
-        StateScoped(AppState::GameOver),
+        Transform::from_translation(Vec2::ONE.extend(1.)),
         YSorted,
     ));
 }
