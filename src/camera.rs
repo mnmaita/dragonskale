@@ -40,52 +40,29 @@ impl Plugin for CameraPlugin {
     }
 }
 
-#[derive(Bundle)]
-pub struct MainCameraBundle {
-    pub camera_2d: Camera2dBundle,
-    pub marker: MainCamera,
-    pub render_layers: RenderLayers,
-}
-
-impl MainCameraBundle {
-    pub fn from_layer(layer: Layer) -> Self {
-        Self {
-            camera_2d: Camera2dBundle {
-                camera: Camera {
-                    order: layer as isize,
-                    ..default()
-                },
-                ..default()
-            },
-            marker: MainCamera,
-            render_layers: RenderLayers::layer(layer),
-        }
-    }
-}
-
-#[derive(Bundle)]
-pub struct SubLayerCameraBundle {
-    pub camera_2d: Camera2dBundle,
-    pub render_layers: RenderLayers,
-}
-
-impl SubLayerCameraBundle {
-    pub fn from_layer(layer: Layer) -> Self {
-        Self {
-            camera_2d: Camera2dBundle {
-                camera: Camera {
-                    clear_color: ClearColorConfig::None,
-                    order: layer as isize,
-                    ..default()
-                },
-                ..default()
-            },
-            render_layers: RenderLayers::layer(layer),
-        }
-    }
+fn sub_layer_camera(layer: Layer) -> impl Bundle {
+    (
+        Camera2d,
+        Camera {
+            clear_color: ClearColorConfig::None,
+            order: layer as isize,
+            ..default()
+        },
+        Msaa::Off,
+        RenderLayers::layer(layer),
+    )
 }
 
 #[derive(Component)]
+#[require(
+    Camera2d,
+    Camera(|| Camera {
+        order: RenderLayer::Background as isize,
+        ..Default::default()
+    }),
+    Msaa(|| Msaa::Off),
+    RenderLayers(|| RenderLayers::layer(RenderLayer::Background.into()))
+)]
 pub struct MainCamera;
 
 #[derive(Component)]
@@ -95,16 +72,12 @@ pub struct YSorted;
 pub struct YSortedInverse;
 
 fn setup_camera(mut commands: Commands) {
-    commands
-        .spawn(MainCameraBundle::from_layer(RenderLayer::Background.into()))
-        .with_children(|builder| {
-            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Ground.into()));
-            builder.spawn(SubLayerCameraBundle::from_layer(
-                RenderLayer::Topography.into(),
-            ));
-            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Sky.into()));
-            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Ui.into()));
-        });
+    commands.spawn(MainCamera).with_children(|builder| {
+        builder.spawn(sub_layer_camera(RenderLayer::Ground.into()));
+        builder.spawn(sub_layer_camera(RenderLayer::Topography.into()));
+        builder.spawn(sub_layer_camera(RenderLayer::Sky.into()));
+        builder.spawn(sub_layer_camera(RenderLayer::Ui.into()));
+    });
 }
 
 fn update_camera(

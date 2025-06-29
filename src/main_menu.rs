@@ -35,80 +35,58 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
             StateScoped(AppState::MainMenu),
         ))
         .with_children(|node| {
-            node.spawn(ImageBundle {
-                image: UiImage::new(
-                    asset_server
-                        .get_handle("textures/menu_background.png")
-                        .unwrap_or_default(),
-                ),
-                ..default()
-            });
+            node.spawn(ImageNode::new(
+                asset_server
+                    .get_handle("textures/menu_background.png")
+                    .unwrap_or_default(),
+            ));
 
             node.spawn((
-                ButtonBundle {
-                    background_color: ALICE_BLUE.into(),
-                    style: Style {
-                        position_type: PositionType::Absolute,
-                        bottom: Val::Percent(12.),
-                        ..default()
-                    },
+                Button,
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Percent(12.),
                     ..default()
                 },
+                BackgroundColor::from(ALICE_BLUE),
                 MainMenuButtonAction::NewGame,
             ))
             .with_children(|button| {
-                button.spawn(TextBundle {
-                    text: Text::from_section(
-                        "New Game",
-                        TextStyle {
-                            color: Color::BLACK,
-                            font: font.clone(),
-                            font_size: 32.0,
-                        },
-                    ),
-                    ..default()
-                });
+                button.spawn((
+                    Text::new("New Game"),
+                    TextFont::from_font(font.clone()).with_font_size(32.0),
+                    TextColor(Color::BLACK),
+                ));
             });
 
             #[cfg(not(target_family = "wasm"))]
             node.spawn((
-                ButtonBundle {
-                    background_color: ALICE_BLUE.into(),
-                    style: Style {
-                        position_type: PositionType::Absolute,
-                        bottom: Val::Percent(6.),
-                        ..default()
-                    },
+                Button,
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Percent(6.),
                     ..default()
                 },
+                BackgroundColor::from(ALICE_BLUE),
                 MainMenuButtonAction::Exit,
             ))
             .with_children(|button| {
-                button.spawn(TextBundle {
-                    text: Text::from_section(
-                        "Exit",
-                        TextStyle {
-                            color: Color::BLACK,
-                            font: font.clone(),
-                            font_size: 32.0,
-                        },
-                    ),
-                    ..default()
-                });
+                button.spawn((
+                    Text::new("Exit"),
+                    TextFont::from_font(font).with_font_size(32.0),
+                    TextColor(Color::BLACK),
+                ));
             });
         });
 }

@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::{
     dynamics::{LockedAxes, RigidBody},
     geometry::{Collider, CollisionGroups, Sensor},
-    plugin::RapierContext,
+    plugin::ReadRapierContext,
 };
 use rand::Rng;
 
@@ -50,20 +50,18 @@ impl PowerUpEvent {
     }
 }
 
-#[derive(Bundle)]
-pub struct PowerUpBundle {
-    pub marker: PowerUp,
-    pub animation_indices: AnimationIndices,
-    pub animation_timer: AnimationTimer,
-    pub sprite: SpriteBundle,
-    pub texture_atlas: TextureAtlas,
-    pub collider: Collider,
-    pub render_layers: RenderLayers,
-    pub sensor: Sensor,
-    pub collision_groups: CollisionGroups,
-}
-
 #[derive(Component)]
+#[require(
+    AnimationIndices(|| AnimationIndices::new(0, 1)),
+    AnimationTimer(|| AnimationTimer::from_seconds(0.2)),
+    RenderLayers(|| RenderLayers::layer(RenderLayer::Sky.into())),
+    Collider(|| Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y)),
+    Sensor(|| Sensor),
+    CollisionGroups(|| CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP)),
+    StateScoped::<AppState>(|| StateScoped(AppState::GameOver)),
+    LockedAxes(|| LockedAxes::ROTATION_LOCKED),
+    RigidBody(|| RigidBody::Dynamic),
+)]
 pub struct PowerUp;
 
 #[derive(Resource)]
@@ -101,25 +99,14 @@ fn spawn_powerups(
 
                 if rng.gen_bool(0.1) {
                     commands.spawn((
-                        PowerUpBundle {
-                            marker: PowerUp,
-                            animation_indices: AnimationIndices::new(0, 1),
-                            animation_timer: AnimationTimer::from_seconds(0.2),
-                            sprite: SpriteBundle {
-                                texture: texture_healing_scale.clone(),
-                                transform: *transform,
-                                ..default()
-                            },
-                            texture_atlas: scale_texture_atlas_handler.0.clone().into(),
-                            collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
-                            render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
-                            sensor: Sensor,
-                            collision_groups: CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP),
+                        PowerUp,
+                        Sprite {
+                            image: texture_healing_scale.clone(),
+                            texture_atlas: Some(scale_texture_atlas_handler.0.clone().into()),
+                            ..Default::default()
                         },
-                        StateScoped(AppState::GameOver),
-                        LockedAxes::ROTATION_LOCKED,
+                        *transform,
                         YSorted,
-                        RigidBody::Dynamic,
                     ));
                 };
             }
@@ -131,8 +118,10 @@ fn consume_powerups(
     mut commands: Commands,
     powerup_query: Query<Entity, With<PowerUp>>,
     mut player_query: Query<&mut ResourcePool<Health>, With<Player>>,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadRapierContext,
 ) {
+    let rapier_context = rapier_context.single();
+
     for entity in &powerup_query {
         for (_, _, intersecting) in rapier_context.intersection_pairs_with(entity) {
             if intersecting {
