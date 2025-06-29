@@ -421,6 +421,7 @@ dependencies = [
  "bevy_reflect",
  "bevy_tasks",
  "bevy_utils",
+ "serde",
  "uuid",
 ]
 
@@ -536,6 +537,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_enoki"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cb9e8602abb486a4265c227f00c9627d58c465568425511e545e2d69fb3ae52"
+dependencies = [
+ "bevy",
+ "rand",
+ "ron",
+ "serde",
+]
+
+[[package]]
 name = "bevy_gizmos"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -618,6 +631,7 @@ dependencies = [
  "bevy_reflect",
  "bevy_utils",
  "derive_more",
+ "serde",
  "smol_str",
 ]
 
@@ -960,6 +974,7 @@ dependencies = [
  "nonmax",
  "radsort",
  "rectangle-pack",
+ "serde",
 ]
 
 [[package]]
@@ -1042,6 +1057,7 @@ dependencies = [
  "bevy_reflect",
  "bevy_utils",
  "crossbeam-channel",
+ "serde",
 ]
 
 [[package]]
@@ -1056,6 +1072,7 @@ dependencies = [
  "bevy_math",
  "bevy_reflect",
  "derive_more",
+ "serde",
 ]
 
 [[package]]
@@ -1087,6 +1104,7 @@ dependencies = [
  "bytemuck",
  "derive_more",
  "nonmax",
+ "serde",
  "smallvec",
  "taffy",
 ]
@@ -1132,6 +1150,7 @@ dependencies = [
  "bevy_reflect",
  "bevy_utils",
  "raw-window-handle",
+ "serde",
  "smol_str",
 ]
 
@@ -1159,6 +1178,7 @@ dependencies = [
  "cfg-if",
  "crossbeam-channel",
  "raw-window-handle",
+ "serde",
  "wasm-bindgen",
  "web-sys",
  "winit",
@@ -1785,6 +1805,7 @@ version = "0.1.4"
 dependencies = [
  "bevy",
  "bevy_embedded_assets",
+ "bevy_enoki",
  "bevy_kira_audio",
  "bevy_rapier2d",
  "noise",
@@ -3747,6 +3768,9 @@ name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "smol_str"

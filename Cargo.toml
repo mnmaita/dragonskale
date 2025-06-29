@@ -24,7 +24,7 @@ bevy = { version = "0.15.3", default-features = false, features = [
     "x11",
 ] }
 bevy_rapier2d = { version = "0.29.0", features = ["debug-render-2d"] }
-# bevy_particle_systems = "0.13.0"
+bevy_enoki = "0.3.3"
 noise = "0.9.0"
 rand = "0.8.5"
 pathfinding = "4.14.0"

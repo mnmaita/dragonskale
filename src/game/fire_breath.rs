@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::view::RenderLayers};
+use bevy_enoki::prelude::*;
 use bevy_kira_audio::{Audio, AudioChannel, AudioControl};
-// use bevy_particle_systems::*;
 use bevy_rapier2d::prelude::{Collider, CollisionGroups, Sensor};
 
 use crate::{
@@ -21,7 +21,7 @@ impl Plugin for FireBreathPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SpawnFireBreathEvent>();
 
-        // app.add_plugins(ParticleSystemPlugin);
+        app.add_plugins(EnokiPlugin);
 
         app.add_systems(
             FixedUpdate,
@@ -30,12 +30,22 @@ impl Plugin for FireBreathPlugin {
 
         app.add_systems(Update, spawn_fire_breath.run_if(playing()));
 
-        // app.add_systems(
-        //     PostUpdate,
-        //     update_fire_particles_render_layers.run_if(playing()),
-        // );
+        let image = app
+            .world()
+            .resource::<AssetServer>()
+            .load("textures/fire_anim.png");
+
+        let sprite_particle_material = app
+            .world_mut()
+            .resource_mut::<Assets<SpriteParticle2dMaterial>>()
+            .add(SpriteParticle2dMaterial::new(image, 2, 1));
+
+        app.insert_resource(FireBreathParticleMaterialAsset(sprite_particle_material));
     }
 }
+
+#[derive(Deref, Resource)]
+pub struct FireBreathParticleMaterialAsset(Handle<SpriteParticle2dMaterial>);
 
 #[derive(Event)]
 pub struct SpawnFireBreathEvent {
@@ -52,6 +62,7 @@ impl SpawnFireBreathEvent {
 fn spawn_fire_breath(
     mut commands: Commands,
     mut spawn_fire_breath_event_reader: EventReader<SpawnFireBreathEvent>,
+    material: Res<FireBreathParticleMaterialAsset>,
     asset_server: Res<AssetServer>,
     player_query: Query<&ResourcePool<Fire>, With<Player>>,
 ) {
@@ -63,48 +74,12 @@ fn spawn_fire_breath(
         return;
     }
 
-    // let fire_texture = asset_server
-    //     .get_handle("textures/fire_anim.png")
-    //     .unwrap_or_default();
-    // let texture_atlas_layout_fire =
-    //     TextureAtlasLayout::from_grid(UVec2::new(40, 40), 2, 1, None, None);
-    // let texture_atlas_handle_fire = asset_server.add(texture_atlas_layout_fire);
-    // let animated_index: AtlasIndex = AtlasIndex::Animated(AnimatedIndex {
-    //     indices: vec![0, 1],
-    //     time_step: 0.2,
-    //     step_offset: 0,
-    // });
-
     for &SpawnFireBreathEvent { damage, position } in spawn_fire_breath_event_reader.read() {
         commands.spawn((
-            // FireBreathBundle {
-            //     marker: Fire,
-            //     // particle_system: ParticleSystemBundle {
-            //     //     transform: Transform::from_translation(position.extend(10.0)),
-            //     //     particle_system: ParticleSystem {
-            //     //         max_particles: 10_000,
-            //     //         texture: ParticleTexture::TextureAtlas {
-            //     //             atlas: texture_atlas_handle_fire.clone(),
-            //     //             index: animated_index.clone(),
-            //     //             texture: fire_texture.clone(),
-            //     //         },
-            //     //         spawn_rate_per_second: 5.0.into(),
-            //     //         initial_speed: JitteredValue::jittered(3.0, -1.0..1.0),
-            //     //         lifetime: JitteredValue::jittered(4.0, -1.0..1.0),
-            //     //         looping: false,
-            //     //         despawn_on_finish: true,
-            //     //         system_duration_seconds: 1.0,
-            //     //         ..ParticleSystem::default()
-            //     //     },
-            //     //     ..ParticleSystemBundle::default()
-            //     // },
-            //     render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
-            //     sensor: Sensor,
-            //     collider: Collider::ball(25.0),
-            //     damage: ImpactDamage(damage),
-            // },
+            ParticleSpawner(material.clone()),
+            ParticleEffectHandle(asset_server.load("vfx/fire_breath.ron")),
+            OneShot::Despawn,
             Fire,
-            Visibility::default(),
             RenderLayers::layer(RenderLayer::Ground.into()),
             Transform::from_translation(position.extend(10.0)),
             Sensor,
@@ -112,23 +87,10 @@ fn spawn_fire_breath(
             CollisionGroups::new(FIRE_BREATH_GROUP, BUILDING_GROUP | ENEMY_GROUP),
             StateScoped(AppState::GameOver),
             ImpactDamage(damage),
-            // Playing,
             YSorted,
         ));
     }
 }
-
-// fn update_fire_particles_render_layers(
-//     mut commands: Commands,
-//     query: Query<(Entity, &Particle), Added<Particle>>,
-//     render_layers_query: Query<&RenderLayers>,
-// ) {
-//     for (entity, particle) in &query {
-//         if let Ok(render_layers) = render_layers_query.get(particle.parent_system) {
-//             commands.entity(entity).insert(render_layers.clone());
-//         }
-//     }
-// }
 
 fn consume_fire_breath_resource(
     mut player_query: Query<&mut ResourcePool<Fire>, With<Player>>,
