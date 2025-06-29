@@ -22,7 +22,7 @@ impl Plugin for DebugPlugin {
 }
 
 fn draw_grid(mut gizmos: Gizmos) {
-    gizmos.grid_2d(-HALF_TILE_SIZE, GRID_SIZE.as_uvec2(), Vec2::ZERO, FUCHSIA);
+    gizmos.grid_2d(-HALF_TILE_SIZE, GRID_SIZE.as_uvec2(), TILE_SIZE, FUCHSIA);
 }
 
 fn draw_camera_constraints(
