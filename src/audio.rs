@@ -360,8 +360,9 @@ fn update_music_assets_load_state(
         #[cfg(target_family = "wasm")]
         {
             let all_loaded = music_handles.iter().all(|handle| {
-                asset_server.recursive_dependency_load_state(handle.id())
-                    == RecursiveDependencyLoadState::Loaded
+                asset_server
+                    .recursive_dependency_load_state(handle.id())
+                    .is_loaded()
             });
             if all_loaded {
                 RecursiveDependencyLoadState::Loaded.into()
@@ -387,8 +388,9 @@ fn update_sound_effect_assets_load_state(
         #[cfg(target_family = "wasm")]
         {
             let all_loaded = sound_effect_handles.iter().all(|handle| {
-                asset_server.recursive_dependency_load_state(handle.id())
-                    == RecursiveDependencyLoadState::Loaded
+                asset_server
+                    .recursive_dependency_load_state(handle.id())
+                    .is_loaded()
             });
             if all_loaded {
                 RecursiveDependencyLoadState::Loaded.into()

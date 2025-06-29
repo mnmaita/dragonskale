@@ -43,13 +43,13 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         StateScoped(AppState::MainMenu),
-        children![
-            ImageNode::new(
+        Children::spawn((
+            Spawn(ImageNode::new(
                 asset_server
                     .get_handle("textures/menu_background.png")
                     .unwrap_or_default(),
-            ),
-            (
+            )),
+            Spawn((
                 Button,
                 Node {
                     position_type: PositionType::Absolute,
@@ -63,9 +63,9 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     TextFont::from_font(font.clone()).with_font_size(32.0),
                     TextColor(Color::BLACK),
                 )],
-            ),
+            )),
             #[cfg(not(target_family = "wasm"))]
-            (
+            Spawn((
                 Button,
                 Node {
                     position_type: PositionType::Absolute,
@@ -79,8 +79,8 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     TextFont::from_font(font).with_font_size(32.0),
                     TextColor(Color::BLACK),
                 )],
-            )
-        ],
+            )),
+        )),
     ));
 }
 
