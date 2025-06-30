@@ -24,7 +24,7 @@ impl Plugin for PlayerPlugin {
 
 #[derive(Component)]
 #[require(
-    AnimationIndices::new(0, 2),
+    AnimationIndices = Player::default_animation_indices(),
     AnimationTimer::from_seconds(0.2),
     Collider::cuboid(15., 40.),
     CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
@@ -35,6 +35,12 @@ impl Plugin for PlayerPlugin {
     StateScoped::<AppState>(AppState::GameOver),
 )]
 pub struct Player;
+
+impl Player {
+    pub fn default_animation_indices() -> AnimationIndices {
+        AnimationIndices::new(0, 2)
+    }
+}
 
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let image = asset_server
