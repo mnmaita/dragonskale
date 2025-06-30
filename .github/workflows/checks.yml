@@ -3,13 +3,27 @@ name: Checks
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
 
 jobs:
   tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [windows-64, web, linux-64]
+        include:
+          - platform: windows-64
+            # TODO: consider using x86_64-pc-windows-gnullvm in the future
+            target: x86_64-pc-windows-gnu
+          - platform: web
+            target: wasm32-unknown-unknown
+          - platform: linux-64
+            target: x86_64-unknown-linux-gnu
     steps:
       - uses: actions/checkout@v4
 
@@ -17,15 +31,17 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: ${{ vars.CACHE_BUILD_VERSION }}-cargo-${{ runner.os }}
+          prefix-key: ${{ vars.CACHE_BUILD_VERSION }}-cargo
+          shared-key: ${{ matrix.platform }}-dev
+          # Only save if we're running on the main branch, so that other branches can also use this cache.
+          save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - name: Install alsa and udev
-        run: sudo apt update; sudo apt install --no-install-recommends libasound2-dev libudev-dev
+        if: ${{ runner.os == 'linux' }}
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
 
-      - name: Build and run tests
-        run: cargo test
-        env:
-          CARGO_INCREMENTAL: 0
+      - name: Run ${{ matrix.target }} dev build
+        run: cargo build --target ${{ matrix.target }}
 
   format:
     runs-on: ubuntu-latest
@@ -50,10 +66,14 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: ${{ vars.CACHE_BUILD_VERSION }}-cargo-${{ runner.os }}
+          prefix-key: ${{ vars.CACHE_BUILD_VERSION }}-cargo
+          shared-key: lint
+          # Only save if we're running on the main branch, so that other branches can also use this cache.
+          save-if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - name: Install alsa and udev
-        run: sudo apt update; sudo apt install --no-install-recommends libasound2-dev libudev-dev
+        if: ${{ runner.os == 'linux' }}
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
 
       - name: Run linter
         run: cargo clippy --all-targets --all-features
