@@ -2,7 +2,7 @@ use bevy::{ecs::system::SystemParam, prelude::*, render::view::RenderLayers, spr
 use bevy_rapier2d::prelude::*;
 use noise::{NoiseFn, Perlin};
 use pathfinding::prelude::Matrix;
-use rand::{random, seq::SliceRandom, Rng};
+use rand::{random, seq::IndexedRandom as _, Rng};
 
 use crate::{
     audio::{PlayMusicEvent, PlaybackSettings},
@@ -134,7 +134,7 @@ fn spawn_buildings(
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
     let total_buildings = (grass_tiles.len() as f32 * BUILDING_SPAWN_CHANCE).ceil() as usize;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let random_spawn_points = grass_tiles.choose_multiple(&mut rng, total_buildings);
     let building_tile_variants = [
         Rect::from_corners(Vec2::new(352., 96.), Vec2::new(400., 144.)),
@@ -160,7 +160,7 @@ fn spawn_buildings(
             RenderLayers::layer(RenderLayer::Ground.into()),
             RigidBody::Fixed,
             Sprite {
-                flip_x: rng.gen_bool(0.5),
+                flip_x: rng.random_bool(0.5),
                 image: image.clone(),
                 rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
@@ -184,7 +184,7 @@ fn spawn_hills(
         .filter(|(_, tile)| **tile == Tile::Hills)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let hill_tile_variants = [
         Rect::from_corners(Vec2::new(320., 64.), Vec2::new(368., 96.)),
         Rect::from_corners(Vec2::new(368., 64.), Vec2::new(400., 96.)),
@@ -197,14 +197,14 @@ fn spawn_hills(
 
     for position in hill_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
-            -HALF_TILE_SIZE.y + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            rng.random::<f32>() * POSITION_OFFSET_FACTOR,
+            -HALF_TILE_SIZE.y + rng.random::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (position + position_offset).extend(1.);
         commands.spawn((
             Sprite {
                 anchor: bevy::sprite::Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.2),
+                flip_x: rng.random_bool(0.2),
                 image: image.clone(),
                 rect: Some(*hill_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
@@ -230,7 +230,7 @@ fn spawn_mountains(
         .filter(|(_, tile)| **tile == Tile::Mountains)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mountain_tile_variants = [
         Rect::from_corners(Vec2::ZERO, MOUNTAIN_TILE_SIZE),
         Rect::from_corners(
@@ -249,15 +249,15 @@ fn spawn_mountains(
 
     for position in mountain_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
-            -MOUNTAIN_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            rng.random::<f32>() * POSITION_OFFSET_FACTOR,
+            -MOUNTAIN_TILE_SIZE.y / 2. + rng.random::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (position + position_offset).extend(1.);
 
         commands.spawn((
             Sprite {
                 anchor: Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.3),
+                flip_x: rng.random_bool(0.3),
                 image: image.clone(),
                 rect: Some(*mountain_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
@@ -283,7 +283,7 @@ fn spawn_waves(
         .filter(|(_, tile)| **tile == Tile::Water)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let wave_tiles =
         water_tiles.choose_multiple(&mut rng, (water_tiles.len() as f32 * 0.05) as usize);
     let image = asset_server
@@ -292,15 +292,15 @@ fn spawn_waves(
 
     for position in wave_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
-            -WAVE_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            rng.random::<f32>() * POSITION_OFFSET_FACTOR,
+            -WAVE_TILE_SIZE.y / 2. + rng.random::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (*position + position_offset).extend(2.);
 
         commands.spawn((
             Sprite {
                 anchor: Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.3),
+                flip_x: rng.random_bool(0.3),
                 image: image.clone(),
                 rect: Some(Rect::from_corners(
                     Vec2::new(208., 176.),
@@ -383,7 +383,7 @@ impl From<Tile> for usize {
                 if random::<f32>() > 0.1 {
                     145
                 } else {
-                    let mut rng = rand::thread_rng();
+                    let mut rng = rand::rng();
                     *[146_usize, 147, 148].choose(&mut rng).unwrap()
                 }
             }

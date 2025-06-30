@@ -95,9 +95,9 @@ fn spawn_powerups(
     {
         match powerup_event_type {
             PowerUpEventType::HealingScale => {
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
 
-                if rng.gen_bool(0.1) {
+                if rng.random_bool(0.1) {
                     commands.spawn((
                         PowerUp,
                         Sprite {

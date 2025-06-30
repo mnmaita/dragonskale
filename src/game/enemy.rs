@@ -160,12 +160,12 @@ fn spawn_enemies(
             ));
         }
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         if let Some(tile_transform) = tile_query.iter().choose(&mut rng) {
             let translation = tile_transform.translation.truncate().extend(1.);
 
             //pick a random texture atlas handle between archer and axe
-            let (texture_atlas_handle, image) = if rng.gen_bool(0.5) {
+            let (texture_atlas_handle, image) = if rng.random_bool(0.5) {
                 (
                     texture_archer_atlas_handle.0.clone(),
                     asset_server
