@@ -27,7 +27,7 @@ jobs:
         if: matrix.target == 'x86_64-pc-windows-gnu'
         run: sudo apt-get update; sudo apt-get install -y gcc-mingw-w64-x86-64
 
-      - uses: dtolnay/rust-toolchain@1.86.0
+      - uses: dtolnay/rust-toolchain@1.87.0
         with:
           targets: ${{ matrix.target }}
 

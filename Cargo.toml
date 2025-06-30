@@ -2,7 +2,7 @@
 name = "dragonskale"
 version = "0.1.4"
 edition = "2021"
-rust-version = "1.86.0"
+rust-version = "1.87.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -42,3 +42,8 @@ getrandom = { version = "0.3", default-features = false, features = [
     "wasm_js",
 ] }
 
+[package.metadata.bevy_cli.web.dev]
+wasm-opt = ["-Os", "--enable-bulk-memory", "--all-features"]
+
+[package.metadata.bevy_cli.web.release]
+wasm-opt = ["--strip-debug", "-Os", "--enable-bulk-memory", "--all-features"]
