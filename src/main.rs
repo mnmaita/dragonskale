@@ -46,6 +46,7 @@ fn main() {
                 }),
                 ..default()
             }),
+        bevy_enoki::EnokiPlugin,
         AnimationPlugin,
         AudioPlugin,
         CameraPlugin,
