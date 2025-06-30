@@ -268,7 +268,6 @@ fn update_enemy_sprite_animation(
                 let enemy_position = enemy_transform.translation.truncate();
 
                 if enemy_position.distance(player_position) > distance {
-                    println!("walk");
                     match facing_direction.0 {
                         Dir2::NORTH => *sprite_animation = SpriteAnimation::RunUp,
                         Dir2::EAST => *sprite_animation = SpriteAnimation::RunRight,
@@ -281,7 +280,6 @@ fn update_enemy_sprite_animation(
                         _ => (),
                     }
                 } else {
-                    println!("attack");
                     match facing_direction.0 {
                         Dir2::NORTH => *sprite_animation = SpriteAnimation::AttackUp,
                         Dir2::EAST => *sprite_animation = SpriteAnimation::AttackRight,
