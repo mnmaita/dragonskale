@@ -1,9 +1,11 @@
 use bevy::{prelude::*, render::view::RenderLayers};
+use bevy_enhanced_input::prelude::Actions;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
     camera::{RenderLayer, YSorted},
+    input::DefaultInputContext,
     physics::Speed,
     AppState,
 };
@@ -24,6 +26,7 @@ impl Plugin for PlayerPlugin {
 
 #[derive(Component)]
 #[require(
+    Actions::<DefaultInputContext>::default(),
     AnimationIndices = Player::default_animation_indices(),
     AnimationTimer::from_seconds(0.2),
     Collider::cuboid(15., 40.),

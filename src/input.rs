@@ -96,21 +96,18 @@ fn player_movement(
     }
 }
 
-fn clear_input(
-    mut keyboard_input: ResMut<ButtonInput<KeyCode>>,
-    mut mouse_input: ResMut<ButtonInput<MouseButton>>,
-) {
+fn clear_input(mut keyboard_input: ResMut<ButtonInput<KeyCode>>) {
     keyboard_input.reset_all();
-    mouse_input.reset_all()
 }
 
-fn bind_actions(trigger: Trigger<OnAdd, Player>, mut commands: Commands) {
-    let mut actions = Actions::<DefaultInputContext>::default();
+fn bind_actions(
+    trigger: Trigger<Bind<DefaultInputContext>>,
+    mut players: Query<&mut Actions<DefaultInputContext>>,
+) {
+    let mut actions = players.get_mut(trigger.target()).unwrap();
 
     actions
         .bind::<FireBreath>()
         .to(MouseButton::Left)
         .with_conditions(Hold::new(0.5));
-
-    commands.entity(trigger.target()).insert(actions);
 }
