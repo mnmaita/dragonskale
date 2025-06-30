@@ -5,6 +5,10 @@ pub struct AnimationPlugin;
 impl Plugin for AnimationPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, animate_sprite);
+        app.add_systems(
+            PostUpdate,
+            reset_animation_index.run_if(any_match_filter::<Changed<AnimationIndices>>),
+        );
     }
 }
 
@@ -50,6 +54,16 @@ fn animate_sprite(
                     texture_atlas.index + 1
                 };
             }
+        }
+    }
+}
+
+fn reset_animation_index(
+    mut query: Query<(&AnimationIndices, &mut Sprite), Changed<AnimationIndices>>,
+) {
+    for (indices, mut sprite) in &mut query {
+        if let Some(ref mut texture_atlas) = sprite.texture_atlas {
+            texture_atlas.index = indices.first();
         }
     }
 }
