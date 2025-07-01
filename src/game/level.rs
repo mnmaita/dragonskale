@@ -143,8 +143,8 @@ fn spawn_buildings(
     for position in random_spawn_points {
         let translation = position.extend(1.);
 
-        // TODO: Add a Building component
         commands.spawn((
+            Building,
             ActiveCollisionTypes::all(),
             AttackDamage(5),
             AttackTimer::new(4.),
@@ -326,6 +326,9 @@ pub struct TilesetObjectsTextureAtlasHandle(Handle<TextureAtlasLayout>);
 
 #[derive(Resource, Deref)]
 pub struct LevelMatrix(Matrix<Tile>);
+
+#[derive(Component)]
+pub struct Building;
 
 #[derive(Component)]
 pub struct BorderTile;
