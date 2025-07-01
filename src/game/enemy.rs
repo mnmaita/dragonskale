@@ -1,11 +1,15 @@
 use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::prelude::*;
-use rand::{seq::IteratorRandom, Rng};
+use rand::{
+    seq::{IndexedRandom as _, IteratorRandom},
+    Rng,
+};
 use std::{collections::HashMap, time::Duration};
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
     camera::{RenderLayer, YSorted},
+    game::{combat::OnFire, game_timer::GameTimer},
     physics::Speed,
     playing, AppState,
 };
@@ -61,12 +65,13 @@ impl Plugin for EnemyPlugin {
                 spawn_enemies,
                 handle_enemy_movement,
                 handle_enemy_attacks,
-                update_enemy_facing_direction.after(handle_enemy_movement),
-                update_enemy_sprite_animation.after(update_enemy_facing_direction),
+                update_enemy_sprite_animation.after(handle_enemy_movement),
                 update_enemy_animation_indexes.after(update_enemy_sprite_animation),
             )
                 .run_if(playing()),
         );
+
+        app.add_observer(on_add_on_fire);
     }
 }
 
@@ -108,6 +113,7 @@ impl EnemySpawnTimer {
 #[derive(Component)]
 pub enum Behavior {
     FollowPlayer { distance: f32 },
+    Random,
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -222,26 +228,6 @@ fn setup_enemy_spawn_counter(mut commands: Commands) {
     commands.insert_resource(EnemySpawnCounter(0));
 }
 
-fn update_enemy_facing_direction(
-    mut enemy_query: Query<(&Transform, &Behavior, &mut FacingDirection), With<Enemy>>,
-    player_transform: Single<&Transform, With<Player>>,
-) {
-    let player_position = player_transform.translation.truncate();
-
-    for (enemy_transform, enemy_behavior, mut enemy_facing_direction) in &mut enemy_query {
-        match enemy_behavior {
-            &Behavior::FollowPlayer { distance } => {
-                let enemy_position = enemy_transform.translation.truncate();
-
-                if enemy_position.distance(player_position) > distance {
-                    enemy_facing_direction.0 =
-                        Dir2::new(player_position - enemy_position).unwrap_or(Dir2::NEG_X);
-                }
-            }
-        }
-    }
-}
-
 fn update_enemy_sprite_animation(
     mut enemy_query: Query<
         (
@@ -260,10 +246,10 @@ fn update_enemy_sprite_animation(
         &mut enemy_query
     {
         match enemy_behavior {
-            &Behavior::FollowPlayer { distance } => {
+            Behavior::FollowPlayer { distance } => {
                 let enemy_position = enemy_transform.translation.truncate();
 
-                if enemy_position.distance(player_position) > distance {
+                if enemy_position.distance(player_position) > *distance {
                     match facing_direction.0 {
                         Dir2::NORTH => *sprite_animation = SpriteAnimation::RunUp,
                         Dir2::EAST => *sprite_animation = SpriteAnimation::RunRight,
@@ -289,6 +275,17 @@ fn update_enemy_sprite_animation(
                     }
                 }
             }
+            Behavior::Random => match facing_direction.0 {
+                Dir2::NORTH => *sprite_animation = SpriteAnimation::RunUp,
+                Dir2::EAST => *sprite_animation = SpriteAnimation::RunRight,
+                Dir2::SOUTH => *sprite_animation = SpriteAnimation::RunDown,
+                Dir2::WEST => *sprite_animation = SpriteAnimation::RunLeft,
+                Dir2::NORTH_EAST => *sprite_animation = SpriteAnimation::RunUpRight,
+                Dir2::NORTH_WEST => *sprite_animation = SpriteAnimation::RunUpLeft,
+                Dir2::SOUTH_EAST => *sprite_animation = SpriteAnimation::RunDownRight,
+                Dir2::SOUTH_WEST => *sprite_animation = SpriteAnimation::RunDownLeft,
+                _ => (),
+            },
         }
     }
 }
@@ -312,23 +309,55 @@ fn update_enemy_animation_indexes(
 }
 
 fn handle_enemy_movement(
-    mut enemy_query: Query<(&mut Transform, &Speed, &Behavior), With<Enemy>>,
+    mut enemy_query: Query<
+        (
+            &mut Transform,
+            &mut FacingDirection,
+            Option<&mut GameTimer<Behavior>>,
+            &Speed,
+            &Behavior,
+        ),
+        With<Enemy>,
+    >,
     player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
+    time: Res<Time>,
 ) {
     let player_position = player_transform.translation.truncate();
 
-    for (mut enemy_transform, enemy_speed, enemy_behavior) in &mut enemy_query {
+    for (mut enemy_transform, mut facing_direction, behavior_timer, enemy_speed, enemy_behavior) in
+        &mut enemy_query
+    {
         match enemy_behavior {
-            &Behavior::FollowPlayer { distance } => {
+            Behavior::FollowPlayer { distance } => {
                 let enemy_position = enemy_transform.translation.truncate();
+                let new_direction = Dir2::new(player_position - enemy_position).unwrap_or(Dir2::X);
 
-                let enemy_direction =
-                    Dir2::new(player_position - enemy_position).unwrap_or(Dir2::X);
-
-                if enemy_position.distance(player_position) > distance {
-                    enemy_transform.translation.x += enemy_direction.x * enemy_speed.0;
-                    enemy_transform.translation.y += enemy_direction.y * enemy_speed.0;
+                if enemy_position.distance(player_position) > *distance {
+                    enemy_transform.translation.x += new_direction.x * enemy_speed.0;
+                    enemy_transform.translation.y += new_direction.y * enemy_speed.0;
+                    **facing_direction = new_direction;
                 }
+            }
+            Behavior::Random => {
+                let should_change_direction = if let Some(mut timer) = behavior_timer {
+                    timer.tick(time.delta()).just_finished()
+                } else {
+                    true
+                };
+
+                if should_change_direction {
+                    let values = [0.0, 1.0];
+                    let mut rng = rand::rng();
+                    **facing_direction = Dir2::new(Vec2::new(
+                        *values.choose(&mut rng).unwrap(),
+                        *values.choose(&mut rng).unwrap(),
+                    ))
+                    .unwrap_or(Dir2::NEG_X);
+                }
+
+                let delta_secs = time.delta_secs();
+                enemy_transform.translation.x += facing_direction.x * enemy_speed.0 * delta_secs;
+                enemy_transform.translation.y += facing_direction.y * enemy_speed.0 * delta_secs;
             }
         }
     }
@@ -338,7 +367,7 @@ fn handle_enemy_attacks(
     mut spawn_projectile_event_writer: EventWriter<SpawnProjectileEvent>,
     mut enemy_query: Query<
         (Entity, &Transform, &mut AttackTimer, &Range, &AttackDamage),
-        With<Enemy>,
+        (With<Enemy>, Without<OnFire>),
     >,
     player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
@@ -364,5 +393,47 @@ fn handle_enemy_attacks(
                 ));
             }
         }
+    }
+}
+
+fn on_add_on_fire(
+    trigger: Trigger<OnAdd, OnFire>,
+    mut query: Query<(Option<&mut Speed>, Option<&mut Behavior>)>,
+    mut commands: Commands,
+    mut texture_atlas_layout: Local<Handle<TextureAtlasLayout>>,
+    asset_server: Res<AssetServer>,
+) {
+    let entity = trigger.target();
+
+    *texture_atlas_layout = asset_server.add(TextureAtlasLayout::from_grid(
+        UVec2::splat(40),
+        2,
+        1,
+        None,
+        None,
+    ));
+
+    if let Ok((speed, behavior)) = query.get_mut(entity) {
+        if let Some(mut speed) = speed {
+            **speed *= 100.0;
+        }
+        if let Some(mut behavior) = behavior {
+            *behavior = Behavior::Random;
+        }
+        commands
+            .entity(entity)
+            .insert(GameTimer::<Behavior>::from_seconds(0.2))
+            .with_child((
+                Sprite {
+                    color: Color::default().with_alpha(0.6),
+                    image: asset_server.load("textures/fire_anim.png"),
+                    texture_atlas: Some(TextureAtlas::from(texture_atlas_layout.clone())),
+                    ..Default::default()
+                },
+                AnimationIndices::new(0, 1),
+                AnimationTimer::from_seconds(0.2),
+                RenderLayers::layer(RenderLayer::Ground.into()),
+                StateScoped(AppState::GameOver),
+            ));
     }
 }
