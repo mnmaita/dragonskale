@@ -1,15 +1,10 @@
-use std::{f32::consts::FRAC_PI_2, time::Duration};
-
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
 use bevy_kira_audio::{Audio, AudioChannel, AudioControl};
-use bevy_rapier2d::prelude::Collider;
 
 use crate::{
-    animation::AnimationTimer,
     audio::DragonBreathChannel,
     camera::MainCamera,
-    game::{Fire, Player, ResourcePool, SpawnFireBreathEvent},
-    physics::Speed,
+    game::{Fire, Player, PlayerMovementEvent, ResourcePool, SpawnFireBreathEvent},
     playing, AppState,
 };
 
@@ -21,7 +16,7 @@ impl Plugin for InputPlugin {
             PreUpdate,
             (
                 clear_input.run_if(state_changed::<AppState>),
-                (mouse_input, player_movement).run_if(playing()),
+                mouse_input.run_if(playing()),
             )
                 .chain(),
         );
@@ -47,12 +42,18 @@ impl CursorWorldPositionChecker<'_> {
 
 fn mouse_input(
     mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
+    mut player_movement_event_writer: EventWriter<PlayerMovementEvent>,
+    cursor_world_position_checker: CursorWorldPositionChecker,
     player: Single<(&Transform, &ResourcePool<Fire>), With<Player>>,
     asset_server: Res<AssetServer>,
     mouse_input: ResMut<ButtonInput<MouseButton>>,
     dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
     audio: Res<Audio>,
 ) {
+    if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
+        player_movement_event_writer.write(PlayerMovementEvent::accelerate(cursor_position));
+    }
+
     let (player_transform, fire_breath_resource_pool) = player.into_inner();
 
     if mouse_input.just_pressed(MouseButton::Left) {
@@ -86,44 +87,6 @@ fn mouse_input(
 
         if !fire_breath_resource_pool.is_empty() {
             spawn_fire_breath_event_writer.write(SpawnFireBreathEvent::new(1, fire_position));
-        }
-    }
-}
-
-fn player_movement(
-    player: Single<(&mut Transform, &Speed, &mut AnimationTimer, &Collider), With<Player>>,
-    cursor_world_position_checker: CursorWorldPositionChecker,
-) {
-    if let Some(cursor_position) = cursor_world_position_checker.cursor_world_position() {
-        let (mut player_transform, player_speed, mut player_animation_timer, player_collider) =
-            player.into_inner();
-        let player_position = player_transform.translation.truncate();
-        let cursor_to_player_vector = cursor_position - player_position;
-
-        if cursor_to_player_vector != Vec2::ZERO {
-            let cursor_distance_to_player = cursor_position.distance(player_position);
-            let velocity_rate = cursor_distance_to_player.min(300.) / 300.;
-            let direction = cursor_to_player_vector.normalize();
-
-            if cursor_distance_to_player > player_collider.as_cuboid().unwrap().half_extents().y {
-                player_transform.translation.x += direction.x * player_speed.0 * velocity_rate;
-                player_transform.translation.y += direction.y * player_speed.0 * velocity_rate;
-                player_animation_timer.set_duration(Duration::from_secs_f32(
-                    0.2 * player_speed.0 * 0.25 * velocity_rate,
-                ));
-            } else {
-                player_animation_timer.set_duration(Duration::from_secs_f32(0.2));
-            }
-
-            if direction != Vec2::ZERO {
-                let angle = direction.angle_to(Vec2::X);
-
-                if angle.is_finite() {
-                    // FIXME: Rotate the image sprite to always face right?
-                    // FRAC_PI_2 is subtracted to offset the 90 degree rotation from the X axis the sprite has.
-                    player_transform.rotation = Quat::from_rotation_z(-angle - FRAC_PI_2);
-                }
-            }
         }
     }
 }
