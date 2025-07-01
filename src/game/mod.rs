@@ -3,6 +3,7 @@ mod constants;
 mod enemy;
 mod fire_breath;
 mod game_over;
+pub mod game_timer;
 mod hud;
 mod level;
 mod player;
