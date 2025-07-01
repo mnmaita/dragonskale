@@ -232,7 +232,7 @@ fn spawn_enemies(
                     ResourcePool::<Health>::new(1),
                     Enemy,
                     Range(TILE_SIZE.x * 15.),
-                    Speed(2.),
+                    Speed(100.),
                     RenderLayers::layer(RenderLayer::Ground.into()),
                     FacingDirection::default(),
                     StateScoped(AppState::GameOver),
@@ -317,6 +317,7 @@ fn handle_enemy_movement(
     player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) {
+    let delta_secs = time.delta_secs();
     let player_position = player_transform.translation.xy();
 
     for (mut enemy_transform, mut facing_direction, behavior_timer, enemy_speed, enemy_behavior) in
@@ -328,8 +329,8 @@ fn handle_enemy_movement(
                 let new_direction = Dir2::new(player_position - enemy_position).unwrap_or(Dir2::X);
 
                 if enemy_position.distance(player_position) > *distance {
-                    enemy_transform.translation.x += new_direction.x * enemy_speed.0;
-                    enemy_transform.translation.y += new_direction.y * enemy_speed.0;
+                    enemy_transform.translation.x += new_direction.x * enemy_speed.0 * delta_secs;
+                    enemy_transform.translation.y += new_direction.y * enemy_speed.0 * delta_secs;
                     **facing_direction = new_direction;
                 }
             }
@@ -350,7 +351,6 @@ fn handle_enemy_movement(
                     .unwrap_or(Dir2::NEG_X);
                 }
 
-                let delta_secs = time.delta_secs();
                 enemy_transform.translation.x += facing_direction.x * enemy_speed.0 * delta_secs;
                 enemy_transform.translation.y += facing_direction.y * enemy_speed.0 * delta_secs;
             }
@@ -410,7 +410,7 @@ fn on_add_on_fire(
 
     if let Ok((speed, behavior)) = query.get_mut(entity) {
         if let Some(mut speed) = speed {
-            **speed *= 100.0;
+            **speed *= 2.0;
         }
         if let Some(mut behavior) = behavior {
             *behavior = Behavior::Random;
