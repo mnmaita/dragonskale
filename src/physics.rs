@@ -14,15 +14,19 @@ impl Plugin for PhysicsPlugin {
         #[cfg(debug_assertions)]
         app.add_plugins(RapierDebugRenderPlugin::default());
 
-        app.insert_resource(RapierConfiguration {
-            gravity: Vec2::ZERO,
-            timestep_mode: TimestepMode::Fixed {
-                dt: 1. / 64.,
-                substeps: 1,
-            },
-            ..default()
-        });
+        let timestep_mode = TimestepMode::Fixed {
+            dt: 1. / 64.,
+            substeps: 1,
+        };
+
+        app.insert_resource(timestep_mode);
+
+        app.add_systems(Startup, setup_physics);
     }
+}
+
+fn setup_physics(mut rapier_configuration: Single<&mut RapierConfiguration>) {
+    rapier_configuration.gravity = Vec2::ZERO;
 }
 
 #[derive(Component)]

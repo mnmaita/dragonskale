@@ -1,11 +1,14 @@
-use bevy::{audio::Volume, prelude::*};
+use bevy::prelude::*;
 
-use crate::{audio::PlayMusicEvent, entity_cleanup, playing, AppState};
+use crate::{
+    audio::{PlayMusicEvent, PlaybackSettings},
+    playing, AppState,
+};
 
 use super::{
     resource_pool::{Health, ResourcePool},
     score_system::Score,
-    InGameEntity, Player,
+    Player,
 };
 
 pub(super) struct GameOverPlugin;
@@ -18,20 +21,17 @@ impl Plugin for GameOverPlugin {
             FixedUpdate,
             (
                 check_game_over_condition.run_if(playing()),
-                (fade_out_screen, update_score_display, fade_in_text)
-                    .chain()
-                    .run_if(in_state(AppState::GameOver)),
+                (fade_out_screen, fade_in_text).run_if(in_state(AppState::GameOver)),
             ),
         );
 
         app.add_systems(
             OnEnter(AppState::GameOver),
-            (play_background_music, display_game_over_screen),
-        );
-
-        app.add_systems(
-            OnExit(AppState::GameOver),
-            entity_cleanup::<Or<(With<GameOverEntity>, With<InGameEntity>)>>,
+            (
+                play_background_music,
+                display_game_over_screen,
+                update_score_display.after(display_game_over_screen),
+            ),
         );
     }
 }
@@ -40,9 +40,6 @@ impl Plugin for GameOverPlugin {
 enum GameOverButtonAction {
     BackToMenu,
 }
-
-#[derive(Component)]
-struct GameOverEntity;
 
 #[derive(Component)]
 struct GameOverBackground;
@@ -55,136 +52,90 @@ struct ScoreDisplay;
 
 fn check_game_over_condition(
     mut next_state: ResMut<NextState<AppState>>,
-    query: Query<&ResourcePool<Health>, (With<Player>, Changed<ResourcePool<Health>>)>,
+    player_health: Single<&ResourcePool<Health>, (With<Player>, Changed<ResourcePool<Health>>)>,
 ) {
-    if let Ok(player_health) = query.get_single() {
-        if player_health.current() == 0 {
-            next_state.set(AppState::GameOver);
-        }
+    if player_health.current() == 0 {
+        next_state.set(AppState::GameOver);
     }
 }
 
 fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn((
-            GameOverBackground,
-            GameOverEntity,
-            NodeBundle {
-                background_color: BackgroundColor(Color::BLACK.with_a(0.)),
-                style: Style {
-                    align_items: AlignItems::Center,
-                    display: Display::Flex,
-                    flex_direction: FlexDirection::Column,
-                    height: Val::Percent(100.),
-                    justify_content: JustifyContent::Center,
-                    width: Val::Percent(100.),
-                    ..default()
-                },
-                ..default()
-            },
-        ))
-        .with_children(|builder| {
-            builder.spawn((
+    let font = asset_server
+        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
+        .unwrap_or_default();
+    commands.spawn((
+        GameOverBackground,
+        StateScoped(AppState::GameOver),
+        Node {
+            align_items: AlignItems::Center,
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            height: Val::Percent(100.),
+            justify_content: JustifyContent::Center,
+            width: Val::Percent(100.),
+            ..default()
+        },
+        BackgroundColor(Color::BLACK.with_alpha(0.)),
+        children![
+            (
                 GameOverText,
-                TextBundle {
-                    text: Text::from_section(
-                        "Game Over",
-                        TextStyle {
-                            color: Color::WHITE.with_a(0.),
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
-                            font_size: 64.,
-                        },
-                    ),
-                    ..default()
-                },
-            ));
-
-            builder.spawn((
+                Text::new("Game Over"),
+                TextColor(Color::WHITE.with_alpha(0.0)),
+                TextFont::from_font(font.clone()).with_font_size(64.0),
+            ),
+            (
                 GameOverText,
                 ScoreDisplay,
-                TextBundle {
-                    text: Text::from_section(
-                        "Score:",
-                        TextStyle {
-                            color: Color::WHITE.with_a(0.),
-                            font: asset_server
-                                .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                .unwrap_or_default(),
-                            font_size: 32.,
-                        },
-                    ),
-                    ..default()
-                },
-            ));
-
-            builder
-                .spawn((
-                    ButtonBundle {
-                        background_color: BackgroundColor(Color::default().with_a(0.)),
-                        ..default()
-                    },
-                    GameOverButtonAction::BackToMenu,
-                ))
-                .with_children(|button| {
-                    button.spawn((
-                        GameOverText,
-                        TextBundle {
-                            text: Text::from_section(
-                                "Back to Menu",
-                                TextStyle {
-                                    color: Color::WHITE.with_a(0.),
-                                    font: asset_server
-                                        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-                                        .unwrap_or_default(),
-                                    font_size: 32.0,
-                                },
-                            ),
-                            ..default()
-                        },
-                    ));
-                });
-        });
+                Text::new("Score:"),
+                TextColor(Color::WHITE.with_alpha(0.0)),
+                TextFont::from_font(font.clone()).with_font_size(32.0),
+            ),
+            (
+                Button,
+                BackgroundColor(Color::default().with_alpha(0.)),
+                GameOverButtonAction::BackToMenu,
+                children![(
+                    GameOverText,
+                    Text::new("Back to Menu"),
+                    TextColor(Color::WHITE.with_alpha(0.0)),
+                    TextFont::from_font(font).with_font_size(32.0),
+                )],
+            )
+        ],
+    ));
 }
 
-fn fade_out_screen(mut query: Query<&mut BackgroundColor, With<GameOverBackground>>) {
-    let mut background_color = query.single_mut();
-
-    if background_color.0.a() < 1. {
-        let alpha = background_color.0.a();
-        background_color.0.set_a(alpha + 0.01);
+fn fade_out_screen(mut background_color: Single<&mut BackgroundColor, With<GameOverBackground>>) {
+    if background_color.0.alpha() < 1. {
+        let alpha = background_color.0.alpha();
+        background_color.0.set_alpha(alpha + 0.01);
     }
 }
 
 fn update_score_display(
-    mut score_display_query: Query<&mut Text, (With<GameOverText>, With<ScoreDisplay>)>,
-    player_query: Query<&Score, With<Player>>,
+    mut score_text: Single<&mut Text, (With<GameOverText>, With<ScoreDisplay>)>,
+    player_score: Single<&Score, With<Player>>,
 ) {
-    if let Ok(player_score) = player_query.get_single() {
-        let mut score_text = score_display_query.single_mut();
-        score_text.sections[0].value = format!("Score: {}", player_score.current());
-    }
+    score_text.0 = format!("Score: {}", player_score.current());
 }
 
 fn fade_in_text(
-    mut query: Query<&mut Text, With<GameOverText>>,
-    background_query: Query<&BackgroundColor, With<GameOverBackground>>,
+    mut query: Query<&mut TextColor, With<GameOverText>>,
+    background_color: Single<&BackgroundColor, With<GameOverBackground>>,
 ) {
-    let background_color = background_query.single();
-    for mut text in &mut query {
-        if background_color.0.a() >= 0.5 && text.sections[0].style.color.a() < 1. {
-            let alpha = text.sections[0].style.color.a();
-            text.sections[0].style.color.set_a(alpha + 0.001);
+    for mut text_color in &mut query {
+        if background_color.0.alpha() >= 0.5 && text_color.alpha() < 1. {
+            let alpha = text_color.alpha();
+            text_color.set_alpha(alpha + 0.001);
         }
     }
 }
 
 fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
-    play_music_event_writer.send(PlayMusicEvent::new(
+    play_music_event_writer.write(PlayMusicEvent::new(
         "theme3.ogg",
         Some(PlaybackSettings {
-            volume: Volume::new(0.25),
+            volume: 0.25,
             ..default()
         }),
         None,

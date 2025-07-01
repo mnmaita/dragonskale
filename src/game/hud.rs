@@ -1,11 +1,14 @@
-use bevy::{prelude::*, text::BreakLineOn};
+use bevy::{
+    color::palettes::css::{GOLD, LIMEGREEN, RED},
+    prelude::*,
+};
 
 use crate::{playing, AppState};
 
 use super::{
     resource_pool::{Fire, Health, ResourcePool},
     score_system::Score,
-    InGameEntity, Player,
+    Player,
 };
 
 const BAR_WIDTH: f32 = 150.;
@@ -40,138 +43,100 @@ struct FireBreathBar;
 struct ScoreDisplay;
 
 fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn((
-            InGameEntity,
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.),
-                    height: Val::Percent(100.),
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::SpaceBetween,
-                    align_items: AlignItems::End,
-                    padding: UiRect::all(Val::Px(16.)),
-                    ..default()
-                },
-                ..default()
-            },
-        ))
-        .with_children(|builder| {
-            builder
-                .spawn(NodeBundle {
-                    border_color: BorderColor(Color::BLACK),
-                    style: Style {
-                        border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
-                        width: Val::Px(BAR_WIDTH),
-                        height: Val::Px(BAR_HEIGHT),
-                        ..default()
-                    },
-                    ..default()
-                })
-                .with_children(|health_bar_builder| {
-                    health_bar_builder.spawn((
-                        NodeBundle {
-                            background_color: BackgroundColor(Color::RED),
-                            style: Style {
-                                width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
-                                height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
-                                ..default()
-                            },
-                            ..default()
-                        },
-                        HealthBar,
-                    ));
-                });
-
-            builder
-                .spawn(NodeBundle {
-                    border_color: BorderColor(Color::BLACK),
-                    style: Style {
-                        border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
-                        width: Val::Px(BAR_WIDTH),
-                        height: Val::Px(BAR_HEIGHT),
-                        ..default()
-                    },
-                    ..default()
-                })
-                .with_children(|fire_breath_bar_builder| {
-                    fire_breath_bar_builder.spawn((
-                        NodeBundle {
-                            background_color: BackgroundColor(Color::LIME_GREEN),
-                            style: Style {
-                                width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
-                                height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
-                                ..default()
-                            },
-                            ..default()
-                        },
-                        FireBreathBar,
-                    ));
-                });
-        });
-
-    // Score text in botton middle of screen
     commands.spawn((
-        InGameEntity,
-        ScoreDisplay,
-        TextBundle {
-            text: Text {
-                linebreak_behavior: BreakLineOn::NoWrap,
-                sections: vec![TextSection {
-                    value: "Score: 0".to_string(),
-                    style: TextStyle {
-                        font: asset_server
-                            .get_handle("fonts/Prince Valiant.ttf")
-                            .unwrap_or_default(),
-                        font_size: 40.0,
-                        color: Color::GOLD,
-                    },
-                }],
-                ..default()
-            },
-            style: Style {
-                position_type: PositionType::Absolute,
-                width: Val::Px(5.),
-                height: Val::Px(5.),
-                ..default()
-            },
+        StateScoped(AppState::GameOver),
+        Node {
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
+            flex_direction: FlexDirection::Row,
+            justify_content: JustifyContent::SpaceBetween,
+            align_items: AlignItems::End,
+            padding: UiRect::all(Val::Px(16.)),
             ..default()
         },
+        children![
+            (
+                Node {
+                    border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
+                    width: Val::Px(BAR_WIDTH),
+                    height: Val::Px(BAR_HEIGHT),
+                    ..default()
+                },
+                BorderColor::from(Color::BLACK),
+                children![(
+                    Node {
+                        width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
+                        height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
+                        ..default()
+                    },
+                    BackgroundColor::from(RED),
+                    HealthBar,
+                )],
+            ),
+            (
+                Node {
+                    border: UiRect::all(Val::Px(BAR_BORDER_SIZE)),
+                    width: Val::Px(BAR_WIDTH),
+                    height: Val::Px(BAR_HEIGHT),
+                    ..default()
+                },
+                BorderColor::from(Color::BLACK),
+                children![(
+                    Node {
+                        width: Val::Px(BAR_WIDTH - BAR_BORDER_SIZE * 2.),
+                        height: Val::Px(BAR_HEIGHT - BAR_BORDER_SIZE * 2.),
+                        ..default()
+                    },
+                    BackgroundColor::from(LIMEGREEN),
+                    FireBreathBar,
+                )],
+            )
+        ],
+    ));
+
+    // Score text in bottom middle of screen
+    commands.spawn((
+        StateScoped(AppState::GameOver),
+        ScoreDisplay,
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Px(5.),
+            height: Val::Px(5.),
+            ..default()
+        },
+        Text::new("Score: 0"),
+        TextFont::from_font(
+            asset_server
+                .get_handle("fonts/Prince Valiant.ttf")
+                .unwrap_or_default(),
+        )
+        .with_font_size(40.0),
+        TextColor(GOLD.into()),
+        TextLayout::new_with_no_wrap(),
     ));
 }
 
 fn update_health_bar_display(
-    player_query: Query<&ResourcePool<Health>, (Changed<ResourcePool<Health>>, With<Player>)>,
-    mut health_bar_query: Query<&mut Style, With<HealthBar>>,
+    player_hp: Single<&ResourcePool<Health>, (Changed<ResourcePool<Health>>, With<Player>)>,
+    mut health_bar_node: Single<&mut Node, With<HealthBar>>,
 ) {
-    if let Ok(hitpoints) = player_query.get_single() {
-        let mut style = health_bar_query.single_mut();
-
-        style.width = Val::Px(BAR_WIDTH * hitpoints.current_percentage());
-    }
+    health_bar_node.width = Val::Px(BAR_WIDTH * player_hp.current_percentage());
 }
 
 fn update_fire_bar_display(
-    player_query: Query<&ResourcePool<Fire>, (Changed<ResourcePool<Fire>>, With<Player>)>,
-    mut fire_bar_query: Query<&mut Style, With<FireBreathBar>>,
+    player_fire: Single<&ResourcePool<Fire>, (Changed<ResourcePool<Fire>>, With<Player>)>,
+    mut fire_bar_node: Single<&mut Node, With<FireBreathBar>>,
 ) {
-    if let Ok(fire_breath_resource) = player_query.get_single() {
-        let mut style = fire_bar_query.single_mut();
-
-        style.width = Val::Px(BAR_WIDTH * fire_breath_resource.current_percentage());
-    }
+    fire_bar_node.width = Val::Px(BAR_WIDTH * player_fire.current_percentage());
 }
 
 fn update_score_display(
-    player_query: Query<&Score, (Changed<Score>, With<Player>)>,
-    mut score_text_display_query: Query<&mut Text, With<ScoreDisplay>>,
+    player_score: Single<&Score, (Changed<Score>, With<Player>)>,
+    mut score_text: Single<&mut Text, With<ScoreDisplay>>,
 ) {
-    if let Ok(score_system) = player_query.get_single() {
-        let mut score_text = score_text_display_query.single_mut();
-        score_text.sections[0].value = format!(
-            "Score: {} - Multiplier x {}",
-            score_system.current(),
-            score_system.multiplier()
-        );
-    }
+    score_text.0 = format!(
+        "Score: {} - Multiplier x {}",
+        player_score.current(),
+        player_score.multiplier()
+    );
 }

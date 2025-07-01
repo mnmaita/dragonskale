@@ -3,14 +3,14 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     camera::{RenderLayer, YSorted},
-    playing,
+    playing, AppState,
 };
 
 use super::{
     power_up::{PowerUpEvent, PowerUpEventType},
     resource_pool::{Fire, Health, ResourcePool},
     score_system::{ScoreEvent, ScoreEventType},
-    Enemy, InGameEntity, Player, PLAYER_GROUP, PROJECTILE_GROUP, TILE_SIZE,
+    Enemy, Player, PLAYER_GROUP, PROJECTILE_GROUP, TILE_SIZE,
 };
 
 pub(super) struct CombatPlugin;
@@ -54,20 +54,6 @@ impl SpawnProjectileEvent {
     }
 }
 
-#[derive(Bundle)]
-pub struct ProjectileBundle {
-    pub collider: Collider,
-    pub collision_groups: CollisionGroups,
-    pub ccd: Ccd,
-    pub damage: ImpactDamage,
-    pub emitter: Emitter,
-    pub marker: Projectile,
-    pub render_layers: RenderLayers,
-    pub rigid_body: RigidBody,
-    pub sprite: SpriteBundle,
-    pub velocity: Velocity,
-}
-
 #[derive(Component)]
 pub struct Emitter(Entity);
 
@@ -92,7 +78,23 @@ impl AttackTimer {
 }
 
 #[derive(Component)]
+#[require(
+    Ccd::enabled(),
+    Collider::cuboid(Projectile::DEFAULT_SIZE.x / 2., Projectile::DEFAULT_SIZE.y / 2.),
+    CollisionGroups::new(PROJECTILE_GROUP, PLAYER_GROUP | PROJECTILE_GROUP),
+    RenderLayers::layer(RenderLayer::Sky.into()),
+    RigidBody::Dynamic,
+    Damping {
+        linear_damping: 1.0,
+        angular_damping: 10.0,
+    },
+    StateScoped::<AppState>(AppState::GameOver),
+)]
 pub struct Projectile;
+
+impl Projectile {
+    const DEFAULT_SIZE: Vec2 = Vec2::new(TILE_SIZE.x, 4.);
+}
 
 fn spawn_projectiles(
     mut commands: Commands,
@@ -106,9 +108,8 @@ fn spawn_projectiles(
         speed,
     } in spawn_projectile_event_reader.read()
     {
-        let size = Vec2::new(TILE_SIZE.x, 4.);
         let angle = if direction != Vec2::ZERO {
-            let mut angle = (direction).angle_between(Vec2::X);
+            let mut angle = direction.angle_to(Vec2::X);
             if !angle.is_finite() {
                 angle = 0.;
             }
@@ -117,40 +118,21 @@ fn spawn_projectiles(
             0.
         };
 
-        let mut projectile_entity_commands = commands.spawn(ProjectileBundle {
-            ccd: Ccd::enabled(),
-            collider: Collider::cuboid(size.x / 2., size.y / 2.),
-            collision_groups: CollisionGroups::new(
-                PROJECTILE_GROUP,
-                PLAYER_GROUP | PROJECTILE_GROUP,
-            ),
-            damage: ImpactDamage(damage),
-            emitter: Emitter(emitter),
-            marker: Projectile,
-            render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
-            rigid_body: RigidBody::Dynamic,
-            sprite: SpriteBundle {
-                sprite: Sprite {
-                    color: Color::BLACK,
-                    custom_size: Some(size),
-                    ..default()
-                },
-                transform: Transform::from_translation(position.extend(1.0))
-                    .with_rotation(Quat::from_rotation_z(-angle)),
+        commands.spawn((
+            ImpactDamage(damage),
+            Emitter(emitter),
+            Projectile,
+            Sprite {
+                color: Color::BLACK,
+                custom_size: Some(Projectile::DEFAULT_SIZE),
                 ..default()
             },
-            velocity: Velocity {
+            Transform::from_translation(position.extend(1.0))
+                .with_rotation(Quat::from_rotation_z(-angle)),
+            Velocity {
                 linvel: direction * speed,
                 angvel: 0.,
             },
-        });
-
-        projectile_entity_commands.insert((
-            Damping {
-                linear_damping: 1.0,
-                angular_damping: 10.0,
-            },
-            InGameEntity,
             YSorted,
         ));
     }
@@ -159,20 +141,23 @@ fn spawn_projectiles(
 fn projectile_collision_with_player(
     mut commands: Commands,
     mut score_event_writer: EventWriter<ScoreEvent>,
-    mut player_query: Query<(Entity, &mut ResourcePool<Health>), With<Player>>,
+    player: Single<(Entity, &mut ResourcePool<Health>), With<Player>>,
     projectile_query: Query<(Entity, &ImpactDamage), With<Projectile>>,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadRapierContext,
 ) {
-    let (player_entity, mut player_hitpoints) = player_query.single_mut(); // A first entity with a collider attached.
+    let (player_entity, mut player_hitpoints) = player.into_inner();
+    let Ok(rapier_context) = rapier_context.single() else {
+        return;
+    };
 
     for (projectile_entity, projectile_damage) in &projectile_query {
         if let Some(contact_pair) = rapier_context.contact_pair(player_entity, projectile_entity) {
-            if contact_pair.has_any_active_contacts() {
+            if contact_pair.has_any_active_contact() {
                 player_hitpoints.subtract(projectile_damage.0);
-                score_event_writer.send(ScoreEvent::new(0, ScoreEventType::ResetMultiplier));
+                score_event_writer.write(ScoreEvent::new(0, ScoreEventType::ResetMultiplier));
 
                 // TODO: Add "death" component or event and use it here so a different system handles despawns.
-                commands.entity(projectile_entity).despawn_recursive();
+                commands.entity(projectile_entity).despawn();
             }
         }
     }
@@ -181,8 +166,12 @@ fn projectile_collision_with_player(
 fn compute_damage_from_intersections(
     mut enemy_query: Query<&mut ResourcePool<Health>, With<Enemy>>,
     fire_query: Query<(Entity, &ImpactDamage), With<Fire>>,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadRapierContext,
 ) {
+    let Ok(rapier_context) = rapier_context.single() else {
+        return;
+    };
+
     for (entity, damage) in &fire_query {
         for (entity1, entity2, intersecting) in rapier_context.intersection_pairs_with(entity) {
             let other_entity = if entity1 == entity { entity2 } else { entity1 };
@@ -207,9 +196,9 @@ fn despawn_dead_entities(
 ) {
     for (entity, health, transform) in &query {
         if health.current() == 0 {
-            commands.entity(entity).despawn_recursive();
-            score_event_writer.send(ScoreEvent::new(10, ScoreEventType::AddPoints));
-            powerup_event_writer.send(PowerUpEvent::new(
+            commands.entity(entity).despawn();
+            score_event_writer.write(ScoreEvent::new(10, ScoreEventType::AddPoints));
+            powerup_event_writer.write(PowerUpEvent::new(
                 *transform,
                 PowerUpEventType::HealingScale,
             ));
@@ -219,12 +208,12 @@ fn despawn_dead_entities(
 
 fn despawn_projectiles(
     mut commands: Commands,
-    projectile_query: Query<(Entity, &Velocity), With<Projectile>>,
+    projectile_query: Query<(Entity, &Velocity), (With<Projectile>, Changed<Velocity>)>,
 ) {
     for (entity, velocity) in &projectile_query {
         if velocity.linvel.length() < 60. {
             // TODO: Decouple this with a Despawn component
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }

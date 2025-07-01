@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::{
     dynamics::{LockedAxes, RigidBody},
     geometry::{Collider, CollisionGroups, Sensor},
-    plugin::RapierContext,
+    plugin::ReadRapierContext,
 };
 use rand::Rng;
 
@@ -13,7 +13,6 @@ use crate::{
 };
 
 use super::{
-    plugin::InGameEntity,
     resource_pool::{Health, ResourcePool},
     Player, HALF_TILE_SIZE, PLAYER_GROUP, POWERUP_GROUP,
 };
@@ -51,19 +50,18 @@ impl PowerUpEvent {
     }
 }
 
-#[derive(Bundle)]
-pub struct PowerUpBundle {
-    pub marker: PowerUp,
-    pub animation_indices: AnimationIndices,
-    pub animation_timer: AnimationTimer,
-    pub sprite: SpriteSheetBundle,
-    pub collider: Collider,
-    pub render_layers: RenderLayers,
-    pub sensor: Sensor,
-    pub collision_groups: CollisionGroups,
-}
-
 #[derive(Component)]
+#[require(
+    AnimationIndices::new(0, 1),
+    AnimationTimer::from_seconds(0.2),
+    RenderLayers::layer(RenderLayer::Sky.into()),
+    Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
+    Sensor,
+    CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP),
+    StateScoped::<AppState>(AppState::GameOver),
+    LockedAxes::ROTATION_LOCKED,
+    RigidBody::Dynamic,
+)]
 pub struct PowerUp;
 
 #[derive(Resource)]
@@ -71,7 +69,7 @@ pub struct ScaleTextureAtlasLayoutHandle(Handle<TextureAtlasLayout>);
 
 fn load_scale_atlas(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture_atlas_layout_healing_scale =
-        TextureAtlasLayout::from_grid(Vec2::new(40., 40.), 2, 1, None, None);
+        TextureAtlasLayout::from_grid(UVec2::new(40, 40), 2, 1, None, None);
     let texture_atlas_layout_handle_healing_scale =
         asset_server.add(texture_atlas_layout_healing_scale);
 
@@ -97,33 +95,18 @@ fn spawn_powerups(
     {
         match powerup_event_type {
             PowerUpEventType::HealingScale => {
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
 
-                if rng.gen_bool(0.1) {
-                    let mut powerup_entity_commands = commands.spawn(PowerUpBundle {
-                        marker: PowerUp,
-                        animation_indices: AnimationIndices::new(0, 1),
-                        animation_timer: AnimationTimer::from_seconds(0.2),
-                        sprite: SpriteSheetBundle {
-                            atlas: TextureAtlas {
-                                layout: scale_texture_atlas_handler.0.clone(),
-                                index: 0,
-                            },
-                            texture: texture_healing_scale.clone(),
-                            transform: *transform,
-                            ..default()
+                if rng.random_bool(0.1) {
+                    commands.spawn((
+                        PowerUp,
+                        Sprite {
+                            image: texture_healing_scale.clone(),
+                            texture_atlas: Some(scale_texture_atlas_handler.0.clone().into()),
+                            ..Default::default()
                         },
-                        collider: Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
-                        render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
-                        sensor: Sensor,
-                        collision_groups: CollisionGroups::new(POWERUP_GROUP, PLAYER_GROUP),
-                    });
-
-                    powerup_entity_commands.insert((
-                        InGameEntity,
-                        LockedAxes::ROTATION_LOCKED,
+                        *transform,
                         YSorted,
-                        RigidBody::Dynamic,
                     ));
                 };
             }
@@ -134,16 +117,18 @@ fn spawn_powerups(
 fn consume_powerups(
     mut commands: Commands,
     powerup_query: Query<Entity, With<PowerUp>>,
-    mut player_query: Query<&mut ResourcePool<Health>, With<Player>>,
-    rapier_context: Res<RapierContext>,
+    mut player_hp: Single<&mut ResourcePool<Health>, With<Player>>,
+    rapier_context: ReadRapierContext,
 ) {
+    let Ok(rapier_context) = rapier_context.single() else {
+        return;
+    };
+
     for entity in &powerup_query {
         for (_, _, intersecting) in rapier_context.intersection_pairs_with(entity) {
             if intersecting {
-                if let Ok(mut hitpoints) = player_query.get_single_mut() {
-                    hitpoints.add(50);
-                    commands.entity(entity).despawn_recursive();
-                }
+                player_hp.add(50);
+                commands.entity(entity).despawn();
             }
         }
     }

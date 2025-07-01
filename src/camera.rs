@@ -1,4 +1,7 @@
-use bevy::{prelude::*, render::view::RenderLayers};
+use bevy::{
+    prelude::*,
+    render::view::{Layer, RenderLayers},
+};
 
 use crate::{
     game::Player,
@@ -13,9 +16,9 @@ pub enum RenderLayer {
     Ui,
 }
 
-impl From<RenderLayer> for u8 {
+impl From<RenderLayer> for Layer {
     fn from(value: RenderLayer) -> Self {
-        value as u8
+        value as Layer
     }
 }
 
@@ -28,11 +31,8 @@ impl Plugin for CameraPlugin {
         app.add_systems(
             PostUpdate,
             (
-                (
-                    update_camera.run_if(any_with_component::<Player>),
-                    constrain_camera_position_to_level,
-                )
-                    .chain(),
+                update_camera.run_if(any_with_component::<Player>),
+                constrain_camera_position_to_level.after(update_camera),
                 y_sorting,
                 inverse_y_sorting,
             ),
@@ -40,52 +40,29 @@ impl Plugin for CameraPlugin {
     }
 }
 
-#[derive(Bundle)]
-pub struct MainCameraBundle {
-    pub camera_2d: Camera2dBundle,
-    pub marker: MainCamera,
-    pub render_layers: RenderLayers,
-}
-
-impl MainCameraBundle {
-    pub fn from_layer(layer: u8) -> Self {
-        Self {
-            camera_2d: Camera2dBundle {
-                camera: Camera {
-                    order: layer as isize,
-                    ..default()
-                },
-                ..default()
-            },
-            marker: MainCamera,
-            render_layers: RenderLayers::layer(layer),
-        }
-    }
-}
-
-#[derive(Bundle)]
-pub struct SubLayerCameraBundle {
-    pub camera_2d: Camera2dBundle,
-    pub render_layers: RenderLayers,
-}
-
-impl SubLayerCameraBundle {
-    pub fn from_layer(layer: u8) -> Self {
-        Self {
-            camera_2d: Camera2dBundle {
-                camera: Camera {
-                    clear_color: ClearColorConfig::None,
-                    order: layer as isize,
-                    ..default()
-                },
-                ..default()
-            },
-            render_layers: RenderLayers::layer(layer),
-        }
-    }
+fn sub_layer_camera(layer: Layer) -> impl Bundle {
+    (
+        Camera2d,
+        Camera {
+            clear_color: ClearColorConfig::None,
+            order: layer as isize,
+            ..default()
+        },
+        Msaa::Off,
+        RenderLayers::layer(layer),
+    )
 }
 
 #[derive(Component)]
+#[require(
+    Camera2d,
+    Camera {
+        order: RenderLayer::Background as isize,
+        ..Default::default()
+    },
+    Msaa::Off,
+    RenderLayers::layer(RenderLayer::Background.into())
+)]
 pub struct MainCamera;
 
 #[derive(Component)]
@@ -95,33 +72,31 @@ pub struct YSorted;
 pub struct YSortedInverse;
 
 fn setup_camera(mut commands: Commands) {
-    commands
-        .spawn(MainCameraBundle::from_layer(RenderLayer::Background.into()))
-        .with_children(|builder| {
-            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Ground.into()));
-            builder.spawn(SubLayerCameraBundle::from_layer(
-                RenderLayer::Topography.into(),
-            ));
-            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Sky.into()));
-            builder.spawn(SubLayerCameraBundle::from_layer(RenderLayer::Ui.into()));
-        });
+    commands.spawn((
+        MainCamera,
+        children![
+            sub_layer_camera(RenderLayer::Ground.into()),
+            sub_layer_camera(RenderLayer::Topography.into()),
+            sub_layer_camera(RenderLayer::Sky.into()),
+            sub_layer_camera(RenderLayer::Ui.into()),
+        ],
+    ));
 }
 
 fn update_camera(
-    mut camera_query: Query<&mut Transform, (With<Camera2d>, With<MainCamera>)>,
-    player_query: Query<&Transform, (With<Player>, Without<Camera2d>)>,
+    main_camera: Single<&mut Transform, With<MainCamera>>,
+    player_transform: Single<&Transform, (With<Player>, Without<MainCamera>)>,
 ) {
-    let player_transform = player_query.single();
-    let mut camera_transform = camera_query.single_mut();
+    let mut camera_transform = main_camera.into_inner();
 
     camera_transform.translation.x = player_transform.translation.x;
     camera_transform.translation.y = player_transform.translation.y;
 }
 
 fn constrain_camera_position_to_level(
-    mut camera_query: Query<(&Camera, &mut Transform), (With<Camera2d>, With<MainCamera>)>,
+    main_camera: Single<(&Camera, &mut Transform), With<MainCamera>>,
 ) {
-    let (camera, mut camera_transform) = camera_query.single_mut();
+    let (camera, mut camera_transform) = main_camera.into_inner();
 
     if let Some(viewport_size) = camera.logical_viewport_size() {
         let level_dimensions = GRID_SIZE * TILE_SIZE;

@@ -11,7 +11,7 @@ use crate::{
 use super::{
     resource_pool::{Fire, Health, ResourcePool},
     score_system::Score,
-    InGameEntity, PLAYER_GROUP, POWERUP_GROUP, PROJECTILE_GROUP,
+    PLAYER_GROUP, POWERUP_GROUP, PROJECTILE_GROUP,
 };
 
 pub(super) struct PlayerPlugin;
@@ -26,61 +26,43 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-#[derive(Bundle)]
-pub struct PlayerBundle {
-    pub animation_indices: AnimationIndices,
-    pub animation_timer: AnimationTimer,
-    pub collider: Collider,
-    pub collision_groups: CollisionGroups,
-    pub fire_breath_resource: ResourcePool<Fire>,
-    pub hitpoints: ResourcePool<Health>,
-    pub score: Score,
-    pub damping: Damping,
-    pub external_impulse: ExternalImpulse,
-    pub marker: Player,
-    pub rigid_body: RigidBody,
-    pub speed: Speed,
-    pub render_layers: RenderLayers,
-    pub spritesheet: SpriteSheetBundle,
-}
-
 #[derive(Component)]
+#[require(
+    AnimationIndices::new(0, 2),
+    AnimationTimer::from_seconds(0.2),
+    Collider::cuboid(15., 40.),
+    CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
+    Damping::default(),
+    ExternalImpulse::default(),
+    RenderLayers::layer(RenderLayer::Sky.into()),
+    ResourcePool::<Fire>::new(100),
+    ResourcePool::<Health>::new(100),
+    RigidBody::Dynamic,
+    Speed(10.),
+    StateScoped::<AppState>(AppState::GameOver),
+)]
 pub struct Player;
 
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/dragon.png")
         .unwrap_or_default();
     let texture_atlas_layout =
-        TextureAtlasLayout::from_grid(Vec2::new(191., 161.), 12, 1, None, None);
+        TextureAtlasLayout::from_grid(UVec2::new(191, 161), 12, 1, None, None);
     let texture_atlas_layout_handle = asset_server.add(texture_atlas_layout);
 
-    let mut player_entity_commands = commands.spawn(PlayerBundle {
-        animation_indices: AnimationIndices::new(0, 2),
-        animation_timer: AnimationTimer::from_seconds(0.2),
-        collider: Collider::cuboid(15., 40.),
-        collision_groups: CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
-        fire_breath_resource: ResourcePool::<Fire>::new(100),
-        hitpoints: ResourcePool::<Health>::new(100),
-        score: Score::new(0, 1),
-        marker: Player,
-        render_layers: RenderLayers::layer(RenderLayer::Sky.into()),
-        speed: Speed(10.),
-        damping: Damping::default(),
-        external_impulse: ExternalImpulse::default(),
-        rigid_body: RigidBody::Dynamic,
-        spritesheet: SpriteSheetBundle {
-            atlas: TextureAtlas {
-                layout: texture_atlas_layout_handle,
-                index: 0,
-            },
-            texture,
-            transform: Transform::from_translation(Vec2::ONE.extend(1.)),
-            ..default()
+    commands.spawn((
+        Player,
+        // TODO: Score could be a bevy Resource
+        Score::new(0, 1),
+        Sprite {
+            image,
+            texture_atlas: Some(texture_atlas_layout_handle.into()),
+            ..Default::default()
         },
-    });
-
-    player_entity_commands.insert((InGameEntity, YSorted));
+        Transform::from_translation(Vec2::ONE.extend(1.)),
+        YSorted,
+    ));
 }
 
 #[derive(Event)]

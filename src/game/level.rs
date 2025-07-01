@@ -1,18 +1,15 @@
-use bevy::{
-    audio::Volume, ecs::system::SystemParam, prelude::*, render::view::RenderLayers, sprite::Anchor,
-};
+use bevy::{ecs::system::SystemParam, prelude::*, render::view::RenderLayers, sprite::Anchor};
 use bevy_rapier2d::prelude::*;
 use noise::{NoiseFn, Perlin};
 use pathfinding::prelude::Matrix;
-use rand::{random, seq::SliceRandom, Rng};
+use rand::{random, seq::IndexedRandom as _, Rng};
 
 use crate::{
-    audio::{PlayMusicEvent, SoundEffect},
+    audio::{PlayMusicEvent, PlaybackSettings},
     camera::{RenderLayer, YSorted, YSortedInverse},
-    entity_cleanup,
     game::{
-        InGameEntity, BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, GRID_SIZE, HALF_GRID_SIZE,
-        HALF_TILE_SIZE, TILE_SIZE,
+        BUILDING_GROUP, ENEMY_GROUP, FIRE_BREATH_GROUP, GRID_SIZE, HALF_GRID_SIZE, HALF_TILE_SIZE,
+        TILE_SIZE,
     },
     AppState,
 };
@@ -28,38 +25,29 @@ pub(super) struct LevelPlugin;
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnTransition {
-                from: AppState::MainMenu,
-                to: AppState::InGame,
-            },
-            (generate_level_matrix, generate_tilemaps),
-        );
-
-        app.add_systems(
             OnEnter(AppState::InGame),
             (
-                spawn_level_tiles,
-                spawn_buildings,
-                spawn_hills,
-                spawn_mountains,
-                spawn_waves,
+                generate_level_matrix,
+                generate_tilemaps,
+                (
+                    spawn_level_tiles.after(generate_tilemaps),
+                    spawn_buildings,
+                    spawn_hills,
+                    spawn_mountains,
+                    spawn_waves,
+                )
+                    .after(generate_level_matrix),
                 play_background_music,
-            )
-                .chain(),
-        );
-
-        app.add_systems(
-            OnExit(AppState::InGame),
-            entity_cleanup::<With<SoundEffect>>,
+            ),
         );
     }
 }
 
 fn generate_tilemaps(mut commands: Commands, asset_server: Res<AssetServer>) {
     let tileset_ground_texture_atlas_layout =
-        TextureAtlasLayout::from_grid(TILE_SIZE, 16, 18, None, None);
+        TextureAtlasLayout::from_grid(TILE_SIZE.as_uvec2(), 16, 18, None, None);
     let tileset_objects_texture_atlas =
-        TextureAtlasLayout::from_grid(TILE_SIZE, 38, 14, None, None);
+        TextureAtlasLayout::from_grid(TILE_SIZE.as_uvec2(), 38, 14, None, None);
 
     commands.insert_resource(TilesetGroundTextureAtlasHandle(
         asset_server.add(tileset_ground_texture_atlas_layout),
@@ -114,21 +102,18 @@ fn spawn_level_tiles(
         let position = translate_grid_position_to_world_space(&(x, y));
         let translation = position.extend(0.0);
         let transform = Transform::from_translation(translation);
-        let mut tile_entity = commands.spawn(TileBundle {
-            render_layers: RenderLayers::layer(RenderLayer::Background.into()),
-            sprite: SpriteSheetBundle {
-                atlas: TextureAtlas {
+        let mut tile_entity = commands.spawn((
+            tile,
+            transform,
+            Sprite {
+                image: tileset_ground_texture.clone(),
+                texture_atlas: Some(TextureAtlas {
                     layout: tileset_ground_texture_atlas_layout_handle.0.clone(),
                     index: tile.into(),
-                },
-                texture: tileset_ground_texture.clone(),
-                transform,
-                ..default()
+                }),
+                ..Default::default()
             },
-            tile,
-        });
-
-        tile_entity.insert(InGameEntity);
+        ));
 
         if y == 0 || x == 0 || y == GRID_SIZE.y as usize - 1 || x == GRID_SIZE.x as usize - 1 {
             tile_entity.insert(BorderTile);
@@ -149,42 +134,41 @@ fn spawn_buildings(
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
     let total_buildings = (grass_tiles.len() as f32 * BUILDING_SPAWN_CHANCE).ceil() as usize;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let random_spawn_points = grass_tiles.choose_multiple(&mut rng, total_buildings);
     let building_tile_variants = [
         Rect::from_corners(Vec2::new(352., 96.), Vec2::new(400., 144.)),
         Rect::from_corners(Vec2::new(400., 96.), Vec2::new(448., 144.)),
     ];
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/tileset_objects.png")
         .unwrap_or_default();
 
     for position in random_spawn_points {
         let translation = position.extend(1.);
-        let mut building_entity_commands = commands.spawn(BuildingBundle {
-            active_collision_types: ActiveCollisionTypes::all(),
-            attack_damage: AttackDamage(5),
-            attack_timer: AttackTimer::new(4.),
-            collider: Collider::ball(HALF_TILE_SIZE.x),
-            collision_groups: CollisionGroups::new(BUILDING_GROUP, ENEMY_GROUP | FIRE_BREATH_GROUP),
-            hitpoints: ResourcePool::<Health>::new(1000),
-            marker: Enemy,
-            range: Range(TILE_SIZE.x * 20.),
-            render_layers: RenderLayers::layer(RenderLayer::Ground.into()),
-            rigid_body: RigidBody::Fixed,
-            sprite: SpriteBundle {
-                sprite: Sprite {
-                    flip_x: rng.gen_bool(0.5),
-                    rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
-                    ..default()
-                },
-                texture: texture.clone(),
-                transform: Transform::from_translation(translation),
+
+        // TODO: Add a Building component
+        commands.spawn((
+            ActiveCollisionTypes::all(),
+            AttackDamage(5),
+            AttackTimer::new(4.),
+            Collider::ball(HALF_TILE_SIZE.x),
+            CollisionGroups::new(BUILDING_GROUP, ENEMY_GROUP | FIRE_BREATH_GROUP),
+            ResourcePool::<Health>::new(1000),
+            Enemy,
+            Range(TILE_SIZE.x * 20.),
+            RenderLayers::layer(RenderLayer::Ground.into()),
+            RigidBody::Fixed,
+            Sprite {
+                flip_x: rng.random_bool(0.5),
+                image: image.clone(),
+                rect: Some(*building_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
             },
-        });
-
-        building_entity_commands.insert((InGameEntity, YSorted));
+            Transform::from_translation(translation),
+            StateScoped(AppState::GameOver),
+            YSorted,
+        ));
     }
 }
 
@@ -200,38 +184,34 @@ fn spawn_hills(
         .filter(|(_, tile)| **tile == Tile::Hills)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let hill_tile_variants = [
         Rect::from_corners(Vec2::new(320., 64.), Vec2::new(368., 96.)),
         Rect::from_corners(Vec2::new(368., 64.), Vec2::new(400., 96.)),
         Rect::from_corners(Vec2::new(400., 80.), Vec2::new(432., 96.)),
         Rect::from_corners(Vec2::new(432., 80.), Vec2::new(448., 96.)),
     ];
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/tileset_objects.png")
         .unwrap_or_default();
 
     for position in hill_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
-            -HALF_TILE_SIZE.y + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            rng.random::<f32>() * POSITION_OFFSET_FACTOR,
+            -HALF_TILE_SIZE.y + rng.random::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (position + position_offset).extend(1.);
-        let mut hill_entity_commands = commands.spawn(SpriteBundle {
-            sprite: Sprite {
+        commands.spawn((
+            Sprite {
                 anchor: bevy::sprite::Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.2),
+                flip_x: rng.random_bool(0.2),
+                image: image.clone(),
                 rect: Some(*hill_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
             },
-            texture: texture.clone(),
-            transform: Transform::from_translation(translation),
-            ..default()
-        });
-
-        hill_entity_commands.insert((
+            Transform::from_translation(translation),
             RenderLayers::layer(RenderLayer::Topography.into()),
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             YSorted,
         ));
     }
@@ -250,7 +230,7 @@ fn spawn_mountains(
         .filter(|(_, tile)| **tile == Tile::Mountains)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mountain_tile_variants = [
         Rect::from_corners(Vec2::ZERO, MOUNTAIN_TILE_SIZE),
         Rect::from_corners(
@@ -263,31 +243,28 @@ fn spawn_mountains(
         ),
         Rect::from_corners(MOUNTAIN_TILE_SIZE, MOUNTAIN_TILE_SIZE * 2.),
     ];
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/tileset_objects.png")
         .unwrap_or_default();
 
     for position in mountain_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
-            -MOUNTAIN_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            rng.random::<f32>() * POSITION_OFFSET_FACTOR,
+            -MOUNTAIN_TILE_SIZE.y / 2. + rng.random::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (position + position_offset).extend(1.);
-        let mut mountain_entity_commands = commands.spawn(SpriteBundle {
-            sprite: Sprite {
+
+        commands.spawn((
+            Sprite {
                 anchor: Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.3),
+                flip_x: rng.random_bool(0.3),
+                image: image.clone(),
                 rect: Some(*mountain_tile_variants.choose(&mut rng).unwrap()),
                 ..default()
             },
-            texture: texture.clone(),
-            transform: Transform::from_translation(translation),
-            ..default()
-        });
-
-        mountain_entity_commands.insert((
+            Transform::from_translation(translation),
             RenderLayers::layer(RenderLayer::Topography.into()),
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             YSortedInverse,
         ));
     }
@@ -306,48 +283,45 @@ fn spawn_waves(
         .filter(|(_, tile)| **tile == Tile::Water)
         .map(|(pos, _)| translate_grid_position_to_world_space(&pos))
         .collect();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let wave_tiles =
         water_tiles.choose_multiple(&mut rng, (water_tiles.len() as f32 * 0.05) as usize);
-    let texture = asset_server
+    let image = asset_server
         .get_handle("textures/tileset_objects.png")
         .unwrap_or_default();
 
     for position in wave_tiles {
         let position_offset = Vec2::new(
-            rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
-            -WAVE_TILE_SIZE.y / 2. + rng.gen::<f32>() * POSITION_OFFSET_FACTOR,
+            rng.random::<f32>() * POSITION_OFFSET_FACTOR,
+            -WAVE_TILE_SIZE.y / 2. + rng.random::<f32>() * POSITION_OFFSET_FACTOR,
         );
         let translation = (*position + position_offset).extend(2.);
-        let mut wave_entity_commands = commands.spawn(SpriteBundle {
-            sprite: Sprite {
+
+        commands.spawn((
+            Sprite {
                 anchor: Anchor::BottomCenter,
-                flip_x: rng.gen_bool(0.3),
+                flip_x: rng.random_bool(0.3),
+                image: image.clone(),
                 rect: Some(Rect::from_corners(
                     Vec2::new(208., 176.),
                     Vec2::new(240., 192.),
                 )),
                 ..default()
             },
-            texture: texture.clone(),
-            transform: Transform::from_translation(translation),
-            ..default()
-        });
-
-        wave_entity_commands.insert((
+            Transform::from_translation(translation),
             RenderLayers::layer(RenderLayer::Background.into()),
-            InGameEntity,
+            StateScoped(AppState::GameOver),
             YSortedInverse,
         ));
     }
 }
 
 fn play_background_music(mut play_music_event_writer: EventWriter<PlayMusicEvent>) {
-    play_music_event_writer.send(PlayMusicEvent::new(
+    play_music_event_writer.write(PlayMusicEvent::new(
         "theme2.ogg",
         Some(PlaybackSettings {
-            mode: bevy::audio::PlaybackMode::Loop,
-            volume: Volume::new(0.25),
+            loop_from: Some(0.0),
+            volume: 0.25,
             ..default()
         }),
         None,
@@ -363,32 +337,15 @@ pub struct TilesetObjectsTextureAtlasHandle(Handle<TextureAtlasLayout>);
 #[derive(Resource, Deref)]
 pub struct LevelMatrix(Matrix<Tile>);
 
-#[derive(Bundle)]
-pub struct BuildingBundle {
-    pub active_collision_types: ActiveCollisionTypes,
-    pub attack_damage: AttackDamage,
-    pub attack_timer: AttackTimer,
-    pub collider: Collider,
-    pub collision_groups: CollisionGroups,
-    pub hitpoints: ResourcePool<Health>,
-    pub marker: Enemy,
-    pub range: Range,
-    pub sprite: SpriteBundle,
-    pub render_layers: RenderLayers,
-    pub rigid_body: RigidBody,
-}
-
 #[derive(Component)]
 pub struct BorderTile;
 
-#[derive(Bundle)]
-pub struct TileBundle {
-    pub render_layers: RenderLayers,
-    pub sprite: SpriteSheetBundle,
-    pub tile: Tile,
-}
-
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[require(
+    Sprite,
+    RenderLayers::layer(RenderLayer::Background.into()),
+    StateScoped::<AppState>(AppState::GameOver),
+)]
 pub enum Tile {
     Water,
     Sand,
@@ -415,19 +372,6 @@ impl From<u8> for Tile {
     }
 }
 
-impl From<Tile> for Color {
-    fn from(value: Tile) -> Self {
-        match value {
-            Tile::Grass => Self::DARK_GREEN,
-            Tile::Hills => Self::GRAY,
-            Tile::Mountains => Self::DARK_GRAY,
-            Tile::Water => Self::BLUE,
-            Tile::Sand => Self::BEIGE,
-            Tile::_LAST => Self::default(),
-        }
-    }
-}
-
 impl From<Tile> for usize {
     fn from(value: Tile) -> Self {
         match value {
@@ -439,7 +383,7 @@ impl From<Tile> for usize {
                 if random::<f32>() > 0.1 {
                     145
                 } else {
-                    let mut rng = rand::thread_rng();
+                    let mut rng = rand::rng();
                     *[146_usize, 147, 148].choose(&mut rng).unwrap()
                 }
             }

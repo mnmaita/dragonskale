@@ -4,4 +4,4 @@ opt-level = "s"
 lto = "thin"
 
 [target.wasm32-unknown-unknown]
-runner = "wasm-server-runner"
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']

@@ -2,6 +2,7 @@ use bevy::{
     asset::{LoadedFolder, RecursiveDependencyLoadState},
     prelude::*,
 };
+use bevy_kira_audio::*;
 
 pub const ASSET_FOLDER_MUSIC: &str = "music";
 pub const ASSET_FOLDER_SFX: &str = "sfx";
@@ -10,12 +11,15 @@ pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(bevy_kira_audio::AudioPlugin);
         app.add_event::<PlayMusicEvent>();
         app.add_event::<PlaySoundEffectEvent>();
         app.add_event::<StopMusicEvent>();
         app.init_resource::<AudioLoadStates>();
         app.init_resource::<MusicHandles>();
         app.init_resource::<SoundEffectHandles>();
+        app.add_audio_channel::<BgmChannel>();
+        app.add_audio_channel::<DragonBreathChannel>();
         app.add_systems(Startup, (load_music_files, load_sound_effect_files));
         app.add_systems(
             Update,
@@ -38,6 +42,12 @@ impl Plugin for AudioPlugin {
     }
 }
 
+#[derive(Resource)]
+pub struct BgmChannel;
+
+#[derive(Resource)]
+pub struct DragonBreathChannel;
+
 #[derive(PartialEq)]
 enum AudioLoadState {
     NotLoaded,
@@ -58,7 +68,7 @@ impl From<RecursiveDependencyLoadState> for AudioLoadState {
             RecursiveDependencyLoadState::NotLoaded => Self::NotLoaded,
             RecursiveDependencyLoadState::Loading => Self::Loading,
             RecursiveDependencyLoadState::Loaded => Self::Loaded,
-            RecursiveDependencyLoadState::Failed => Self::Failed,
+            RecursiveDependencyLoadState::Failed(_) => Self::Failed,
         }
     }
 }
@@ -96,6 +106,30 @@ struct SoundEffectHandles(
     #[cfg(not(target_family = "wasm"))] Handle<LoadedFolder>,
     #[cfg(target_family = "wasm")] Vec<Handle<AudioSource>>,
 );
+
+pub struct PlaybackSettings {
+    pub fade_in: Option<AudioTween>,
+    pub loop_from: Option<f64>,
+    pub loop_until: Option<f64>,
+    pub panning: f64,
+    pub playback_rate: f64,
+    pub volume: f64,
+    pub reverse: bool,
+}
+
+impl Default for PlaybackSettings {
+    fn default() -> Self {
+        Self {
+            fade_in: None,
+            loop_from: None,
+            loop_until: None,
+            panning: 0.5,
+            playback_rate: 1.0,
+            reverse: false,
+            volume: 1.0,
+        }
+    }
+}
 
 #[derive(Event)]
 pub struct PlayMusicEvent {
@@ -170,7 +204,7 @@ pub struct SoundEffect;
 
 fn handle_play_music_events(
     asset_server: Res<AssetServer>,
-    mut commands: Commands,
+    bgm_audio_channel: Res<AudioChannel<BgmChannel>>,
     mut event_reader: EventReader<PlayMusicEvent>,
 ) {
     for event in event_reader.read() {
@@ -179,14 +213,36 @@ fn handle_play_music_events(
             settings,
             spatial_transform,
         } = event;
-        let settings = settings.unwrap_or(PlaybackSettings::DESPAWN);
-        let path = format_music_file_name(file_name);
-        let source = asset_server.get_handle(path).unwrap_or_default();
-        let mut entity = commands.spawn((BackgroundMusic, AudioBundle { source, settings }));
 
-        if let Some(transform) = spatial_transform {
-            entity.insert(SpatialBundle::from_transform(*transform));
+        let path = format_music_file_name(file_name);
+
+        if bgm_audio_channel.is_playing_sound() {
+            bgm_audio_channel.stop();
         }
+
+        let mut play_audio_command =
+            bgm_audio_channel.play(asset_server.get_handle(path).unwrap_or_default());
+        let Some(settings) = settings else {
+            return;
+        };
+
+        if settings.reverse {
+            play_audio_command.reverse();
+        }
+        if let Some(fade_in) = &settings.fade_in {
+            play_audio_command.fade_in(fade_in.clone());
+        }
+        if let Some(loop_from) = settings.loop_from {
+            play_audio_command.loop_from(loop_from);
+        }
+        if let Some(loop_until) = settings.loop_until {
+            play_audio_command.loop_until(loop_until);
+        }
+
+        play_audio_command
+            .with_panning(settings.panning)
+            .with_playback_rate(settings.playback_rate)
+            .with_volume(settings.volume);
     }
 }
 
@@ -196,15 +252,16 @@ fn handle_stop_music_events(
     query: Query<Entity, With<BackgroundMusic>>,
 ) {
     if !event_reader.is_empty() {
-        let entity = query.single();
-        commands.entity(entity).despawn_recursive();
+        if let Ok(entity) = query.single() {
+            commands.entity(entity).despawn();
+        }
     }
     event_reader.clear();
 }
 
 fn handle_play_sound_effect_events(
     asset_server: Res<AssetServer>,
-    mut commands: Commands,
+    audio: Res<Audio>,
     mut event_reader: EventReader<PlaySoundEffectEvent>,
 ) {
     for event in event_reader.read() {
@@ -213,14 +270,30 @@ fn handle_play_sound_effect_events(
             settings,
             spatial_transform,
         } = event;
-        let settings = settings.unwrap_or(PlaybackSettings::DESPAWN);
-        let path = format_sfx_file_name(file_name);
-        let source = asset_server.get_handle(path).unwrap_or_default();
-        let mut entity = commands.spawn((AudioBundle { source, settings }, SoundEffect));
 
-        if let Some(transform) = spatial_transform {
-            entity.insert(SpatialBundle::from_transform(*transform));
+        let path = format_sfx_file_name(file_name);
+        let mut play_audio_command = audio.play(asset_server.get_handle(path).unwrap_or_default());
+        let Some(settings) = settings else {
+            return;
+        };
+
+        if settings.reverse {
+            play_audio_command.reverse();
         }
+        if let Some(fade_in) = &settings.fade_in {
+            play_audio_command.fade_in(fade_in.clone());
+        }
+        if let Some(loop_from) = settings.loop_from {
+            play_audio_command.loop_from(loop_from);
+        }
+        if let Some(loop_until) = settings.loop_until {
+            play_audio_command.loop_until(loop_until);
+        }
+
+        play_audio_command
+            .with_panning(settings.panning)
+            .with_playback_rate(settings.playback_rate)
+            .with_volume(settings.volume);
     }
 }
 
@@ -287,8 +360,9 @@ fn update_music_assets_load_state(
         #[cfg(target_family = "wasm")]
         {
             let all_loaded = music_handles.iter().all(|handle| {
-                asset_server.recursive_dependency_load_state(handle.id())
-                    == RecursiveDependencyLoadState::Loaded
+                asset_server
+                    .recursive_dependency_load_state(handle.id())
+                    .is_loaded()
             });
             if all_loaded {
                 RecursiveDependencyLoadState::Loaded.into()
@@ -314,8 +388,9 @@ fn update_sound_effect_assets_load_state(
         #[cfg(target_family = "wasm")]
         {
             let all_loaded = sound_effect_handles.iter().all(|handle| {
-                asset_server.recursive_dependency_load_state(handle.id())
-                    == RecursiveDependencyLoadState::Loaded
+                asset_server
+                    .recursive_dependency_load_state(handle.id())
+                    .is_loaded()
             });
             if all_loaded {
                 RecursiveDependencyLoadState::Loaded.into()
