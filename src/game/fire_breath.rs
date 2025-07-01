@@ -105,16 +105,20 @@ fn consume_fire_breath_resource(
 
 fn restore_fire_breath_resource(
     player: Single<(&Actions<DefaultInputContext>, &mut ResourcePool<Fire>), With<Player>>,
-) -> Result<()> {
+) {
     const FIRE_BREATH_RESTORATION_RATIO: i16 = 1;
 
     let (actions, mut fire_resource_pool) = player.into_inner();
 
-    if actions.state::<FireBreath>()? == ActionState::None {
-        fire_resource_pool.add(FIRE_BREATH_RESTORATION_RATIO);
-    }
+    if let Ok(fire_breath_action_state) = actions.state::<FireBreath>() {
+        if fire_breath_action_state == ActionState::Fired && fire_resource_pool.is_empty() {
+            return;
+        }
 
-    Ok(())
+        if fire_breath_action_state != ActionState::Fired {
+            fire_resource_pool.add(FIRE_BREATH_RESTORATION_RATIO);
+        }
+    }
 }
 
 fn on_fire_breath_started(
