@@ -1,31 +1,44 @@
 use std::{f32::consts::FRAC_PI_2, time::Duration};
 
 use bevy::{ecs::system::SystemParam, prelude::*, window::PrimaryWindow};
-use bevy_kira_audio::{Audio, AudioChannel, AudioControl};
+use bevy_enhanced_input::prelude::*;
 use bevy_rapier2d::prelude::Collider;
 
 use crate::{
-    animation::AnimationTimer,
-    audio::DragonBreathChannel,
-    camera::MainCamera,
-    game::{Fire, Player, ResourcePool, SpawnFireBreathEvent},
-    physics::Speed,
-    playing, AppState,
+    animation::AnimationTimer, camera::MainCamera, game::Player, physics::Speed, playing, AppState,
 };
+use actions::*;
 
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(bevy_enhanced_input::EnhancedInputPlugin);
+
         app.add_systems(
             PreUpdate,
             (
                 clear_input.run_if(state_changed::<AppState>),
-                (mouse_input, player_movement).run_if(playing()),
+                player_movement.run_if(playing()),
             )
                 .chain(),
         );
+
+        app.add_input_context::<DefaultInputContext>();
+
+        app.add_observer(bind_actions);
     }
+}
+
+#[derive(InputContext)]
+pub struct DefaultInputContext;
+
+pub mod actions {
+    use super::InputAction;
+
+    #[derive(Debug, InputAction)]
+    #[input_action(output = bool)]
+    pub struct FireBreath;
 }
 
 #[derive(SystemParam)]
@@ -42,51 +55,6 @@ impl CursorWorldPositionChecker<'_> {
                 .viewport_to_world_2d(camera_transform, cursor_position)
                 .ok()
         })
-    }
-}
-
-fn mouse_input(
-    mut spawn_fire_breath_event_writer: EventWriter<SpawnFireBreathEvent>,
-    player: Single<(&Transform, &ResourcePool<Fire>), With<Player>>,
-    asset_server: Res<AssetServer>,
-    mouse_input: ResMut<ButtonInput<MouseButton>>,
-    dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
-    audio: Res<Audio>,
-) {
-    let (player_transform, fire_breath_resource_pool) = player.into_inner();
-
-    if mouse_input.just_pressed(MouseButton::Left) {
-        dragon_breath_audio_channel.play(
-            asset_server
-                .get_handle("sfx/breathstart.ogg")
-                .unwrap_or_default(),
-        );
-        dragon_breath_audio_channel
-            .play(
-                asset_server
-                    .get_handle("sfx/breathloop.ogg")
-                    .unwrap_or_default(),
-            )
-            .looped();
-    } else if mouse_input.just_released(MouseButton::Left) {
-        if !fire_breath_resource_pool.is_empty() {
-            audio.play(
-                asset_server
-                    .get_handle("sfx/breathend.ogg")
-                    .unwrap_or_default(),
-            );
-        }
-        dragon_breath_audio_channel.stop();
-    }
-
-    if mouse_input.pressed(MouseButton::Left) {
-        let player_direction = player_transform.rotation.mul_vec3(Vec3::Y).truncate();
-        // TODO: replace constant with sprite dimensions
-        let fire_position = player_transform.translation.truncate() + player_direction * 90.;
-
-        if !fire_breath_resource_pool.is_empty() {
-            spawn_fire_breath_event_writer.write(SpawnFireBreathEvent::new(1, fire_position));
-        }
     }
 }
 
@@ -128,10 +96,18 @@ fn player_movement(
     }
 }
 
-fn clear_input(
-    mut keyboard_input: ResMut<ButtonInput<KeyCode>>,
-    mut mouse_input: ResMut<ButtonInput<MouseButton>>,
-) {
+fn clear_input(mut keyboard_input: ResMut<ButtonInput<KeyCode>>) {
     keyboard_input.reset_all();
-    mouse_input.reset_all()
+}
+
+fn bind_actions(
+    trigger: Trigger<Bind<DefaultInputContext>>,
+    mut players: Query<&mut Actions<DefaultInputContext>>,
+) {
+    let mut actions = players.get_mut(trigger.target()).unwrap();
+
+    actions
+        .bind::<FireBreath>()
+        .to(MouseButton::Left)
+        .with_conditions(Hold::new(0.5));
 }

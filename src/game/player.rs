@@ -1,9 +1,11 @@
 use bevy::{prelude::*, render::view::RenderLayers};
+use bevy_enhanced_input::prelude::Actions;
 use bevy_rapier2d::prelude::*;
 
 use crate::{
     animation::{AnimationIndices, AnimationTimer},
     camera::{RenderLayer, YSorted},
+    input::DefaultInputContext,
     physics::Speed,
     AppState,
 };
@@ -24,7 +26,8 @@ impl Plugin for PlayerPlugin {
 
 #[derive(Component)]
 #[require(
-    AnimationIndices::new(0, 2),
+    Actions::<DefaultInputContext>::default(),
+    AnimationIndices = Player::default_animation_indices(),
     AnimationTimer::from_seconds(0.2),
     Collider::cuboid(15., 40.),
     CollisionGroups::new(PLAYER_GROUP, PROJECTILE_GROUP | POWERUP_GROUP),
@@ -35,6 +38,12 @@ impl Plugin for PlayerPlugin {
     StateScoped::<AppState>(AppState::GameOver),
 )]
 pub struct Player;
+
+impl Player {
+    pub fn default_animation_indices() -> AnimationIndices {
+        AnimationIndices::new(0, 2)
+    }
+}
 
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let image = asset_server
