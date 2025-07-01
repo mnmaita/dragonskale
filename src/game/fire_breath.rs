@@ -126,11 +126,7 @@ fn on_fire_breath_started(
     dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
     asset_server: Res<AssetServer>,
 ) {
-    dragon_breath_audio_channel.play(
-        asset_server
-            .get_handle("sfx/breathstart.ogg")
-            .unwrap_or_default(),
-    );
+    dragon_breath_audio_channel.play(asset_server.load("sfx/breathstart.ogg"));
 }
 
 fn on_fire_breath_ongoing(
@@ -156,11 +152,7 @@ fn on_fire_breath_fired(
     if trigger.fired_secs == 0.0 {
         *player_animation_indices = Player::default_animation_indices();
         dragon_breath_audio_channel
-            .play(
-                asset_server
-                    .get_handle("sfx/breathloop.ogg")
-                    .unwrap_or_default(),
-            )
+            .play(asset_server.load("sfx/breathloop.ogg"))
             .looped();
     }
 }
@@ -182,11 +174,7 @@ fn on_fire_breath_completed(
     dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
 ) {
     if !fire_resource_pool.is_empty() {
-        audio.play(
-            asset_server
-                .get_handle("sfx/breathend.ogg")
-                .unwrap_or_default(),
-        );
+        audio.play(asset_server.load("sfx/breathend.ogg"));
         dragon_breath_audio_channel.stop();
     }
 }
@@ -198,11 +186,7 @@ fn play_breath_end_sfx(
     dragon_breath_audio_channel: Res<AudioChannel<DragonBreathChannel>>,
 ) {
     if fire_resource_pool.is_empty() {
-        audio.play(
-            asset_server
-                .get_handle("sfx/breathend.ogg")
-                .unwrap_or_default(),
-        );
+        audio.play(asset_server.load("sfx/breathend.ogg"));
         dragon_breath_audio_channel.stop();
     }
 }

@@ -220,8 +220,7 @@ fn handle_play_music_events(
             bgm_audio_channel.stop();
         }
 
-        let mut play_audio_command =
-            bgm_audio_channel.play(asset_server.get_handle(path).unwrap_or_default());
+        let mut play_audio_command = bgm_audio_channel.play(asset_server.load(path));
         let Some(settings) = settings else {
             return;
         };
@@ -272,7 +271,7 @@ fn handle_play_sound_effect_events(
         } = event;
 
         let path = format_sfx_file_name(file_name);
-        let mut play_audio_command = audio.play(asset_server.get_handle(path).unwrap_or_default());
+        let mut play_audio_command = audio.play(asset_server.load(path));
         let Some(settings) = settings else {
             return;
         };

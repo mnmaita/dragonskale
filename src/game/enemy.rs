@@ -168,16 +168,12 @@ fn spawn_enemies(
             let (texture_atlas_handle, image) = if rng.random_bool(0.5) {
                 (
                     texture_archer_atlas_handle.0.clone(),
-                    asset_server
-                        .get_handle("textures/enemy_archer.png")
-                        .unwrap_or_default(),
+                    asset_server.load("textures/enemy_archer.png"),
                 )
             } else {
                 (
                     texture_axeman_atlas_handle.0.clone(),
-                    asset_server
-                        .get_handle("textures/enemy_axe.png")
-                        .unwrap_or_default(),
+                    asset_server.load("textures/enemy_axe.png"),
                 )
             };
 

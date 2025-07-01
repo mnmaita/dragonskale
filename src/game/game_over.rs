@@ -60,9 +60,8 @@ fn check_game_over_condition(
 }
 
 fn display_game_over_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server
-        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-        .unwrap_or_default();
+    let font = asset_server.load("fonts/MorrisRomanAlternate-Black.ttf");
+
     commands.spawn((
         GameOverBackground,
         StateScoped(AppState::GameOver),

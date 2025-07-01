@@ -93,9 +93,7 @@ fn spawn_level_tiles(
     level_matrix: Res<LevelMatrix>,
     tileset_ground_texture_atlas_layout_handle: Res<TilesetGroundTextureAtlasHandle>,
 ) {
-    let tileset_ground_texture = asset_server
-        .get_handle("textures/tileset_ground.png")
-        .unwrap_or_default();
+    let tileset_ground_texture = asset_server.load("textures/tileset_ground.png");
 
     for ((x, y), tile) in level_matrix.0.items() {
         let tile = *tile;
@@ -140,9 +138,7 @@ fn spawn_buildings(
         Rect::from_corners(Vec2::new(352., 96.), Vec2::new(400., 144.)),
         Rect::from_corners(Vec2::new(400., 96.), Vec2::new(448., 144.)),
     ];
-    let image = asset_server
-        .get_handle("textures/tileset_objects.png")
-        .unwrap_or_default();
+    let image = asset_server.load("textures/tileset_objects.png");
 
     for position in random_spawn_points {
         let translation = position.extend(1.);
@@ -191,9 +187,7 @@ fn spawn_hills(
         Rect::from_corners(Vec2::new(400., 80.), Vec2::new(432., 96.)),
         Rect::from_corners(Vec2::new(432., 80.), Vec2::new(448., 96.)),
     ];
-    let image = asset_server
-        .get_handle("textures/tileset_objects.png")
-        .unwrap_or_default();
+    let image = asset_server.load("textures/tileset_objects.png");
 
     for position in hill_tiles {
         let position_offset = Vec2::new(
@@ -243,9 +237,7 @@ fn spawn_mountains(
         ),
         Rect::from_corners(MOUNTAIN_TILE_SIZE, MOUNTAIN_TILE_SIZE * 2.),
     ];
-    let image = asset_server
-        .get_handle("textures/tileset_objects.png")
-        .unwrap_or_default();
+    let image = asset_server.load("textures/tileset_objects.png");
 
     for position in mountain_tiles {
         let position_offset = Vec2::new(
@@ -286,9 +278,7 @@ fn spawn_waves(
     let mut rng = rand::rng();
     let wave_tiles =
         water_tiles.choose_multiple(&mut rng, (water_tiles.len() as f32 * 0.05) as usize);
-    let image = asset_server
-        .get_handle("textures/tileset_objects.png")
-        .unwrap_or_default();
+    let image = asset_server.load("textures/tileset_objects.png");
 
     for position in wave_tiles {
         let position_offset = Vec2::new(

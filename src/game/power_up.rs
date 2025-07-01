@@ -84,9 +84,7 @@ fn spawn_powerups(
     scale_texture_atlas_handler: Res<ScaleTextureAtlasLayoutHandle>,
     mut powerup_event_reader: EventReader<PowerUpEvent>,
 ) {
-    let texture_healing_scale = asset_server
-        .get_handle("textures/scale_anim.png")
-        .unwrap_or_default();
+    let texture_healing_scale = asset_server.load("textures/scale_anim.png");
 
     for PowerUpEvent {
         transform,

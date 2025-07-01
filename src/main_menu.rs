@@ -29,9 +29,7 @@ enum MainMenuButtonAction {
 }
 
 fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server
-        .get_handle("fonts/MorrisRomanAlternate-Black.ttf")
-        .unwrap_or_default();
+    let font = asset_server.load("fonts/MorrisRomanAlternate-Black.ttf");
 
     commands.spawn((
         Node {
@@ -45,9 +43,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         StateScoped(AppState::MainMenu),
         Children::spawn((
             Spawn(ImageNode::new(
-                asset_server
-                    .get_handle("textures/menu_background.png")
-                    .unwrap_or_default(),
+                asset_server.load("textures/menu_background.png"),
             )),
             Spawn((
                 Button,

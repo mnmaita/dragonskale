@@ -46,9 +46,7 @@ impl Player {
 }
 
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let image = asset_server
-        .get_handle("textures/dragon.png")
-        .unwrap_or_default();
+    let image = asset_server.load("textures/dragon.png");
     let texture_atlas_layout =
         TextureAtlasLayout::from_grid(UVec2::new(191, 161), 12, 1, None, None);
     let texture_atlas_layout_handle = asset_server.add(texture_atlas_layout);

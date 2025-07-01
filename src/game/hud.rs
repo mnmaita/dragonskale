@@ -105,12 +105,7 @@ fn spawn_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         Text::new("Score: 0"),
-        TextFont::from_font(
-            asset_server
-                .get_handle("fonts/Prince Valiant.ttf")
-                .unwrap_or_default(),
-        )
-        .with_font_size(40.0),
+        TextFont::from_font(asset_server.load("fonts/Prince Valiant.ttf")).with_font_size(40.0),
         TextColor(GOLD.into()),
         TextLayout::new_with_no_wrap(),
     ));
