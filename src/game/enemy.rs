@@ -21,28 +21,28 @@ use super::{
 };
 
 #[derive(Resource, Deref)]
-struct SpriteAnimationMap(HashMap<SpriteAnimation, [usize; 2]>);
+struct AnimationTagMap(HashMap<AnimationTag, [usize; 2]>);
 
-impl Default for SpriteAnimationMap {
+impl Default for AnimationTagMap {
     fn default() -> Self {
         Self(HashMap::from([
-            (SpriteAnimation::RunLeft, [0, 7]),
-            (SpriteAnimation::RunUpLeft, [16, 23]),
-            (SpriteAnimation::RunUp, [32, 39]),
-            (SpriteAnimation::RunUpRight, [48, 55]),
-            (SpriteAnimation::RunRight, [64, 71]),
-            (SpriteAnimation::RunDownRight, [80, 87]),
-            (SpriteAnimation::RunDown, [96, 103]),
-            (SpriteAnimation::RunDownLeft, [112, 119]),
+            (AnimationTag::RunLeft, [0, 7]),
+            (AnimationTag::RunUpLeft, [16, 23]),
+            (AnimationTag::RunUp, [32, 39]),
+            (AnimationTag::RunUpRight, [48, 55]),
+            (AnimationTag::RunRight, [64, 71]),
+            (AnimationTag::RunDownRight, [80, 87]),
+            (AnimationTag::RunDown, [96, 103]),
+            (AnimationTag::RunDownLeft, [112, 119]),
             // TODO update all indexes
-            (SpriteAnimation::AttackLeft, [12, 15]),
-            (SpriteAnimation::AttackUpLeft, [28, 31]),
-            (SpriteAnimation::AttackUp, [44, 47]),
-            (SpriteAnimation::AttackUpRight, [60, 63]),
-            (SpriteAnimation::AttackRight, [76, 79]),
-            (SpriteAnimation::AttackDownRight, [92, 95]),
-            (SpriteAnimation::AttackDown, [108, 111]),
-            (SpriteAnimation::AttackDownLeft, [124, 127]),
+            (AnimationTag::AttackLeft, [12, 15]),
+            (AnimationTag::AttackUpLeft, [28, 31]),
+            (AnimationTag::AttackUp, [44, 47]),
+            (AnimationTag::AttackUpRight, [60, 63]),
+            (AnimationTag::AttackRight, [76, 79]),
+            (AnimationTag::AttackDownRight, [92, 95]),
+            (AnimationTag::AttackDown, [108, 111]),
+            (AnimationTag::AttackDownLeft, [124, 127]),
         ]))
     }
 }
@@ -52,7 +52,7 @@ pub(super) struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnTimer::new(3.));
-        app.insert_resource(SpriteAnimationMap::default());
+        app.insert_resource(AnimationTagMap::default());
 
         app.add_systems(
             OnEnter(AppState::InGame),
@@ -65,8 +65,8 @@ impl Plugin for EnemyPlugin {
                 spawn_enemies,
                 handle_enemy_movement,
                 handle_enemy_attacks,
-                update_enemy_sprite_animation.after(handle_enemy_movement),
-                update_enemy_animation_indexes.after(update_enemy_sprite_animation),
+                update_enemy_animation_tag.after(handle_enemy_movement),
+                update_enemy_animation_indexes.after(update_enemy_animation_tag),
             )
                 .run_if(playing()),
         );
@@ -76,7 +76,7 @@ impl Plugin for EnemyPlugin {
 }
 
 #[derive(Component, Eq, PartialEq, Hash, Debug, Copy, Clone)]
-pub enum SpriteAnimation {
+pub enum AnimationTag {
     RunLeft,
     RunUpLeft,
     RunUp,
@@ -211,7 +211,7 @@ fn spawn_enemies(
                 .insert((
                     AnimationIndices::new(4, 11),
                     AnimationTimer::from_seconds(0.2),
-                    SpriteAnimation::RunLeft,
+                    AnimationTag::RunLeft,
                     Collider::cuboid(HALF_TILE_SIZE.x, HALF_TILE_SIZE.y),
                     RigidBody::Dynamic,
                     CollisionGroups::new(
@@ -228,62 +228,55 @@ fn setup_enemy_spawn_counter(mut commands: Commands) {
     commands.insert_resource(EnemySpawnCounter(0));
 }
 
-fn update_enemy_sprite_animation(
+fn update_enemy_animation_tag(
     mut enemy_query: Query<
-        (
-            &Transform,
-            &Behavior,
-            &FacingDirection,
-            &mut SpriteAnimation,
-        ),
+        (&Transform, &Behavior, &FacingDirection, &mut AnimationTag),
         With<Enemy>,
     >,
     player_transform: Single<&Transform, With<Player>>,
 ) {
     let player_position = player_transform.translation.truncate();
 
-    for (enemy_transform, enemy_behavior, facing_direction, mut sprite_animation) in
-        &mut enemy_query
-    {
+    for (enemy_transform, enemy_behavior, facing_direction, mut animation_tag) in &mut enemy_query {
         match enemy_behavior {
             Behavior::FollowPlayer { distance } => {
                 let enemy_position = enemy_transform.translation.truncate();
 
                 if enemy_position.distance(player_position) > *distance {
                     match facing_direction.0 {
-                        Dir2::NORTH => *sprite_animation = SpriteAnimation::RunUp,
-                        Dir2::EAST => *sprite_animation = SpriteAnimation::RunRight,
-                        Dir2::SOUTH => *sprite_animation = SpriteAnimation::RunDown,
-                        Dir2::WEST => *sprite_animation = SpriteAnimation::RunLeft,
-                        Dir2::NORTH_EAST => *sprite_animation = SpriteAnimation::RunUpRight,
-                        Dir2::NORTH_WEST => *sprite_animation = SpriteAnimation::RunUpLeft,
-                        Dir2::SOUTH_EAST => *sprite_animation = SpriteAnimation::RunDownRight,
-                        Dir2::SOUTH_WEST => *sprite_animation = SpriteAnimation::RunDownLeft,
+                        Dir2::NORTH => *animation_tag = AnimationTag::RunUp,
+                        Dir2::EAST => *animation_tag = AnimationTag::RunRight,
+                        Dir2::SOUTH => *animation_tag = AnimationTag::RunDown,
+                        Dir2::WEST => *animation_tag = AnimationTag::RunLeft,
+                        Dir2::NORTH_EAST => *animation_tag = AnimationTag::RunUpRight,
+                        Dir2::NORTH_WEST => *animation_tag = AnimationTag::RunUpLeft,
+                        Dir2::SOUTH_EAST => *animation_tag = AnimationTag::RunDownRight,
+                        Dir2::SOUTH_WEST => *animation_tag = AnimationTag::RunDownLeft,
                         _ => (),
                     }
                 } else {
                     match facing_direction.0 {
-                        Dir2::NORTH => *sprite_animation = SpriteAnimation::AttackUp,
-                        Dir2::EAST => *sprite_animation = SpriteAnimation::AttackRight,
-                        Dir2::SOUTH => *sprite_animation = SpriteAnimation::AttackDown,
-                        Dir2::WEST => *sprite_animation = SpriteAnimation::AttackLeft,
-                        Dir2::NORTH_EAST => *sprite_animation = SpriteAnimation::AttackUpRight,
-                        Dir2::NORTH_WEST => *sprite_animation = SpriteAnimation::AttackUpLeft,
-                        Dir2::SOUTH_EAST => *sprite_animation = SpriteAnimation::AttackDownRight,
-                        Dir2::SOUTH_WEST => *sprite_animation = SpriteAnimation::AttackDownLeft,
+                        Dir2::NORTH => *animation_tag = AnimationTag::AttackUp,
+                        Dir2::EAST => *animation_tag = AnimationTag::AttackRight,
+                        Dir2::SOUTH => *animation_tag = AnimationTag::AttackDown,
+                        Dir2::WEST => *animation_tag = AnimationTag::AttackLeft,
+                        Dir2::NORTH_EAST => *animation_tag = AnimationTag::AttackUpRight,
+                        Dir2::NORTH_WEST => *animation_tag = AnimationTag::AttackUpLeft,
+                        Dir2::SOUTH_EAST => *animation_tag = AnimationTag::AttackDownRight,
+                        Dir2::SOUTH_WEST => *animation_tag = AnimationTag::AttackDownLeft,
                         _ => (),
                     }
                 }
             }
             Behavior::Random => match facing_direction.0 {
-                Dir2::NORTH => *sprite_animation = SpriteAnimation::RunUp,
-                Dir2::EAST => *sprite_animation = SpriteAnimation::RunRight,
-                Dir2::SOUTH => *sprite_animation = SpriteAnimation::RunDown,
-                Dir2::WEST => *sprite_animation = SpriteAnimation::RunLeft,
-                Dir2::NORTH_EAST => *sprite_animation = SpriteAnimation::RunUpRight,
-                Dir2::NORTH_WEST => *sprite_animation = SpriteAnimation::RunUpLeft,
-                Dir2::SOUTH_EAST => *sprite_animation = SpriteAnimation::RunDownRight,
-                Dir2::SOUTH_WEST => *sprite_animation = SpriteAnimation::RunDownLeft,
+                Dir2::NORTH => *animation_tag = AnimationTag::RunUp,
+                Dir2::EAST => *animation_tag = AnimationTag::RunRight,
+                Dir2::SOUTH => *animation_tag = AnimationTag::RunDown,
+                Dir2::WEST => *animation_tag = AnimationTag::RunLeft,
+                Dir2::NORTH_EAST => *animation_tag = AnimationTag::RunUpRight,
+                Dir2::NORTH_WEST => *animation_tag = AnimationTag::RunUpLeft,
+                Dir2::SOUTH_EAST => *animation_tag = AnimationTag::RunDownRight,
+                Dir2::SOUTH_WEST => *animation_tag = AnimationTag::RunDownLeft,
                 _ => (),
             },
         }
@@ -292,13 +285,13 @@ fn update_enemy_sprite_animation(
 
 fn update_enemy_animation_indexes(
     mut enemy_query: Query<
-        (&SpriteAnimation, &mut AnimationIndices, &mut Sprite),
-        (With<Enemy>, Changed<SpriteAnimation>),
+        (&AnimationTag, &mut AnimationIndices, &mut Sprite),
+        (With<Enemy>, Changed<AnimationTag>),
     >,
-    sprite_animation_map: Res<SpriteAnimationMap>,
+    animation_tag_map: Res<AnimationTagMap>,
 ) {
-    for (sprite_animation, mut animation_indices, mut sprite) in &mut enemy_query {
-        if let Some(value) = sprite_animation_map.get(sprite_animation) {
+    for (animation_tag, mut animation_indices, mut sprite) in &mut enemy_query {
+        if let Some(value) = animation_tag_map.get(animation_tag) {
             let [first, last] = *value;
             *animation_indices = AnimationIndices::new(first, last);
             if let Some(ref mut texture_atlas) = sprite.texture_atlas {
