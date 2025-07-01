@@ -95,6 +95,36 @@ pub enum AnimationTag {
     AttackDownLeft,
 }
 
+impl AnimationTag {
+    pub fn current_attack_tag(dir: Dir2) -> Option<Self> {
+        match dir {
+            Dir2::NORTH => Some(Self::AttackUp),
+            Dir2::EAST => Some(Self::AttackRight),
+            Dir2::SOUTH => Some(Self::AttackDown),
+            Dir2::WEST => Some(Self::AttackLeft),
+            Dir2::NORTH_EAST => Some(Self::AttackUpRight),
+            Dir2::NORTH_WEST => Some(Self::AttackUpLeft),
+            Dir2::SOUTH_EAST => Some(Self::AttackDownRight),
+            Dir2::SOUTH_WEST => Some(Self::AttackDownLeft),
+            _ => None,
+        }
+    }
+
+    pub fn current_run_tag(dir: Dir2) -> Option<Self> {
+        match dir {
+            Dir2::NORTH => Some(Self::RunUp),
+            Dir2::EAST => Some(Self::RunRight),
+            Dir2::SOUTH => Some(Self::RunDown),
+            Dir2::WEST => Some(Self::RunLeft),
+            Dir2::NORTH_EAST => Some(Self::RunUpRight),
+            Dir2::NORTH_WEST => Some(Self::RunUpLeft),
+            Dir2::SOUTH_EAST => Some(Self::RunDownRight),
+            Dir2::SOUTH_WEST => Some(Self::RunDownLeft),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Component)]
 pub struct Enemy;
 
@@ -121,7 +151,7 @@ pub struct FacingDirection(Dir2);
 
 impl Default for FacingDirection {
     fn default() -> Self {
-        Self(Dir2::NEG_X)
+        Self(Dir2::WEST)
     }
 }
 
@@ -168,7 +198,7 @@ fn spawn_enemies(
 
         let mut rng = rand::rng();
         if let Some(tile_transform) = tile_query.iter().choose(&mut rng) {
-            let translation = tile_transform.translation.truncate().extend(1.);
+            let translation = tile_transform.translation.xy().extend(1.);
 
             //pick a random texture atlas handle between archer and axe
             let (texture_atlas_handle, image) = if rng.random_bool(0.5) {
@@ -235,50 +265,22 @@ fn update_enemy_animation_tag(
     >,
     player_transform: Single<&Transform, With<Player>>,
 ) {
-    let player_position = player_transform.translation.truncate();
+    let player_position = player_transform.translation.xy();
 
     for (enemy_transform, enemy_behavior, facing_direction, mut animation_tag) in &mut enemy_query {
-        match enemy_behavior {
+        let current_tag = match enemy_behavior {
             Behavior::FollowPlayer { distance } => {
-                let enemy_position = enemy_transform.translation.truncate();
-
-                if enemy_position.distance(player_position) > *distance {
-                    match facing_direction.0 {
-                        Dir2::NORTH => *animation_tag = AnimationTag::RunUp,
-                        Dir2::EAST => *animation_tag = AnimationTag::RunRight,
-                        Dir2::SOUTH => *animation_tag = AnimationTag::RunDown,
-                        Dir2::WEST => *animation_tag = AnimationTag::RunLeft,
-                        Dir2::NORTH_EAST => *animation_tag = AnimationTag::RunUpRight,
-                        Dir2::NORTH_WEST => *animation_tag = AnimationTag::RunUpLeft,
-                        Dir2::SOUTH_EAST => *animation_tag = AnimationTag::RunDownRight,
-                        Dir2::SOUTH_WEST => *animation_tag = AnimationTag::RunDownLeft,
-                        _ => (),
-                    }
+                if enemy_transform.translation.xy().distance(player_position) > *distance {
+                    AnimationTag::current_run_tag(**facing_direction)
                 } else {
-                    match facing_direction.0 {
-                        Dir2::NORTH => *animation_tag = AnimationTag::AttackUp,
-                        Dir2::EAST => *animation_tag = AnimationTag::AttackRight,
-                        Dir2::SOUTH => *animation_tag = AnimationTag::AttackDown,
-                        Dir2::WEST => *animation_tag = AnimationTag::AttackLeft,
-                        Dir2::NORTH_EAST => *animation_tag = AnimationTag::AttackUpRight,
-                        Dir2::NORTH_WEST => *animation_tag = AnimationTag::AttackUpLeft,
-                        Dir2::SOUTH_EAST => *animation_tag = AnimationTag::AttackDownRight,
-                        Dir2::SOUTH_WEST => *animation_tag = AnimationTag::AttackDownLeft,
-                        _ => (),
-                    }
+                    AnimationTag::current_attack_tag(**facing_direction)
                 }
             }
-            Behavior::Random => match facing_direction.0 {
-                Dir2::NORTH => *animation_tag = AnimationTag::RunUp,
-                Dir2::EAST => *animation_tag = AnimationTag::RunRight,
-                Dir2::SOUTH => *animation_tag = AnimationTag::RunDown,
-                Dir2::WEST => *animation_tag = AnimationTag::RunLeft,
-                Dir2::NORTH_EAST => *animation_tag = AnimationTag::RunUpRight,
-                Dir2::NORTH_WEST => *animation_tag = AnimationTag::RunUpLeft,
-                Dir2::SOUTH_EAST => *animation_tag = AnimationTag::RunDownRight,
-                Dir2::SOUTH_WEST => *animation_tag = AnimationTag::RunDownLeft,
-                _ => (),
-            },
+            Behavior::Random => AnimationTag::current_run_tag(**facing_direction),
+        };
+
+        if let Some(tag) = current_tag {
+            *animation_tag = tag;
         }
     }
 }
@@ -315,14 +317,14 @@ fn handle_enemy_movement(
     player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) {
-    let player_position = player_transform.translation.truncate();
+    let player_position = player_transform.translation.xy();
 
     for (mut enemy_transform, mut facing_direction, behavior_timer, enemy_speed, enemy_behavior) in
         &mut enemy_query
     {
         match enemy_behavior {
             Behavior::FollowPlayer { distance } => {
-                let enemy_position = enemy_transform.translation.truncate();
+                let enemy_position = enemy_transform.translation.xy();
                 let new_direction = Dir2::new(player_position - enemy_position).unwrap_or(Dir2::X);
 
                 if enemy_position.distance(player_position) > *distance {
@@ -365,13 +367,13 @@ fn handle_enemy_attacks(
     player_transform: Single<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) {
-    let player_position = player_transform.translation.truncate();
+    let player_position = player_transform.translation.xy();
 
     for (enemy_entity, enemy_transform, mut enemy_attack_timer, enemy_range, enemy_attack_damage) in
         &mut enemy_query
     {
         if enemy_attack_timer.tick(time.delta()).just_finished() {
-            let enemy_position = enemy_transform.translation.truncate();
+            let enemy_position = enemy_transform.translation.xy();
 
             if enemy_position.distance(player_position) <= enemy_range.0 {
                 let direction = (player_position - enemy_position).normalize();
