@@ -29,5 +29,5 @@ fn setup_physics(mut rapier_configuration: Single<&mut RapierConfiguration>) {
     rapier_configuration.gravity = Vec2::ZERO;
 }
 
-#[derive(Component)]
+#[derive(Component, Deref, DerefMut)]
 pub struct Speed(pub f32);

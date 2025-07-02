@@ -3,6 +3,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{
     camera::{RenderLayer, YSorted},
+    game::{game_timer::GameTimer, level::Building},
     playing, AppState,
 };
 
@@ -26,6 +27,7 @@ impl Plugin for CombatPlugin {
                 spawn_projectiles,
                 despawn_projectiles,
                 despawn_dead_entities,
+                despawn_on_fire_entities,
                 compute_damage_from_intersections,
             )
                 .run_if(playing()),
@@ -76,6 +78,10 @@ impl AttackTimer {
         Self(Timer::from_seconds(seconds, TimerMode::Repeating))
     }
 }
+
+#[derive(Component)]
+#[require(GameTimer::<OnFire>::from_seconds_once(3.0))]
+pub struct OnFire;
 
 #[derive(Component)]
 #[require(
@@ -190,18 +196,44 @@ fn despawn_dead_entities(
     mut score_event_writer: EventWriter<ScoreEvent>,
     mut powerup_event_writer: EventWriter<PowerUpEvent>,
     query: Query<
-        (Entity, &ResourcePool<Health>, &Transform),
-        (Without<Player>, Changed<ResourcePool<Health>>),
+        (
+            Entity,
+            &ResourcePool<Health>,
+            &Transform,
+            Has<Building>,
+            Has<Enemy>,
+        ),
+        (
+            Without<Player>,
+            Without<OnFire>,
+            Changed<ResourcePool<Health>>,
+        ),
     >,
 ) {
-    for (entity, health, transform) in &query {
+    for (entity, health, transform, building, enemy) in &query {
         if health.current() == 0 {
-            commands.entity(entity).despawn();
+            if !building && enemy {
+                commands.entity(entity).insert(OnFire);
+            } else {
+                commands.entity(entity).despawn();
+            }
             score_event_writer.write(ScoreEvent::new(10, ScoreEventType::AddPoints));
             powerup_event_writer.write(PowerUpEvent::new(
                 *transform,
                 PowerUpEventType::HealingScale,
             ));
+        }
+    }
+}
+
+fn despawn_on_fire_entities(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut GameTimer<OnFire>), With<OnFire>>,
+    time: Res<Time>,
+) {
+    for (entity, mut timer) in &mut query {
+        if timer.tick(time.delta()).just_finished() {
+            commands.entity(entity).despawn();
         }
     }
 }
