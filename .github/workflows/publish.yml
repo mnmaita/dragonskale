@@ -56,14 +56,14 @@ jobs:
         if: matrix.platform != 'web'
         run: cargo build --release --target ${{ matrix.target }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.platform == 'web'
         with:
           name: ${{ matrix.platform }}
           path: |
             ./target/bevy_web/web-release/${{ vars.KEBAB_CASE_GAME_NAME }}/*
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: matrix.platform != 'web'
         with:
           name: ${{ matrix.platform }}
